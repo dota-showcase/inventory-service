@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  inventory-service:
+    build: ./app
+    restart: on-failure
+    env_file: ./.env
+    ports:
+      - $SPRING_LOCAL_PORT:$SPRING_DOCKER_PORT
+    environment:
+      SPRING_APPLICATION_JSON: '{
+        "spring.data.mongodb.uri" : "mongodb+srv://{$MONGODB_ROOT_USER_NAME}:{$MONGODB_ROOT_USER_PASSWORD}@localhost:27017/{$MONGODB_DB_NAME}",
+        "spring.data.mongodb.database" : "$MONGODB_DB_NAME"
+      }'
+    volumes:
+      - ./app:/app
+      - .m2:/root/.m2
+    stdin_open: true
+    tty: true
+    depends_on:
+      - inventory-service-mongodb
+
+  inventory-service-mongodb:
+    container_name: inventory-service-mongodb
+    image: mongo:5.0.9
+    restart: always
+    env_file: ./.env
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+      - MONGO_INITDB_ROOT_USERNAME=$MONGODB_ROOT_USER_NAME
+      - MONGO_INITDB_ROOT_PASSWORD=$MONGODB_ROOT_USER_PASSWORD
+      - MONGO_INITDB_DATABASE=$MONGODB_DB_NAME
+    ports:
+      - "27017:27017"
