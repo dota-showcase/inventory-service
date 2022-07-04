@@ -1,4 +1,4 @@
-package com.dota_showcase.inventoryservice;
+package com.dotashowcase.inventoryservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

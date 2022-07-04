@@ -1,4 +1,4 @@
-package com.dota_showcase.inventoryservice;
+package com.dotashowcase.inventoryservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

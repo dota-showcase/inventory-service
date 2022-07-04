@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   inventory-service:
+    container_name: inventory-service-spring
     build: ./app
     restart: on-failure
     env_file: ./.env
@@ -9,12 +10,13 @@ services:
       - $SPRING_LOCAL_PORT:$SPRING_DOCKER_PORT
     environment:
       SPRING_APPLICATION_JSON: '{
-        "spring.data.mongodb.uri" : "mongodb+srv://{$MONGODB_ROOT_USER_NAME}:{$MONGODB_ROOT_USER_PASSWORD}@localhost:27017/{$MONGODB_DB_NAME}",
+        "spring.data.mongodb.uri" : "mongodb+srv://$MONGODB_ROOT_USER_NAME:$MONGODB_ROOT_USER_PASSWORD@localhost:27017/$MONGODB_DB_NAME",
         "spring.data.mongodb.database" : "$MONGODB_DB_NAME"
       }'
+#      mongodb://root:root@localhost:27017/main
     volumes:
       - ./app:/app
-      - .m2:/root/.m2
+      - ~/.m2:/root/.m2
     stdin_open: true
     tty: true
     depends_on:
