@@ -1,27 +1,6 @@
 version: "3.8"
 
 services:
-  inventory-service:
-    container_name: inventory-service-spring
-    build: ./app
-    restart: on-failure
-    env_file: ./.env
-    ports:
-      - $SPRING_LOCAL_PORT:$SPRING_DOCKER_PORT
-    environment:
-      SPRING_APPLICATION_JSON: '{
-        "spring.data.mongodb.uri" : "mongodb+srv://$MONGODB_ROOT_USER_NAME:$MONGODB_ROOT_USER_PASSWORD@localhost:27017/$MONGODB_DB_NAME",
-        "spring.data.mongodb.database" : "$MONGODB_DB_NAME"
-      }'
-#      mongodb://root:root@localhost:27017/main
-    volumes:
-      - ./app:/app
-      - ~/.m2:/root/.m2
-    stdin_open: true
-    tty: true
-    depends_on:
-      - inventory-service-mongodb
-
   inventory-service-mongodb:
     container_name: inventory-service-mongodb
     image: mongo:5.0.9
@@ -35,3 +14,27 @@ services:
       - MONGO_INITDB_DATABASE=$MONGODB_DB_NAME
     ports:
       - "27017:27017"
+
+  inventory-service:
+    container_name: inventory-service
+    build: ./app
+    working_dir: /app
+    restart: on-failure
+    env_file: ./.env
+    environment:
+      SPRING_APPLICATION_JSON: '{
+          "spring.data.mongodb.authentication-database": "admin",
+          "spring.data.mongodb.username": "$MONGODB_ROOT_USER_NAME",
+          "spring.data.mongodb.password": "$MONGODB_ROOT_USER_PASSWORD",
+          "spring.data.mongodb.database": "$MONGODB_DB_NAME",
+          "spring.data.mongodb.host": "localhost",
+          "spring.data.mongodb.port": 27017
+        }'
+    ports:
+      - $SPRING_LOCAL_PORT:$SPRING_DOCKER_PORT
+    volumes:
+      - ./app:/app
+      - ~/.m2:/root/.m2
+    command: mvn clean spring-boot:run
+    depends_on:
+      - inventory-service-mongodb
