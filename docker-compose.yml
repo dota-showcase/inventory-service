@@ -23,6 +23,8 @@ services:
     env_file: ./.env
     environment:
       SPRING_APPLICATION_JSON: '{
+          "spring.profiles.active": "$APP_ENV",
+          "spring.application.name": "$APP_NAME",
           "spring.data.mongodb.authentication-database": "admin",
           "spring.data.mongodb.username": "$MONGODB_ROOT_USER_NAME",
           "spring.data.mongodb.password": "$MONGODB_ROOT_USER_PASSWORD",
