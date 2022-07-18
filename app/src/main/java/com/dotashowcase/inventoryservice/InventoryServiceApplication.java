@@ -2,15 +2,14 @@ package com.dotashowcase.inventoryservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
-// TODO: remove this, coz cant create repo bean
-@SpringBootApplication(exclude={MongoAutoConfiguration.class})
+@SpringBootApplication
 @EnableMongoRepositories
 public class InventoryServiceApplication {
 
     public static void main(String[] args) {
+        System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(InventoryServiceApplication.class, args);
     }
 
