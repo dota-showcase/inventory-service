@@ -38,9 +38,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * //  },
  * ```
  */
-@Document("inventory_items")
+
 @AllArgsConstructor
 @Data
+@Document("inventory_items")
 public class InventoryItem {
 
     @Id
