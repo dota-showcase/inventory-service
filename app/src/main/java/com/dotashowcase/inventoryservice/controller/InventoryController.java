@@ -6,12 +6,19 @@ import com.dotashowcase.inventoryservice.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/v1/")
 public class InventoryController {
 
     @Autowired
     private InventoryService inventoryService;
+
+    @GetMapping("inventories/")
+    public List<InventoryMeta> index(@RequestParam(defaultValue = "-steamId") String sort) {
+        return this.inventoryService.getAll(sort);
+    }
 
     @PostMapping("inventories/")
     @ResponseBody

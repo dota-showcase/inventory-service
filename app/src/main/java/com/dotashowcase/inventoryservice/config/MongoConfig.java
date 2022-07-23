@@ -10,6 +10,9 @@ import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
+/**
+ * Remove _class field from collection
+ */
 @Configuration
 public class MongoConfig {
 
