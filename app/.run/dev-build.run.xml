@@ -1,0 +1,48 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="dev-build" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="inventory-service" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.dotashowcase.inventoryservice.InventoryServiceApplication" />
+    <option name="ACTIVE_PROFILES" value="dev" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <additionalParameters>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="spring.application.name" />
+        <option name="value" value="showcase-inventory" />
+      </param>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="spring.data.mongodb.authentication-database" />
+        <option name="value" value="admin" />
+      </param>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="spring.data.mongodb.username" />
+        <option name="value" value="root" />
+      </param>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="spring.data.mongodb.password" />
+        <option name="value" value="root" />
+      </param>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="spring.data.mongodb.database" />
+        <option name="value" value="main" />
+      </param>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="spring.data.mongodb.host" />
+        <option name="value" value="localhost" />
+      </param>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="spring.data.mongodb.port" />
+        <option name="value" value="27017" />
+      </param>
+    </additionalParameters>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
