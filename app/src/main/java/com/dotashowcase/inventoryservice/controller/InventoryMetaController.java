@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/")
-public class InventoryController {
+public class InventoryMetaController {
 
     @Autowired
     private InventoryService inventoryService;

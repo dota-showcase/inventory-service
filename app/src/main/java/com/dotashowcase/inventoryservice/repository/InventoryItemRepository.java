@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.repository.Query;
 import java.util.List;
 
 public interface InventoryItemRepository extends MongoRepository<InventoryItem, Long> {
+
     @Query("{defindex:'?0'}")
     List<InventoryItem> findItemByDefindex(Integer defindex);
 }
