@@ -9,11 +9,14 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
 
+/**
+ * Inventory meta data.
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Document("inventory_metas")
-public class InventoryMeta {
+@Document("inventory")
+public class Inventory {
 
     @Id
     private Long steamId;
@@ -30,7 +33,7 @@ public class InventoryMeta {
     @Field
     private Date createdAt = new Date();
 
-    public InventoryMeta(Long steamId) {
+    public Inventory(Long steamId) {
         this.steamId = steamId;
     }
 }

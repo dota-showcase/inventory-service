@@ -1,12 +1,18 @@
 package com.dotashowcase.inventoryservice.service;
 
-import com.dotashowcase.inventoryservice.model.InventoryMeta;
+import com.dotashowcase.inventoryservice.model.Inventory;
 
 import java.util.List;
 
 public interface InventoryService {
 
-    public List<InventoryMeta> getAll(String sortBy);
+    public List<Inventory> getAll(String sortBy);
 
-    public InventoryMeta create(Long steamId);
+    public Inventory get(Long steamId);
+
+    public Inventory create(Long steamId);
+
+    public Inventory update(Long steamId);
+
+    public void delete(Long steamId);
 }
