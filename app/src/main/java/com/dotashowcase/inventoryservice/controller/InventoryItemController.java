@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/v1/")
 public class InventoryItemController {
 
-    @GetMapping("inventory/{steamId}/items")
+    @GetMapping("inventories/{steamId}/items")
     public Long index(@PathVariable Long steamId) {
         return steamId;
     }

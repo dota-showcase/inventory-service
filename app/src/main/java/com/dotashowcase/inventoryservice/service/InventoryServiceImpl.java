@@ -3,6 +3,7 @@ package com.dotashowcase.inventoryservice.service;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.repository.InventoryItemRepository;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
+import com.dotashowcase.inventoryservice.steamclient.SteamClient;
 import com.dotashowcase.inventoryservice.support.SortBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -20,11 +21,14 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final SortBuilder sortBuilder;
 
+    private final SteamClient steamClient;
+
     @Autowired
     public InventoryServiceImpl(
             InventoryItemRepository inventoryItemRepository,
             InventoryRepository inventoryRepository,
-            SortBuilder sortBuilder
+            SortBuilder sortBuilder,
+            SteamClient steamClient
     ) {
         Assert.notNull(inventoryItemRepository, "InventoryItemRepository must not be null!");
         this.inventoryItemRepository = inventoryItemRepository;
@@ -34,6 +38,9 @@ public class InventoryServiceImpl implements InventoryService {
 
         Assert.notNull(sortBuilder, "SortBuilder must not be null!");
         this.sortBuilder = sortBuilder;
+
+        Assert.notNull(steamClient, "SteamClient must not be null!");
+        this.steamClient = steamClient;
     }
 
     @Override
