@@ -54,6 +54,11 @@ public class UserInventoryResponseParser {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private static final String NODE_RESULT = "result";
+    private static final String NODE_ITEMS = "items";
+    private static final String NODE_STATUS = "status";
+    private static final String NODE_SLOTS = "slots";
+
     public UserInventoryResponseDTO run(String responseBody) throws BadResponseBodyException {
         JsonNode rootNode = null;
         try {
@@ -63,33 +68,31 @@ public class UserInventoryResponseParser {
         }
 
         // parse root node
-        String resultNodeName = "result";
-        JsonNode resultNode = rootNode.path(resultNodeName);
+        JsonNode resultNode = rootNode.path(NODE_RESULT);
 
         if (resultNode instanceof MissingNode) {
-            throw BadResponseBodyException.jsonNodeNotFound(resultNodeName);
+            throw BadResponseBodyException.jsonNodeNotFound(NODE_RESULT);
         }
 
         UserInventoryResponseDTO userInventoryResponseDTO = new UserInventoryResponseDTO();
 
         // parse status and stats nodes
-        if (resultNode.has("status")) {
-            JsonNode statusNode = resultNode.path("status");
+        if (resultNode.has(NODE_STATUS)) {
+            JsonNode statusNode = resultNode.path(NODE_STATUS);
             userInventoryResponseDTO.setStatus(statusNode.asInt());
         }
 
-        if (resultNode.has("num_backpack_slots")) {
-            JsonNode numSlotNode = resultNode.path("num_backpack_slots");
+        if (resultNode.has(NODE_SLOTS)) {
+            JsonNode numSlotNode = resultNode.path(NODE_SLOTS);
             userInventoryResponseDTO.setNumberBackpackSlots(numSlotNode.asInt());
         }
 
         // parse items node
-        String itemsNodeName = "items";
-        if (!resultNode.has(itemsNodeName)) {
-            throw BadResponseBodyException.jsonNodeNotFound(resultNodeName + "." + itemsNodeName);
+        if (!resultNode.has(NODE_ITEMS)) {
+            throw BadResponseBodyException.jsonNodeNotFound(NODE_RESULT + "." + NODE_ITEMS);
         }
 
-        JsonNode itemNode = resultNode.path(itemsNodeName);
+        JsonNode itemNode = resultNode.path(NODE_ITEMS);
 
         List <ItemDTO> items = new ArrayList<>();
         for (JsonNode item : itemNode) {

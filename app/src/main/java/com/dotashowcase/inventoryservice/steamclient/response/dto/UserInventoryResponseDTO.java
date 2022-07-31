@@ -11,7 +11,7 @@ public class UserInventoryResponseDTO {
 
     private int status;
 
-    List<ItemDTO> items;
+    private List<ItemDTO> items;
 
     public boolean hasItems() {
         return items.size() > 0;

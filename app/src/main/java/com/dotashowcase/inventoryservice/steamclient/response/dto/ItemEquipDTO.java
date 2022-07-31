@@ -7,7 +7,7 @@ import lombok.Data;
 public class ItemEquipDTO {
 
     @JsonProperty("class")
-    public int equip_class;
+    private int equip_class;
 
-    public int slot;
+    private int slot;
 }

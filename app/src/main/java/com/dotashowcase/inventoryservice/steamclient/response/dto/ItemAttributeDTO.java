@@ -5,11 +5,11 @@ import lombok.Data;
 @Data
 public class ItemAttributeDTO {
 
-    public int defindex;
+    private int defindex;
 
-    public String value;                    // mixed
+    private String value;                    // mixed
 
-    public double float_value;
+    private double float_value;
 
-    public AccountInfoDTO account_info;     // optional
+    private AccountInfoDTO account_info;     // optional
 }
