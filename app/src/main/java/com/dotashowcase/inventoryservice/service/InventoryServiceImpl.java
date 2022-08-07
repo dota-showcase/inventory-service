@@ -1,9 +1,12 @@
 package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.model.Inventory;
-import com.dotashowcase.inventoryservice.repository.InventoryItemRepository;
+import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
+import com.dotashowcase.inventoryservice.steamclient.exception.SteamException;
+import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
+import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import com.dotashowcase.inventoryservice.support.SortBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -15,7 +18,7 @@ import java.util.List;
 @Service
 public class InventoryServiceImpl implements InventoryService {
 
-    private final InventoryItemRepository inventoryItemRepository;
+    private final InventoryItemService inventoryItemService;
 
     private final InventoryRepository inventoryRepository;
 
@@ -25,13 +28,13 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Autowired
     public InventoryServiceImpl(
-            InventoryItemRepository inventoryItemRepository,
+            InventoryItemService inventoryItemService,
             InventoryRepository inventoryRepository,
             SortBuilder sortBuilder,
             SteamClient steamClient
     ) {
-        Assert.notNull(inventoryItemRepository, "InventoryItemRepository must not be null!");
-        this.inventoryItemRepository = inventoryItemRepository;
+        Assert.notNull(inventoryItemService, "InventoryItemService must not be null!");
+        this.inventoryItemService = inventoryItemService;
 
         Assert.notNull(inventoryRepository, "InventoryRepository must not be null!");
         this.inventoryRepository = inventoryRepository;
@@ -67,11 +70,31 @@ public class InventoryServiceImpl implements InventoryService {
             return existingInventory;
         }
 
-        // first create items then meta
+        UserInventoryResponseDTO inventoryResponseDTO;
 
-        Inventory inventory = inventoryRepository.save(new Inventory(steamId));
+        try {
+            inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
+        } catch (SteamException steamException) {
+            // TODO: throw exception
+            return new Inventory();
+        }
 
-        return inventory;
+        List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
+
+        // store Inventory to get _id
+        Inventory inventory = new Inventory(steamId);
+        inventory.setNumSlots(inventoryResponseDTO.getNumberBackpackSlots());
+        inventory.setExpCount(responseItems.size());
+
+        Inventory savedInventory = inventoryRepository.save(inventory);
+
+        // store items
+        List<InventoryItem> savedInventoryItems = inventoryItemService.create(savedInventory, responseItems);
+
+        // update some Inventory fields
+        inventory.setCount(savedInventoryItems.size());
+
+        return inventoryRepository.save(inventory);
     }
 
     @Override

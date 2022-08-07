@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class AccountInfoDTO {
 
-    private long steamid;
+    private Long steamid;
 
     private String personaname;
 }

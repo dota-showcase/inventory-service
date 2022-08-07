@@ -57,7 +57,7 @@ public class UserInventoryResponseParser {
     private static final String NODE_RESULT = "result";
     private static final String NODE_ITEMS = "items";
     private static final String NODE_STATUS = "status";
-    private static final String NODE_SLOTS = "slots";
+    private static final String NODE_SLOTS = "num_backpack_slots";
 
     public UserInventoryResponseDTO run(String responseBody) throws BadResponseBodyException {
         JsonNode rootNode = null;
@@ -89,7 +89,7 @@ public class UserInventoryResponseParser {
 
         // parse items node
         if (!resultNode.has(NODE_ITEMS)) {
-            throw BadResponseBodyException.jsonNodeNotFound(NODE_RESULT + "." + NODE_ITEMS);
+           return userInventoryResponseDTO;
         }
 
         JsonNode itemNode = resultNode.path(NODE_ITEMS);

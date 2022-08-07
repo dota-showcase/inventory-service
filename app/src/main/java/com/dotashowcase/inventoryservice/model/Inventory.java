@@ -15,7 +15,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Document("inventory")
+@Document("inventories")
 public class Inventory {
 
     @Id
@@ -28,7 +28,7 @@ public class Inventory {
     private Integer expCount = 0;       // expected item count / Steam API
 
     @Field
-    private Integer slots = 0;          // num_backpack_slots / Steam API
+    private Integer numSlots = 0;       // num_backpack_slots / Steam API
 
     @Field
     private Date createdAt = new Date();

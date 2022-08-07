@@ -41,27 +41,29 @@ import java.util.List;
 @Data
 public class ItemDTO {
 
-    private long id;
+    private Long id;
 
-    private long original_id;
+    private Long original_id;
 
-    private int defindex;
+    private Integer defindex;
 
-    private int level;
+    private Byte level;
 
-    private int quality;
+    private Byte quality;
 
-    private long inventory;
+    private Long inventory;
 
-    private int quantity;
+    private Integer quantity;
 
-    private boolean flag_cannot_trade;
+    private Boolean flag_cannot_trade;
 
-    private boolean flag_cannot_craft;
+    private Boolean flag_cannot_craft;
 
-    private int style;                          // optional
+    private Byte style;                         // optional
 
     private String custom_name;                 // optional
+
+    private String custom_desc;                 // optional
 
     private List<ItemAttributeDTO> attributes;  // optional
 

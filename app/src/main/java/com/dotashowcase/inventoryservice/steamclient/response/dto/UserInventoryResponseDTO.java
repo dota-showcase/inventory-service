@@ -7,9 +7,9 @@ import java.util.List;
 @Data
 public class UserInventoryResponseDTO {
 
-    private int numberBackpackSlots;        // num_backpack_slots
+    private Integer numberBackpackSlots;        // num_backpack_slots
 
-    private int status;
+    private Integer status;
 
     private List<ItemDTO> items;
 
