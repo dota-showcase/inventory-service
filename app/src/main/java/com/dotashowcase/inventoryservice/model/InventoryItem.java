@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.List;
@@ -21,9 +20,8 @@ public class InventoryItem {
     @Id
     private Long id;
 
-    @DocumentReference(lazy = true)
-    @Field("iId")
-    private Inventory inventory;
+    @Field("steamId")
+    private Long steamId;
 
     @Field("orgId")
     private Long originalId;

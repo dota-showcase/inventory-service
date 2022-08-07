@@ -3,10 +3,11 @@ package com.dotashowcase.inventoryservice.service;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
-import com.dotashowcase.inventoryservice.repository.InventoryItemRepository;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -28,8 +29,8 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
-    public List<InventoryItem> get(Inventory inventory) {
-        return this.inventoryItemRepository.findAll(inventory);
+    public Page<InventoryItem> get(Inventory inventory, Pageable pageable) {
+        return this.inventoryItemRepository.findAll(inventory, pageable);
     }
 
     @Override
@@ -37,7 +38,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         List<InventoryItem> inventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
 
         for (InventoryItem inventoryItem : inventoryItems) {
-            inventoryItem.setInventory(inventory);
+            inventoryItem.setSteamId(inventory.getSteamId());
         }
 
         return inventoryItemRepository.insertAll(inventoryItems);
