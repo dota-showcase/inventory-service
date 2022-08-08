@@ -1,4 +1,4 @@
-package com.dotashowcase.inventoryservice.request;
+package com.dotashowcase.inventoryservice.http.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

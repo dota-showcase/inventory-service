@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
@@ -20,6 +21,8 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryItemService inventoryItemService;
 
+    private final HistoryActionService historyActionService;
+
     private final InventoryRepository inventoryRepository;
 
     private final SortBuilder sortBuilder;
@@ -29,12 +32,16 @@ public class InventoryServiceImpl implements InventoryService {
     @Autowired
     public InventoryServiceImpl(
             InventoryItemService inventoryItemService,
+            HistoryActionService historyActionService,
             InventoryRepository inventoryRepository,
             SortBuilder sortBuilder,
             SteamClient steamClient
     ) {
         Assert.notNull(inventoryItemService, "InventoryItemService must not be null!");
         this.inventoryItemService = inventoryItemService;
+
+        Assert.notNull(historyActionService, "HistoryActionService must not be null!");
+        this.historyActionService = historyActionService;
 
         Assert.notNull(inventoryRepository, "InventoryRepository must not be null!");
         this.inventoryRepository = inventoryRepository;
@@ -82,19 +89,20 @@ public class InventoryServiceImpl implements InventoryService {
         List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
 
         // store Inventory to get _id
-        Inventory inventory = new Inventory(steamId);
-        inventory.setNumSlots(inventoryResponseDTO.getNumberBackpackSlots());
-        inventory.setExpCount(responseItems.size());
-
-        Inventory savedInventory = inventoryRepository.save(inventory);
+        Inventory savedInventory = inventoryRepository.save(new Inventory(steamId));
 
         // store items
         List<InventoryItem> savedInventoryItems = inventoryItemService.create(savedInventory, responseItems);
 
-        // update some Inventory fields
-        inventory.setCount(savedInventoryItems.size());
+        HistoryAction historyAction = historyActionService.create(
+                savedInventory,
+                null,
+                savedInventoryItems.size(),
+                responseItems.size(),
+                inventoryResponseDTO.getNumberBackpackSlots()
+        );
 
-        return inventoryRepository.save(inventory);
+        return savedInventory;
     }
 
     @Override
@@ -106,7 +114,7 @@ public class InventoryServiceImpl implements InventoryService {
 //        }
 
         // TODO: for testing
-        existingInventory.setCount(123);
+//        existingInventory.setCount(123);
 
         Inventory inventory = inventoryRepository.save(existingInventory);
 

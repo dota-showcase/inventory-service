@@ -1,4 +1,4 @@
-package com.dotashowcase.inventoryservice.controller;
+package com.dotashowcase.inventoryservice.http.controller;
 
 import com.dotashowcase.inventoryservice.config.AppConstant;
 import com.dotashowcase.inventoryservice.model.Inventory;

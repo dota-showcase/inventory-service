@@ -1,7 +1,7 @@
-package com.dotashowcase.inventoryservice.controller;
+package com.dotashowcase.inventoryservice.http.controller;
 
+import com.dotashowcase.inventoryservice.http.request.InventoryCreateRequest;
 import com.dotashowcase.inventoryservice.model.Inventory;
-import com.dotashowcase.inventoryservice.request.InventoryCreateRequest;
 import com.dotashowcase.inventoryservice.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
