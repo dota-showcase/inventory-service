@@ -1,8 +1,8 @@
 package com.dotashowcase.inventoryservice.service;
 
-import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
+import com.dotashowcase.inventoryservice.model.constant.HistoryActionType;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
 import com.dotashowcase.inventoryservice.steamclient.exception.SteamException;
@@ -94,7 +94,7 @@ public class InventoryServiceImpl implements InventoryService {
         // store items
         List<InventoryItem> savedInventoryItems = inventoryItemService.create(savedInventory, responseItems);
 
-        HistoryAction historyAction = historyActionService.create(
+        historyActionService.create(
                 savedInventory,
                 null,
                 savedInventoryItems.size(),
@@ -109,16 +109,32 @@ public class InventoryServiceImpl implements InventoryService {
     public Inventory update(Long steamId) {
         Inventory existingInventory = this.findInventory(steamId);
 
-//        if (existingInventory == null) {
-//            // TODO: throw exception
-//        }
+        if (existingInventory == null) {
+            // TODO
+           throw new RuntimeException("Inventory not exists");
+        }
 
-        // TODO: for testing
-//        existingInventory.setCount(123);
+        UserInventoryResponseDTO inventoryResponseDTO;
 
-        Inventory inventory = inventoryRepository.save(existingInventory);
+        try {
+            inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
+        } catch (SteamException steamException) {
+            // TODO: throw exception
+            return new Inventory();
+        }
 
-        return inventory;
+        List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
+        int result = inventoryItemService.sync(existingInventory, responseItems);
+
+        historyActionService.create(
+                existingInventory,
+                HistoryActionType.UPDATE,
+                0, // TODO
+                responseItems.size(),
+                inventoryResponseDTO.getNumberBackpackSlots()
+        );
+
+        return existingInventory;
     }
 
     @Override

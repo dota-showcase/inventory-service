@@ -4,6 +4,7 @@ import com.dotashowcase.inventoryservice.model.embedded.ItemAttribute;
 import com.dotashowcase.inventoryservice.model.embedded.ItemEquipment;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -18,9 +19,11 @@ import java.util.List;
 public class InventoryItem {
 
     @Id
+    @EqualsAndHashCode.Exclude
     private Long id;
 
     @Field("steamId")
+    @EqualsAndHashCode.Exclude
     private Long steamId;
 
     @Field("orgId")

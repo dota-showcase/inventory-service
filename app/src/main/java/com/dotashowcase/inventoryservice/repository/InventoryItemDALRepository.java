@@ -12,6 +12,10 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Repository
 public class InventoryItemDALRepository implements InventoryItemDAL {
@@ -34,8 +38,29 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
+    public Map<Long, InventoryItem> findAllActive(Inventory inventory) {
+        Query query = new Query();
+        this.setDefaultParams(query, inventory);
+
+        List<InventoryItem> result = mongoTemplate.find(query, InventoryItem.class);
+
+        return result.stream()
+                .collect(Collectors.toMap(InventoryItem::getId, Function.identity()));
+    }
+
+    @Override
     public List<InventoryItem> insertAll(List<InventoryItem> inventoryItems) {
         return (List<InventoryItem>) mongoTemplate.insertAll(inventoryItems);
+    }
+
+    @Override
+    public long removeAll(Inventory inventory, Set<Long> ids) {
+        Query query = new Query();
+        this.setDefaultParams(query, inventory);
+
+        query.addCriteria(Criteria.where("_id").in(ids));
+
+        return mongoTemplate.remove(query, InventoryItem.class).getDeletedCount();
     }
 
     private void setDefaultParams(Query query, Inventory inventory) {

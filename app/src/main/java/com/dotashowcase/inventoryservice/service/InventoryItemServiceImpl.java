@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 public class InventoryItemServiceImpl implements InventoryItemService {
@@ -42,5 +42,39 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         }
 
         return inventoryItemRepository.insertAll(inventoryItems);
+    }
+
+    @Override
+    public int sync(Inventory inventory, List<ItemDTO> responseItems) {
+        int operations = 0;
+        List<InventoryItem> steamInventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
+        Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAllActive(inventory);
+
+        Set<Long> itemIdsToRemove = new HashSet<>(inventoryItemsById.keySet());
+        List<InventoryItem> itemsToCreate = new ArrayList<>();
+        // TODO: item to create and update
+        List<InventoryItem> itemsToUpdate = new ArrayList<>();
+
+        for (InventoryItem steamInventoryItem: steamInventoryItems) {
+            Long id = steamInventoryItem.getId();
+            itemIdsToRemove.remove(id);
+
+            if (inventoryItemsById.containsKey(id)) {
+                InventoryItem storedInventoryItem = inventoryItemsById.get(id);
+
+                if (!Objects.equals(steamInventoryItem, storedInventoryItem)) {
+                    itemsToUpdate.add(storedInventoryItem);
+                }
+
+                continue;
+            }
+
+            itemsToCreate.add(steamInventoryItem);
+        }
+
+        operations += inventoryItemRepository.insertAll(itemsToCreate).size();
+        operations += inventoryItemRepository.removeAll(inventory, itemIdsToRemove);
+
+        return operations;
     }
 }

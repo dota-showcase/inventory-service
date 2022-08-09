@@ -10,7 +10,9 @@ import java.util.List;
 
 public interface InventoryItemService {
 
-    public Page<InventoryItem> get(Inventory inventory, Pageable pageable);
+    Page<InventoryItem> get(Inventory inventory, Pageable pageable);
 
-    public List<InventoryItem> create(Inventory inventory, List<ItemDTO> responseItems);
+    List<InventoryItem> create(Inventory inventory, List<ItemDTO> responseItems);
+
+    int sync(Inventory inventory, List<ItemDTO> responseItems);
 }
