@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -20,13 +21,25 @@ public class InventoryItem {
 
     @Id
     @EqualsAndHashCode.Exclude
-    private Long id;
+    private ObjectId id;
+
+    @EqualsAndHashCode.Exclude
+    private Long itemId;
+
+    @Field("hId")
+    @EqualsAndHashCode.Exclude
+    private ObjectId historyActionId;
+
+    @Field("isA")
+    @EqualsAndHashCode.Exclude
+    private Boolean isActive = true;
 
     @Field("steamId")
     @EqualsAndHashCode.Exclude
     private Long steamId;
 
     @Field("orgId")
+    @EqualsAndHashCode.Exclude
     private Long originalId;
 
     @Field("dIdx")

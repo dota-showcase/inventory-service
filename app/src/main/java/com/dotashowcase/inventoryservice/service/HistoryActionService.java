@@ -2,23 +2,21 @@ package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
-import com.dotashowcase.inventoryservice.model.InventoryItem;
-import com.dotashowcase.inventoryservice.model.constant.HistoryActionType;
-import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
-import java.util.List;
 
 public interface HistoryActionService {
 
-//    public HistoryAction get(Inventory inventory);
+    HistoryAction getLatest(Inventory inventory);
 
-    public HistoryAction create(
+    HistoryAction create(
             Inventory inventory,
-            HistoryActionType historyActionType,
-            Integer count,
-            Integer expectedCount,
-            Integer numSlots
+            HistoryAction.Type type,
+            HistoryAction prevHistoryAction
+//            Integer count,
+//            Integer expectedCount,
+//            Integer numSlots
     );
+
+    long createAndSaveMeta(HistoryAction historyAction, Integer count, Integer operations, Integer numSlots);
+
+    long delete(Inventory inventory);
 }

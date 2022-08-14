@@ -1,10 +1,12 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,36 +47,68 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
-    public int sync(Inventory inventory, List<ItemDTO> responseItems) {
+    public int sync(Inventory inventory, List<ItemDTO> responseItems, HistoryAction currentHistoryAction) {
         int operations = 0;
         List<InventoryItem> steamInventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
         Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAllActive(inventory);
 
         Set<Long> itemIdsToRemove = new HashSet<>(inventoryItemsById.keySet());
         List<InventoryItem> itemsToCreate = new ArrayList<>();
-        // TODO: item to create and update
-        List<InventoryItem> itemsToUpdate = new ArrayList<>();
+        Set<ObjectId> itemIdsToUpdate = new HashSet<>();
 
         for (InventoryItem steamInventoryItem: steamInventoryItems) {
-            Long id = steamInventoryItem.getId();
+            Long id = steamInventoryItem.getItemId();
             itemIdsToRemove.remove(id);
 
             if (inventoryItemsById.containsKey(id)) {
                 InventoryItem storedInventoryItem = inventoryItemsById.get(id);
 
                 if (!Objects.equals(steamInventoryItem, storedInventoryItem)) {
-                    itemsToUpdate.add(storedInventoryItem);
+                    itemIdsToUpdate.add(steamInventoryItem.getId());
+
+                    // insert new
+                    prepareItemToCreate(steamInventoryItem, currentHistoryAction);
+                    itemsToCreate.add(steamInventoryItem);
                 }
 
                 continue;
             }
 
+            prepareItemToCreate(steamInventoryItem, currentHistoryAction);
             itemsToCreate.add(steamInventoryItem);
         }
 
+        if (itemIdsToRemove.size() > 0) {
+            Set<ObjectId> itemIdsToHide = new HashSet<>();
+
+            for (InventoryItem steamInventoryItem: steamInventoryItems) {
+                if (itemIdsToRemove.contains(steamInventoryItem.getItemId())) {
+                    itemIdsToHide.add(steamInventoryItem.getId());
+                }
+            }
+
+            operations += inventoryItemRepository.updateAll(
+                    itemIdsToHide,
+                    new AbstractMap.SimpleImmutableEntry<>("status", false)
+            );
+
+//            operations += inventoryItemRepository.removeAll(inventory, itemIdsToRemove);
+        }
+
+        operations += inventoryItemRepository.updateAll(
+                itemIdsToUpdate,
+                new AbstractMap.SimpleImmutableEntry<>("status", false)
+        );
         operations += inventoryItemRepository.insertAll(itemsToCreate).size();
-        operations += inventoryItemRepository.removeAll(inventory, itemIdsToRemove);
 
         return operations;
+    }
+
+    private void prepareItemToCreate(InventoryItem inventoryItem, HistoryAction historyAction) {
+        inventoryItem.setHistoryActionId(historyAction.getId());
+    }
+
+    public long delete(Inventory inventory) {
+        return inventoryItemRepository.removeAll(inventory);
     }
 }

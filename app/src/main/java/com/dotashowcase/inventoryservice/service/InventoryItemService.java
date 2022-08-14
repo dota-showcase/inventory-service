@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
@@ -14,5 +15,7 @@ public interface InventoryItemService {
 
     List<InventoryItem> create(Inventory inventory, List<ItemDTO> responseItems);
 
-    int sync(Inventory inventory, List<ItemDTO> responseItems);
+    int sync(Inventory inventory, List<ItemDTO> responseItems, HistoryAction currentHistoryAction);
+
+    long delete(Inventory inventory);
 }

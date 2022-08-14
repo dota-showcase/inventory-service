@@ -6,13 +6,13 @@ import java.util.List;
 
 public interface InventoryService {
 
-    public List<Inventory> getAll(String sortBy);
+    List<Inventory> getAll(String sortBy);
 
-    public Inventory get(Long steamId);
+    Inventory get(Long steamId);
 
-    public Inventory create(Long steamId);
+    Inventory create(Long steamId);
 
-    public Inventory update(Long steamId);
+    Inventory update(Long steamId);
 
-    public void delete(Long steamId);
+    void delete(Long steamId);
 }

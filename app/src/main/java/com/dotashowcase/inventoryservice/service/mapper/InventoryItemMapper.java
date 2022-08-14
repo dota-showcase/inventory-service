@@ -30,7 +30,7 @@ public class InventoryItemMapper {
     public InventoryItem itemDtoToInventoryItem(ItemDTO item) {
         InventoryItem inventoryItem = new InventoryItem();
 
-        inventoryItem.setId(item.getId());
+        inventoryItem.setItemId(item.getId());
         inventoryItem.setOriginalId(item.getOriginal_id());
         inventoryItem.setDefIndex(item.getDefindex());
         inventoryItem.setLevel(item.getLevel());

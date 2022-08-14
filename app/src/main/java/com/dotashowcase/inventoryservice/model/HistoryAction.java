@@ -1,6 +1,6 @@
 package com.dotashowcase.inventoryservice.model;
 
-import com.dotashowcase.inventoryservice.model.constant.HistoryActionType;
+import com.dotashowcase.inventoryservice.model.embedded.HistoryActionMeta;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,23 +19,24 @@ import java.util.Date;
 public class HistoryAction {
 
     @Id
-    ObjectId id;
+    private ObjectId id;
 
     @DocumentReference(lazy = true)
-    Inventory inventory;
+    private Inventory inventory;
 
     @Field
-    private HistoryActionType type = HistoryActionType.CREATE;
+    private Integer version = 1;
 
     @Field
-    private Integer count = 0;          // stored item count
+    private Type type = Type.CREATE;
 
     @Field
-    private Integer expectedCount = 0;       // expected item count / Steam API
-
-    @Field
-    private Integer numSlots = 0;       // num_backpack_slots / Steam API
+    private HistoryActionMeta meta;
 
     @Field
     private Date createdAt = new Date();
+
+    public enum Type {
+        CREATE, UPDATE
+    }
 }
