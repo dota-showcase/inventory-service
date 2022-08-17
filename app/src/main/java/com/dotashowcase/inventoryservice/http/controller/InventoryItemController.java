@@ -26,7 +26,7 @@ public class InventoryItemController {
             @PathVariable Long steamId,
             @PageableDefault(page = 0, size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable
     ) {
-        Inventory inventory = inventoryService.get(steamId);
+        Inventory inventory = inventoryService.findInventory(steamId);
 
         return inventoryItemService.get(inventory, pageable);
     }

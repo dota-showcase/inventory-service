@@ -4,11 +4,15 @@ import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.embedded.HistoryActionMeta;
 
+import java.util.List;
+
 public interface HistoryActionDAL {
 
-   HistoryAction findLatest(Inventory inventory);
+    List<HistoryAction> findByInventories(List<Long> inventoryIds);
 
-   HistoryAction insertOne(HistoryAction historyAction);
+    HistoryAction findLatest(Inventory inventory);
+
+    HistoryAction insertOne(HistoryAction historyAction);
 
     long updateMeta(HistoryAction historyAction, HistoryActionMeta meta);
 

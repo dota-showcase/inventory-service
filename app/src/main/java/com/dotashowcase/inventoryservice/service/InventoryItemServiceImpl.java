@@ -36,18 +36,22 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
-    public List<InventoryItem> create(Inventory inventory, List<ItemDTO> responseItems) {
+    public List<InventoryItem> create(
+            Inventory inventory, HistoryAction currentHistoryAction, List<ItemDTO> responseItems
+    ) {
         List<InventoryItem> inventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
 
         for (InventoryItem inventoryItem : inventoryItems) {
+            inventoryItem.setHistoryActionId(currentHistoryAction.getId());
             inventoryItem.setSteamId(inventory.getSteamId());
         }
 
         return inventoryItemRepository.insertAll(inventoryItems);
     }
 
+    // TODO: return inner class
     @Override
-    public int sync(Inventory inventory, List<ItemDTO> responseItems, HistoryAction currentHistoryAction) {
+    public int sync(Inventory inventory, HistoryAction currentHistoryAction, List<ItemDTO> responseItems) {
         int operations = 0;
         List<InventoryItem> steamInventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
         Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAllActive(inventory);

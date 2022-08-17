@@ -11,6 +11,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public class HistoryActionRepository implements HistoryActionDAL {
 
@@ -18,9 +20,17 @@ public class HistoryActionRepository implements HistoryActionDAL {
     private MongoTemplate mongoTemplate;
 
     @Override
+    public List<HistoryAction> findByInventories(List<Long> inventoryIds) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("steamId").in(inventoryIds));
+
+        return mongoTemplate.find(query, HistoryAction.class);
+    }
+
+    @Override
     public HistoryAction findLatest(Inventory inventory) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("inventory").is(inventory.getSteamId()));
+        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
         query.with(Sort.by(Sort.Direction.DESC, "version"));
 
         return mongoTemplate.findOne(query, HistoryAction.class);
@@ -44,7 +54,7 @@ public class HistoryActionRepository implements HistoryActionDAL {
     @Override
     public long removeAll(Inventory inventory) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("inventory").is(inventory.getSteamId()));
+        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
 
         return mongoTemplate.remove(query, HistoryAction.class).getDeletedCount();
     }

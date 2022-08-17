@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class HistoryActionServiceImpl implements HistoryActionService  {
@@ -22,6 +25,25 @@ public class HistoryActionServiceImpl implements HistoryActionService  {
     }
 
     @Override
+    public Map<Long, List<HistoryAction>> getAll(List<Long> inventoryIds) {
+        List<HistoryAction> historyActions = historyActionRepository.findByInventories(inventoryIds);
+
+        Map<Long, List<HistoryAction>> result = new HashMap<>();
+
+        for (HistoryAction historyAction : historyActions) {
+            Long steamId = historyAction.getSteamId();
+
+            if (result.containsKey(steamId)) {
+                result.get(steamId).add(historyAction);
+            } else {
+                result.put(steamId, new ArrayList<>(List.of(historyAction)));
+            }
+        }
+
+        return result;
+    }
+
+    @Override
     public HistoryAction getLatest(Inventory inventory) {
        return historyActionRepository.findLatest(inventory);
     }
@@ -31,13 +53,10 @@ public class HistoryActionServiceImpl implements HistoryActionService  {
             Inventory inventory,
             HistoryAction.Type type,
             HistoryAction prevHistoryAction
-//            Integer count,
-//            Integer expectedCount,
-//            Integer numSlots
     ) {
         HistoryAction historyAction = new HistoryAction();
 
-        historyAction.setInventory(inventory);
+        historyAction.setSteamId(inventory.getSteamId());
 
         if (type != null) {
             historyAction.setType(type);
@@ -47,22 +66,22 @@ public class HistoryActionServiceImpl implements HistoryActionService  {
             historyAction.setVersion(prevHistoryAction.getVersion() + 1);
         }
 
-//        historyAction.setCount(count);
-//        historyAction.setExpectedCount(expectedCount);
-//        historyAction.setNumSlots(numSlots);
-
         return historyActionRepository.insertOne(historyAction);
     }
 
     @Override
-    public long createAndSaveMeta(HistoryAction historyAction, Integer count, Integer operations, Integer numSlots) {
+    public void createAndSaveMeta(HistoryAction historyAction, Integer count, Integer operations, Integer numSlots) {
         HistoryActionMeta meta = new HistoryActionMeta();
 
         meta.setResponseCount(count);
         meta.setOperations(operations);
         meta.setNumSlots(numSlots);
 
-        return historyActionRepository.updateMeta(historyAction, meta);
+        if (historyActionRepository.updateMeta(historyAction, meta) == 0) {
+            // TODO: log
+        }
+
+        historyAction.setMeta(meta);
     }
 
     @Override

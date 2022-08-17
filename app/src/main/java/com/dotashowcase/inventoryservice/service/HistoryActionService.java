@@ -2,8 +2,14 @@ package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
+import com.dotashowcase.inventoryservice.model.embedded.HistoryActionMeta;
+
+import java.util.List;
+import java.util.Map;
 
 public interface HistoryActionService {
+
+    Map<Long, List<HistoryAction>> getAll(List<Long> inventoryIds);
 
     HistoryAction getLatest(Inventory inventory);
 
@@ -11,12 +17,9 @@ public interface HistoryActionService {
             Inventory inventory,
             HistoryAction.Type type,
             HistoryAction prevHistoryAction
-//            Integer count,
-//            Integer expectedCount,
-//            Integer numSlots
     );
 
-    long createAndSaveMeta(HistoryAction historyAction, Integer count, Integer operations, Integer numSlots);
+    void createAndSaveMeta(HistoryAction historyAction, Integer count, Integer operations, Integer numSlots);
 
     long delete(Inventory inventory);
 }

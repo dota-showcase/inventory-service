@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
@@ -21,8 +20,8 @@ public class HistoryAction {
     @Id
     private ObjectId id;
 
-    @DocumentReference(lazy = true)
-    private Inventory inventory;
+    @Field
+    private Long steamId;
 
     @Field
     private Integer version = 1;

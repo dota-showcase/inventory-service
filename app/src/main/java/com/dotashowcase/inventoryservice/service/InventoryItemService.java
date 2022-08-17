@@ -13,9 +13,9 @@ public interface InventoryItemService {
 
     Page<InventoryItem> get(Inventory inventory, Pageable pageable);
 
-    List<InventoryItem> create(Inventory inventory, List<ItemDTO> responseItems);
+    List<InventoryItem> create(Inventory inventory, HistoryAction currentHistoryAction, List<ItemDTO> responseItems);
 
-    int sync(Inventory inventory, List<ItemDTO> responseItems, HistoryAction currentHistoryAction);
+    int sync(Inventory inventory, HistoryAction currentHistoryAction, List<ItemDTO> responseItems);
 
     long delete(Inventory inventory);
 }
