@@ -21,10 +21,10 @@ public class InventoryStatusHandler {
     public String getStatusMessage(int status) {
         return switch (status) {
             case STATUS_OK -> "Success";
-            case STATUS_STEAM_ID_MISSING -> "The steamid parameter was invalid or missing.";
-            case STATUS_IS_PRIVATE -> "User inventory is private.";
-            case STATUS_STEAM_ID_NOT_EXISTS -> "The Steam ID given does not exist.";
-            default -> "Unknown inventory status.";
+            case STATUS_STEAM_ID_MISSING -> "The steamid parameter was invalid or missing";
+            case STATUS_IS_PRIVATE -> "User inventory is private";
+            case STATUS_STEAM_ID_NOT_EXISTS -> "The Steam ID given does not exist";
+            default -> "Unknown inventory status";
         };
     }
 }

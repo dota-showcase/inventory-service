@@ -4,11 +4,13 @@ import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
+import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
+import com.dotashowcase.inventoryservice.service.exception.InventoryException;
+import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithHistoriesDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestHistoryDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryServiceResultMapper;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
-import com.dotashowcase.inventoryservice.steamclient.exception.SteamException;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import com.dotashowcase.inventoryservice.support.SortBuilder;
@@ -63,11 +65,11 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public List<InventoryWithHistoriesDTO> getAll(String sortBy) {
-        Sort sort = this.sortBuilder.fromRequestParam(sortBy);
+        Sort sort = sortBuilder.fromRequestParam(sortBy);
 
         List<Inventory> inventories = sort != null
-                ? this.inventoryRepository.findAll(sort)
-                : this.inventoryRepository.findAll();
+                ? inventoryRepository.findAll(sort)
+                : inventoryRepository.findAll();
 
         Map<Long, List<HistoryAction>> historyActions = historyActionService.getAll(
                 inventories.stream().map(Inventory::getSteamId).toList()
@@ -78,7 +80,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public InventoryWithHistoriesDTO get(Long steamId) {
-        Inventory inventory = this.findInventory(steamId);
+        Inventory inventory = findInventory(steamId);
 
         // process inventory as list
         Map<Long, List<HistoryAction>> historyActions = historyActionService.getAll(List.of(steamId));
@@ -91,19 +93,10 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory existingInventory = inventoryRepository.findItemBySteamId(steamId);
 
         if (existingInventory != null) {
-            // TODO: throw exception
-
-            return new InventoryWithLatestHistoryDTO();
+            throw new InventoryAlreadyExistsException();
         }
 
-        UserInventoryResponseDTO inventoryResponseDTO;
-
-        try {
-            inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
-        } catch (SteamException steamException) {
-            System.out.println(steamException.getMessage());
-            return new InventoryWithLatestHistoryDTO();
-        }
+        UserInventoryResponseDTO inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
 
         List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
 
@@ -128,23 +121,14 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public InventoryWithLatestHistoryDTO update(Long steamId) {
-        Inventory inventory = this.findInventory(steamId);
-
-        UserInventoryResponseDTO inventoryResponseDTO;
-
-        try {
-            inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
-        } catch (SteamException steamException) {
-            // TODO: throw exception
-            return new InventoryWithLatestHistoryDTO();
-        }
-
+        Inventory inventory = findInventory(steamId);
         HistoryAction prevHistoryAction = historyActionService.getLatest(inventory);
 
         if (prevHistoryAction == null) {
-            // TODO
-            throw new RuntimeException("HistoryAction not exists");
+            throw new InventoryException("Cannot find Inventory Action resource");
         }
+
+        UserInventoryResponseDTO inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
 
         List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
 
@@ -168,7 +152,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public void delete(Long steamId) {
-        Inventory existingInventory = this.findInventory(steamId);
+        Inventory existingInventory = findInventory(steamId);
 
         inventoryRepository.delete(existingInventory);
         historyActionService.delete(existingInventory);
@@ -180,7 +164,7 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory inventory = inventoryRepository.findItemBySteamId(steamId);
 
         if (inventory == null) {
-            throw new RuntimeException("Inventory not exists");
+            throw new InventoryNotFoundException();
         }
 
         return inventory;

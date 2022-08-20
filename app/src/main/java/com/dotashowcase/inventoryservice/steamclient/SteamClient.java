@@ -2,6 +2,7 @@ package com.dotashowcase.inventoryservice.steamclient;
 
 import com.dotashowcase.inventoryservice.steamclient.exception.BadRequestException;
 import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
+import com.dotashowcase.inventoryservice.steamclient.exception.SteamClientException;
 import com.dotashowcase.inventoryservice.steamclient.response.UserInventoryResponseParser;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.exception.BadResponseBodyException;
@@ -45,11 +46,12 @@ public class SteamClient {
      *
      * @param steamId steam user id
      * @return inventory response
+     * @throws SteamClientException on unknown response format or uri error
      * @throws BadRequestException on steam server errors
      * @throws InventoryStatusException on inventory status or wrong params errors
      */
     public UserInventoryResponseDTO fetchUserInventory(Long steamId)
-            throws BadRequestException, InventoryStatusException {
+            throws SteamClientException, BadRequestException, InventoryStatusException {
         final URI uri = this.getInventoryURI(steamId);
 
         // retrieve data
@@ -68,9 +70,7 @@ public class SteamClient {
         try {
             userInventoryResponseDTO = userInventoryResponseParser.run(response.getBody());
         } catch (BadResponseBodyException badResponseBodyException) {
-            // TODO: add logs
-
-            return new UserInventoryResponseDTO();
+            throw new SteamClientException(badResponseBodyException.getMessage());
         }
 
         int inventoryStatus = userInventoryResponseDTO.getStatus();
@@ -94,7 +94,7 @@ public class SteamClient {
        try {
            return builder.build();
        } catch (URISyntaxException uriSyntaxException) {
-           throw new IllegalStateException("Failed to build steam inventory url");
+           throw new SteamClientException("Failed to build steam inventory uri");
        }
     }
 }

@@ -6,18 +6,25 @@ package com.dotashowcase.inventoryservice.steamclient.exception;
  */
 public class BadRequestException extends SteamException {
 
-    private int steamHttpStatusCode;
+    private final int steamHttpStatusCode;
+
+    private final String steamHttpMessage;
 
     private BadRequestException(int steamHttpStatusCode, String message) {
-        super("Steam Response: " + message);
+        super("Steam Response - " + message);
         this.steamHttpStatusCode = steamHttpStatusCode;
+        this.steamHttpMessage = message;
     }
 
     public static BadRequestException steamApiError(int steamHttpStatusCode, String message) {
-        return new BadRequestException(steamHttpStatusCode, String.format("Failed with message: %s", message));
+        return new BadRequestException(steamHttpStatusCode, message);
     }
 
     public int getSteamHttpStatusCode() {
         return this.steamHttpStatusCode;
+    }
+
+    public String getSteamHttpMessage() {
+        return this.steamHttpMessage;
     }
 }
