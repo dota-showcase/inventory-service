@@ -5,6 +5,10 @@ import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
+import com.dotashowcase.inventoryservice.service.result.mapper.InventoryItemServiceResultMapper;
+import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,17 +26,31 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     private final InventoryItemMapper inventoryItemMapper;
 
+    private final InventoryItemServiceResultMapper inventoryItemServiceResultMapper;
+
+    private final PageMapper<InventoryItem, InventoryItemDTO> pageMapper;
+
     @Autowired
-    public InventoryItemServiceImpl(InventoryItemDALRepository inventoryItemRepository) {
+    public InventoryItemServiceImpl(
+            InventoryItemDALRepository inventoryItemRepository,
+            PageMapper<InventoryItem, InventoryItemDTO> pageMapper
+    ) {
         Assert.notNull(inventoryItemRepository, "InventoryItemDALRepository must not be null!");
         this.inventoryItemRepository = inventoryItemRepository;
 
+        Assert.notNull(pageMapper, "PageMapper<InventoryItem, InventoryItemDTO> must not be null!");
+        this.pageMapper = pageMapper;
+
         this.inventoryItemMapper = new InventoryItemMapper();
+
+        this.inventoryItemServiceResultMapper = new InventoryItemServiceResultMapper();
     }
 
     @Override
-    public Page<InventoryItem> get(Inventory inventory, Pageable pageable) {
-        return this.inventoryItemRepository.findAll(inventory, pageable);
+    public PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable) {
+        Page<InventoryItem> inventoryItems = inventoryItemRepository.findAll(inventory, pageable);
+
+        return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);
     }
 
     @Override
@@ -54,13 +72,13 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     public int sync(Inventory inventory, HistoryAction currentHistoryAction, List<ItemDTO> responseItems) {
         int operations = 0;
         List<InventoryItem> steamInventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
-        Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAllActive(inventory);
+        Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAll(inventory);
 
         Set<Long> itemIdsToRemove = new HashSet<>(inventoryItemsById.keySet());
         List<InventoryItem> itemsToCreate = new ArrayList<>();
         Set<ObjectId> itemIdsToUpdate = new HashSet<>();
 
-        for (InventoryItem steamInventoryItem: steamInventoryItems) {
+        for (InventoryItem steamInventoryItem : steamInventoryItems) {
             Long id = steamInventoryItem.getItemId();
             itemIdsToRemove.remove(id);
 
@@ -85,7 +103,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         if (itemIdsToRemove.size() > 0) {
             Set<ObjectId> itemIdsToHide = new HashSet<>();
 
-            for (InventoryItem steamInventoryItem: steamInventoryItems) {
+            for (InventoryItem steamInventoryItem : steamInventoryItems) {
                 if (itemIdsToRemove.contains(steamInventoryItem.getItemId())) {
                     itemIdsToHide.add(steamInventoryItem.getId());
                 }

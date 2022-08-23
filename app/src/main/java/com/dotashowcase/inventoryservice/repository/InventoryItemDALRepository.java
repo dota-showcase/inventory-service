@@ -30,20 +30,20 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     public Page<InventoryItem> findAll(Inventory inventory, Pageable pageable) {
         Query query = new Query();
         query.with(pageable);
-        this.setDefaultParams(query, inventory);
-
-        List<InventoryItem> result = mongoTemplate.find(query, InventoryItem.class);
+        setDefaultParams(query, inventory);
+        query.addCriteria(Criteria.where("isA").is(true));
 
         return PageableExecutionUtils.getPage(
-                result,
+                mongoTemplate.find(query, InventoryItem.class),
                 pageable,
-                () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), InventoryItem.class));
+                () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), InventoryItem.class)
+        );
     }
 
     @Override
-    public Map<Long, InventoryItem> findAllActive(Inventory inventory) {
+    public Map<Long, InventoryItem> findAll(Inventory inventory) {
         Query query = new Query();
-        this.setDefaultParams(query, inventory);
+        setDefaultParams(query, inventory);
         query.addCriteria(Criteria.where("isA").is(true));
 
         List<InventoryItem> result = mongoTemplate.find(query, InventoryItem.class);

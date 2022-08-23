@@ -15,13 +15,13 @@ public interface InventoryItemDAL {
 
     Page<InventoryItem> findAll(Inventory inventory, Pageable pageable);
 
-    Map<Long, InventoryItem> findAllActive(Inventory inventory);
+    Map<Long, InventoryItem> findAll(Inventory inventory);
 
     List<InventoryItem> insertAll(List<InventoryItem> inventoryItems);
 
     long updateAll(Set<ObjectId> ids, AbstractMap.SimpleImmutableEntry<String, Object> updateEntry);
 
-    public long removeAll(Inventory inventory);
+    long removeAll(Inventory inventory);
 
 //    long removeAll(Inventory inventory, Set<Long> ids);
 }

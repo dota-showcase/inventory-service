@@ -2,11 +2,11 @@ package com.dotashowcase.inventoryservice.http.controller;
 
 import com.dotashowcase.inventoryservice.config.AppConstant;
 import com.dotashowcase.inventoryservice.model.Inventory;
-import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.service.InventoryItemService;
 import com.dotashowcase.inventoryservice.service.InventoryService;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +22,7 @@ public class InventoryItemController {
     private InventoryItemService inventoryItemService;
 
     @GetMapping("inventories/{steamId}/items")
-    public Page<InventoryItem> index(
+    public PageResult<InventoryItemDTO> index(
             @PathVariable Long steamId,
             @PageableDefault(page = 0, size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable
     ) {

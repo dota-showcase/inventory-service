@@ -33,7 +33,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public Map<String, Object> handleSteamException(final SteamException ex, HttpServletRequest request) {
-        final Map<String, Object> body = getExceptionBody(ex, request, HttpStatus.BAD_REQUEST, ex.getMessage());
+        final Map<String, Object> body = getExceptionBody(request, HttpStatus.BAD_REQUEST, ex.getMessage());
 
         final Map<String, Object> steamBody = new LinkedHashMap<>();
 
@@ -69,12 +69,11 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 ? responseStatus.reason()
                 : ex.getMessage();
 
-        return new ResponseEntity<>(getExceptionBody(ex, request, status, message), status);
+        return new ResponseEntity<>(getExceptionBody(request, status, message), status);
     }
 
 
-    private Map<String, Object> getExceptionBody(final Exception ex,
-                                                 final HttpServletRequest request,
+    private Map<String, Object> getExceptionBody(final HttpServletRequest request,
                                                  final HttpStatus status,
                                                  final String message) {
         final Map<String, Object> body = new LinkedHashMap<>();
