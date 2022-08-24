@@ -4,6 +4,8 @@ import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.embedded.HistoryActionMeta;
 import com.dotashowcase.inventoryservice.repository.HistoryActionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -17,6 +19,8 @@ import java.util.Map;
 public class HistoryActionServiceImpl implements HistoryActionService  {
 
     private final HistoryActionRepository historyActionRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(HistoryActionServiceImpl.class);
 
     @Autowired
     public HistoryActionServiceImpl(HistoryActionRepository historyActionRepository) {
@@ -78,7 +82,7 @@ public class HistoryActionServiceImpl implements HistoryActionService  {
         meta.setNumSlots(numSlots);
 
         if (historyActionRepository.updateMeta(historyAction, meta) == 0) {
-            // TODO: log
+            log.warn("Failed to store HistoryActionMeta {} for Action _id - {}", meta, historyAction.getId());
         }
 
         historyAction.setMeta(meta);

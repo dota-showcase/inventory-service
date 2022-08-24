@@ -3,6 +3,8 @@ package com.dotashowcase.inventoryservice.http.exception;
 import com.dotashowcase.inventoryservice.steamclient.exception.BadRequestException;
 import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
 import com.dotashowcase.inventoryservice.steamclient.exception.SteamException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -21,6 +23,10 @@ import java.util.Map;
  */
 @ControllerAdvice
 public class AppExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(AppExceptionHandler.class);
+
+    private static final String LOG_MESSAGE_TEMPLATE = "Body '{}'";
 
 //    @ExceptionHandler(SteamClientException.class)
 //    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -54,12 +60,13 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 
         body.put("steam", steamBody);
 
+        log.error(LOG_MESSAGE_TEMPLATE, body);
+
         return body;
     }
 
     @ExceptionHandler({Exception.class})
     public ResponseEntity<Object> handleAllExceptions(Exception ex, HttpServletRequest request) {
-        // TODO: logging
         ResponseStatus responseStatus = ex.getClass().getAnnotation(ResponseStatus.class);
         HttpStatus status = responseStatus != null
                 ? responseStatus.value()
@@ -69,9 +76,12 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 ? responseStatus.reason()
                 : ex.getMessage();
 
-        return new ResponseEntity<>(getExceptionBody(request, status, message), status);
-    }
+        Map<String, Object> body = getExceptionBody(request, status, message);
 
+        log.error(LOG_MESSAGE_TEMPLATE, body);
+
+        return new ResponseEntity<>(body, status);
+    }
 
     private Map<String, Object> getExceptionBody(final HttpServletRequest request,
                                                  final HttpStatus status,

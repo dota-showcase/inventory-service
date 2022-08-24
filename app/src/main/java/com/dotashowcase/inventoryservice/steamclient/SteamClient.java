@@ -94,7 +94,7 @@ public class SteamClient {
        try {
            return builder.build();
        } catch (URISyntaxException uriSyntaxException) {
-           throw new SteamClientException("Failed to build steam inventory uri");
+           throw new SteamClientException("Failed to build steam inventory uri - " + uriSyntaxException.getMessage());
        }
     }
 }
