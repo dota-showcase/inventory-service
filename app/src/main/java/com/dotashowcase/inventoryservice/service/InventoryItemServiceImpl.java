@@ -5,11 +5,13 @@ import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryChangesDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryItemServiceResultMapper;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
+import com.dotashowcase.inventoryservice.support.HistoryRangeCriteria;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -28,15 +30,21 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     private final InventoryItemServiceResultMapper inventoryItemServiceResultMapper;
 
+    private final HistoryActionService historyActionService;
+
     private final PageMapper<InventoryItem, InventoryItemDTO> pageMapper;
 
     @Autowired
     public InventoryItemServiceImpl(
             InventoryItemDALRepository inventoryItemRepository,
+            HistoryActionService historyActionService,
             PageMapper<InventoryItem, InventoryItemDTO> pageMapper
     ) {
         Assert.notNull(inventoryItemRepository, "InventoryItemDALRepository must not be null!");
         this.inventoryItemRepository = inventoryItemRepository;
+
+        Assert.notNull(historyActionService, "HistoryActionService must not be null!");
+        this.historyActionService = historyActionService;
 
         Assert.notNull(pageMapper, "PageMapper<InventoryItem, InventoryItemDTO> must not be null!");
         this.pageMapper = pageMapper;
@@ -51,6 +59,18 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         Page<InventoryItem> inventoryItems = inventoryItemRepository.findAll(inventory, pageable);
 
         return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);
+    }
+
+    @Override
+    public InventoryChangesDTO getChanges(Inventory inventory, Integer version) {
+        List<HistoryAction> actions = historyActionService.getByVersions(inventory, new HistoryRangeCriteria(version));
+
+        Map<Long, InventoryItem> items1 = inventoryItemRepository.findAll(inventory, actions.get(0));
+        Map<Long, InventoryItem> items2 = inventoryItemRepository.findAll(inventory, actions.get(1));
+
+        // TODO: find changes logic
+
+        return new InventoryChangesDTO();
     }
 
     @Override

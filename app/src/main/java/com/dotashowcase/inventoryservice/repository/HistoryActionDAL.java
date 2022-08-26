@@ -12,6 +12,10 @@ public interface HistoryActionDAL {
 
     HistoryAction findLatest(Inventory inventory);
 
+    List<HistoryAction> findLatest(Inventory inventory, int limit);
+
+    HistoryAction findByVersion(Inventory inventory, int version);
+
     HistoryAction insertOne(HistoryAction historyAction);
 
     long updateMeta(HistoryAction historyAction, HistoryActionMeta meta);

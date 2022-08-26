@@ -4,6 +4,8 @@ import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.embedded.HistoryActionMeta;
 import com.dotashowcase.inventoryservice.repository.HistoryActionRepository;
+import com.dotashowcase.inventoryservice.service.exception.HistoryActionNotFoundException;
+import com.dotashowcase.inventoryservice.support.HistoryRangeCriteria;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,42 @@ public class HistoryActionServiceImpl implements HistoryActionService  {
     @Override
     public HistoryAction getLatest(Inventory inventory) {
        return historyActionRepository.findLatest(inventory);
+    }
+
+    @Override
+    public List<HistoryAction> getByVersions(Inventory inventory, HistoryRangeCriteria historyRangeCriteria) {
+        Integer prevVersion = historyRangeCriteria.getPrevVersion();
+        Integer version = historyRangeCriteria.getVersion();
+
+        // by default try to find two latest
+        if (prevVersion == null || version == null) {
+            List<HistoryAction> result = historyActionRepository.findLatest(inventory,2);
+
+            if (result.size() < 2) {
+                throw new HistoryActionNotFoundException(inventory.getSteamId()); // TODO: create another exception
+            }
+
+            return result;
+        }
+
+        List<HistoryAction> result = new ArrayList<>(2);
+
+        HistoryAction action = historyActionRepository.findByVersion(inventory, version);
+
+        if (action == null) {
+            throw new HistoryActionNotFoundException(inventory.getSteamId(), version);
+        }
+
+        HistoryAction prevAction = historyActionRepository.findByVersion(inventory, prevVersion);
+
+        if (prevAction == null) {
+            throw new HistoryActionNotFoundException(inventory.getSteamId(), prevVersion);
+        }
+
+        result.add(0, prevAction);
+        result.add(1, action);
+
+        return result;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import org.bson.types.ObjectId;
@@ -16,6 +17,8 @@ public interface InventoryItemDAL {
     Page<InventoryItem> findAll(Inventory inventory, Pageable pageable);
 
     Map<Long, InventoryItem> findAll(Inventory inventory);
+
+    Map<Long, InventoryItem> findAll(Inventory inventory, HistoryAction action);
 
     List<InventoryItem> insertAll(List<InventoryItem> inventoryItems);
 

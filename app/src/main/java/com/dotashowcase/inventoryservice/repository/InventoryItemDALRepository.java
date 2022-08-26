@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import org.bson.types.ObjectId;
@@ -45,6 +46,18 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         Query query = new Query();
         setDefaultParams(query, inventory);
         query.addCriteria(Criteria.where("isA").is(true));
+
+        List<InventoryItem> result = mongoTemplate.find(query, InventoryItem.class);
+
+        return result.stream()
+                .collect(Collectors.toMap(InventoryItem::getItemId, Function.identity()));
+    }
+
+    @Override
+    public Map<Long, InventoryItem> findAll(Inventory inventory, HistoryAction action) {
+        Query query = new Query();
+        setDefaultParams(query, inventory);
+        query.addCriteria(Criteria.where("hId").is(action.getId()));
 
         List<InventoryItem> result = mongoTemplate.find(query, InventoryItem.class);
 

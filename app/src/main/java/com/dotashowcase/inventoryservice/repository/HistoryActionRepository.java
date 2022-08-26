@@ -37,6 +37,25 @@ public class HistoryActionRepository implements HistoryActionDAL {
     }
 
     @Override
+    public List<HistoryAction> findLatest(Inventory inventory, int limit) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
+        query.with(Sort.by(Sort.Direction.DESC, "version"));
+        query.limit(limit);
+
+        return mongoTemplate.find(query, HistoryAction.class);
+    }
+
+    @Override
+    public HistoryAction findByVersion(Inventory inventory, int version) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
+        query.addCriteria(Criteria.where("version").is(version));
+
+        return mongoTemplate.findOne(query, HistoryAction.class);
+    }
+
+    @Override
     public HistoryAction insertOne(HistoryAction historyAction) {
         return mongoTemplate.insert(historyAction);
     }

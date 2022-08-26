@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -73,12 +75,20 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 : HttpStatus.INTERNAL_SERVER_ERROR;
 
         String message = (responseStatus != null)
-                ? responseStatus.reason()
+                ? responseStatus.reason().length() > 0 ? responseStatus.reason() : ex.getMessage()
                 : ex.getMessage();
 
         Map<String, Object> body = getExceptionBody(request, status, message);
 
         log.error(LOG_MESSAGE_TEMPLATE, body);
+
+        if (status.value() >= HttpStatus.INTERNAL_SERVER_ERROR.value()) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+
+            log.error(sw.toString());
+        }
 
         return new ResponseEntity<>(body, status);
     }
