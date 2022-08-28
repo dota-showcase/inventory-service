@@ -1,6 +1,6 @@
 package com.dotashowcase.inventoryservice.model;
 
-import com.dotashowcase.inventoryservice.model.embedded.HistoryActionMeta;
+import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,8 +14,8 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Document("history_actions")
-public class HistoryAction {
+@Document("operations")
+public class Operation {
 
     @Id
     private ObjectId id;
@@ -27,15 +27,15 @@ public class HistoryAction {
     private Integer version = 1;
 
     @Field
-    private Type type = Type.CREATE;
+    private Type type = Type.C;
 
     @Field
-    private HistoryActionMeta meta;
+    private OperationMeta meta;
 
     @Field
     private Date createdAt = new Date();
 
     public enum Type {
-        CREATE, UPDATE
+        C, U // Create, Update
     }
 }

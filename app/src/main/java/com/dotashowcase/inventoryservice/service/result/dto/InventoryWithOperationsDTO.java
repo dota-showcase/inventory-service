@@ -2,10 +2,12 @@ package com.dotashowcase.inventoryservice.service.result.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
-public class InventoryWithLatestHistoryDTO {
+public class InventoryWithOperationsDTO {
 
     private Long steamId;
 
-    private HistoryActionDTO action;
+    private List<OperationDTO> operations;
 }

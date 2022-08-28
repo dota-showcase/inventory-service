@@ -1,8 +1,8 @@
 package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.model.Inventory;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithHistoriesDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestHistoryDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 
 import java.util.List;
 
@@ -10,13 +10,13 @@ public interface InventoryService {
 
     Inventory findInventory(Long steamId);
 
-    List<InventoryWithHistoriesDTO> getAll(String sortBy);
+    List<InventoryWithOperationsDTO> getAll(String sortBy);
 
-    InventoryWithHistoriesDTO get(Long steamId);
+    InventoryWithOperationsDTO get(Long steamId);
 
-    InventoryWithLatestHistoryDTO create(Long steamId);
+    InventoryWithLatestOperationDTO create(Long steamId);
 
-    InventoryWithLatestHistoryDTO update(Long steamId);
+    InventoryWithLatestOperationDTO update(Long steamId);
 
     void delete(Long steamId);
 }

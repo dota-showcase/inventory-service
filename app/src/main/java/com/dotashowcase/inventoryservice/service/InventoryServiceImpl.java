@@ -1,14 +1,14 @@
 package com.dotashowcase.inventoryservice.service;
 
-import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
+import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithHistoriesDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestHistoryDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryServiceResultMapper;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
@@ -27,7 +27,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryItemService inventoryItemService;
 
-    private final HistoryActionService historyActionService;
+    private final OperationService operationService;
 
     private final InventoryRepository inventoryRepository;
 
@@ -40,7 +40,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Autowired
     public InventoryServiceImpl(
             InventoryItemService inventoryItemService,
-            HistoryActionService historyActionService,
+            OperationService operationService,
             InventoryRepository inventoryRepository,
             SortBuilder sortBuilder,
             SteamClient steamClient
@@ -48,8 +48,8 @@ public class InventoryServiceImpl implements InventoryService {
         Assert.notNull(inventoryItemService, "InventoryItemService must not be null!");
         this.inventoryItemService = inventoryItemService;
 
-        Assert.notNull(historyActionService, "HistoryActionService must not be null!");
-        this.historyActionService = historyActionService;
+        Assert.notNull(operationService, "OperationService must not be null!");
+        this.operationService = operationService;
 
         Assert.notNull(inventoryRepository, "InventoryRepository must not be null!");
         this.inventoryRepository = inventoryRepository;
@@ -64,32 +64,32 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public List<InventoryWithHistoriesDTO> getAll(String sortBy) {
+    public List<InventoryWithOperationsDTO> getAll(String sortBy) {
         Sort sort = sortBuilder.fromRequestParam(sortBy);
 
         List<Inventory> inventories = sort != null
                 ? inventoryRepository.findAll(sort)
                 : inventoryRepository.findAll();
 
-        Map<Long, List<HistoryAction>> historyActions = historyActionService.getAll(
+        Map<Long, List<Operation>> operations = operationService.getAll(
                 inventories.stream().map(Inventory::getSteamId).toList()
         );
 
-        return inventoryServiceResultMapper.getInventoriesWithHistoriesDTO(inventories, historyActions);
+        return inventoryServiceResultMapper.getInventoriesWithOperationsDTO(inventories, operations);
     }
 
     @Override
-    public InventoryWithHistoriesDTO get(Long steamId) {
+    public InventoryWithOperationsDTO get(Long steamId) {
         Inventory inventory = findInventory(steamId);
 
         // process inventory as list
-        Map<Long, List<HistoryAction>> historyActions = historyActionService.getAll(List.of(steamId));
+        Map<Long, List<Operation>> operations = operationService.getAll(List.of(steamId));
 
-        return inventoryServiceResultMapper.getInventoryWithHistoriesDTO(inventory, historyActions.get(steamId));
+        return inventoryServiceResultMapper.getInventoryWithOperationsDTO(inventory, operations.get(steamId));
     }
 
     @Override
-    public InventoryWithLatestHistoryDTO create(Long steamId) {
+    public InventoryWithLatestOperationDTO create(Long steamId) {
         Inventory existingInventory = inventoryRepository.findItemBySteamId(steamId);
 
         if (existingInventory != null) {
@@ -104,50 +104,46 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory savedInventory = inventoryRepository.save(new Inventory(steamId));
 
         // store items
-        HistoryAction historyAction = historyActionService.create(savedInventory, null, null);
+        Operation operation = operationService.create(savedInventory, null, null);
         List<InventoryItem> savedInventoryItems = inventoryItemService.create(
-                savedInventory, historyAction, responseItems
+                savedInventory, operation, responseItems
         );
 
-        historyActionService.createAndSaveMeta(
-                historyAction,
+        operationService.createAndSaveMeta(
+                operation,
                 savedInventoryItems.size(),
                 responseItems.size(),
                 inventoryResponseDTO.getNumberBackpackSlots()
         );
 
-        return inventoryServiceResultMapper.getInventoryWithLatestHistoryDTO(savedInventory, historyAction);
+        return inventoryServiceResultMapper.getInventoryWithLatestOperationDTO(savedInventory, operation);
     }
 
     @Override
-    public InventoryWithLatestHistoryDTO update(Long steamId) {
+    public InventoryWithLatestOperationDTO update(Long steamId) {
         Inventory inventory = findInventory(steamId);
-        HistoryAction prevHistoryAction = historyActionService.getLatest(inventory);
+        Operation prevOperation = operationService.getLatest(inventory);
 
-        if (prevHistoryAction == null) {
-            throw new InventoryException("Cannot find Inventory Action resource");
+        if (prevOperation == null) {
+            throw new InventoryException("Cannot find Inventory Operation resource");
         }
 
         UserInventoryResponseDTO inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
 
         List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
 
-        HistoryAction currentHistoryAction = historyActionService.create(
-                inventory,
-                HistoryAction.Type.UPDATE,
-                prevHistoryAction
-        );
+        Operation currentOperation = operationService.create(inventory, Operation.Type.U, prevOperation);
 
-        int result = inventoryItemService.sync(inventory, currentHistoryAction, responseItems);
+        int result = inventoryItemService.sync(inventory, currentOperation, responseItems);
 
-        historyActionService.createAndSaveMeta(
-                currentHistoryAction,
+        operationService.createAndSaveMeta(
+                currentOperation,
                 responseItems.size(),
                 result,
                 inventoryResponseDTO.getNumberBackpackSlots()
         );
 
-        return inventoryServiceResultMapper.getInventoryWithLatestHistoryDTO(inventory, currentHistoryAction);
+        return inventoryServiceResultMapper.getInventoryWithLatestOperationDTO(inventory, currentOperation);
     }
 
     @Override
@@ -155,7 +151,7 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory existingInventory = findInventory(steamId);
 
         inventoryRepository.delete(existingInventory);
-        historyActionService.delete(existingInventory);
+        operationService.delete(existingInventory);
         inventoryItemService.delete(existingInventory);
     }
 

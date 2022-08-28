@@ -1,8 +1,8 @@
 package com.dotashowcase.inventoryservice.repository;
 
-import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
-import com.dotashowcase.inventoryservice.model.embedded.HistoryActionMeta;
+import com.dotashowcase.inventoryservice.model.Operation;
+import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -14,60 +14,60 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public class HistoryActionRepository implements HistoryActionDAL {
+public class OperationRepository implements OperationDAL {
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
     @Override
-    public List<HistoryAction> findByInventories(List<Long> inventoryIds) {
+    public List<Operation> findByInventories(List<Long> inventoryIds) {
         Query query = new Query();
         query.addCriteria(Criteria.where("steamId").in(inventoryIds));
 
-        return mongoTemplate.find(query, HistoryAction.class);
+        return mongoTemplate.find(query, Operation.class);
     }
 
     @Override
-    public HistoryAction findLatest(Inventory inventory) {
+    public Operation findLatest(Inventory inventory) {
         Query query = new Query();
         query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
         query.with(Sort.by(Sort.Direction.DESC, "version"));
 
-        return mongoTemplate.findOne(query, HistoryAction.class);
+        return mongoTemplate.findOne(query, Operation.class);
     }
 
-    @Override
-    public List<HistoryAction> findLatest(Inventory inventory, int limit) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
-        query.with(Sort.by(Sort.Direction.DESC, "version"));
-        query.limit(limit);
+//    @Override
+//    public List<Operation> findLatest(Inventory inventory, int limit) {
+//        Query query = new Query();
+//        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
+//        query.with(Sort.by(Sort.Direction.DESC, "version"));
+//        query.limit(limit);
+//
+//        return mongoTemplate.find(query, Operation.class);
+//    }
 
-        return mongoTemplate.find(query, HistoryAction.class);
-    }
-
     @Override
-    public HistoryAction findByVersion(Inventory inventory, int version) {
+    public Operation findByVersion(Inventory inventory, int version) {
         Query query = new Query();
         query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
         query.addCriteria(Criteria.where("version").is(version));
 
-        return mongoTemplate.findOne(query, HistoryAction.class);
+        return mongoTemplate.findOne(query, Operation.class);
     }
 
     @Override
-    public HistoryAction insertOne(HistoryAction historyAction) {
-        return mongoTemplate.insert(historyAction);
+    public Operation insertOne(Operation operation) {
+        return mongoTemplate.insert(operation);
     }
 
     @Override
-    public long updateMeta(HistoryAction historyAction, HistoryActionMeta meta) {
-        Criteria criteria = Criteria.where("_id").is(historyAction.getId());
+    public long updateMeta(Operation operation, OperationMeta meta) {
+        Criteria criteria = Criteria.where("_id").is(operation.getId());
         Query query = new Query(criteria);
         Update update = new Update();
         update.set("meta", meta);
 
-        return mongoTemplate.updateFirst(query, update, HistoryAction.class).getModifiedCount();
+        return mongoTemplate.updateFirst(query, update, Operation.class).getModifiedCount();
     }
 
     @Override
@@ -75,6 +75,6 @@ public class HistoryActionRepository implements HistoryActionDAL {
         Query query = new Query();
         query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
 
-        return mongoTemplate.remove(query, HistoryAction.class).getDeletedCount();
+        return mongoTemplate.remove(query, Operation.class).getDeletedCount();
     }
 }

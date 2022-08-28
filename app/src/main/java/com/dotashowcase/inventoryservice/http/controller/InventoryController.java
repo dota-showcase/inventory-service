@@ -3,8 +3,8 @@ package com.dotashowcase.inventoryservice.http.controller;
 import com.dotashowcase.inventoryservice.http.request.InventoryCreateRequest;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.service.InventoryService;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithHistoriesDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestHistoryDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,24 +20,24 @@ public class InventoryController {
     private InventoryService inventoryService;
 
     @GetMapping("inventories/")
-    public List<InventoryWithHistoriesDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
+    public List<InventoryWithOperationsDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
         return this.inventoryService.getAll(sort);
     }
 
     @GetMapping("inventories/{steamId}")
-    public InventoryWithHistoriesDTO get(@PathVariable Long steamId) {
+    public InventoryWithOperationsDTO get(@PathVariable Long steamId) {
         return this.inventoryService.get(steamId);
     }
 
     @PostMapping("inventories/")
     @ResponseBody
-    public InventoryWithLatestHistoryDTO create(@RequestBody InventoryCreateRequest inventoryCreateRequest) {
+    public InventoryWithLatestOperationDTO create(@RequestBody InventoryCreateRequest inventoryCreateRequest) {
         return this.inventoryService.create(inventoryCreateRequest.getSteamId());
     }
 
     @PutMapping("inventories/{steamId}")
     @ResponseBody
-    public InventoryWithLatestHistoryDTO update(@PathVariable Long steamId) {
+    public InventoryWithLatestOperationDTO update(@PathVariable Long steamId) {
         return this.inventoryService.update(steamId);
     }
 

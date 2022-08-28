@@ -1,8 +1,8 @@
 package com.dotashowcase.inventoryservice.repository;
 
-import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
+import com.dotashowcase.inventoryservice.model.Operation;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,10 +14,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,7 +29,7 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         Query query = new Query();
         query.with(pageable);
         setDefaultParams(query, inventory);
-        query.addCriteria(Criteria.where("isA").is(true));
+        query.addCriteria(Criteria.where("_isA").is(true));
 
         return PageableExecutionUtils.getPage(
                 mongoTemplate.find(query, InventoryItem.class),
@@ -45,7 +42,7 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     public Map<Long, InventoryItem> findAll(Inventory inventory) {
         Query query = new Query();
         setDefaultParams(query, inventory);
-        query.addCriteria(Criteria.where("isA").is(true));
+        query.addCriteria(Criteria.where("_isA").is(true));
 
         List<InventoryItem> result = mongoTemplate.find(query, InventoryItem.class);
 
@@ -54,15 +51,12 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
-    public Map<Long, InventoryItem> findAll(Inventory inventory, HistoryAction action) {
+    public List<InventoryItem> findAll(Inventory inventory, Operation operation) {
         Query query = new Query();
         setDefaultParams(query, inventory);
-        query.addCriteria(Criteria.where("hId").is(action.getId()));
+        query.addCriteria(Criteria.where("_oId").is(operation.getId()));
 
-        List<InventoryItem> result = mongoTemplate.find(query, InventoryItem.class);
-
-        return result.stream()
-                .collect(Collectors.toMap(InventoryItem::getItemId, Function.identity()));
+        return mongoTemplate.find(query, InventoryItem.class);
     }
 
     @Override
@@ -71,11 +65,14 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
-    public long updateAll(Set<ObjectId> ids, AbstractMap.SimpleImmutableEntry<String, Object> updateEntry) {
+    public long updateAll(Set<ObjectId> ids, List<AbstractMap.SimpleImmutableEntry<String, Object>> updateEntry) {
         Criteria criteria = Criteria.where("_id").in(ids);
         Query query = new Query(criteria);
         Update update = new Update();
-        update.set(updateEntry.getKey(), updateEntry.getValue());
+
+        for (AbstractMap.SimpleImmutableEntry<String, Object> entry : updateEntry) {
+            update.set(entry.getKey(), entry.getValue());
+        }
 
         return mongoTemplate.updateMulti(query, update, InventoryItem.class).getModifiedCount();
     }
@@ -99,7 +96,6 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 //    }
 
     private void setDefaultParams(Query query, Inventory inventory) {
-        query.fields().exclude("steamId");
         query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
     }
 }

@@ -1,8 +1,8 @@
 package com.dotashowcase.inventoryservice.repository;
 
-import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
+import com.dotashowcase.inventoryservice.model.Operation;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,11 +18,11 @@ public interface InventoryItemDAL {
 
     Map<Long, InventoryItem> findAll(Inventory inventory);
 
-    Map<Long, InventoryItem> findAll(Inventory inventory, HistoryAction action);
+    List<InventoryItem> findAll(Inventory inventory, Operation operation);
 
     List<InventoryItem> insertAll(List<InventoryItem> inventoryItems);
 
-    long updateAll(Set<ObjectId> ids, AbstractMap.SimpleImmutableEntry<String, Object> updateEntry);
+    long updateAll(Set<ObjectId> ids, List<AbstractMap.SimpleImmutableEntry<String, Object>> updateEntry);
 
     long removeAll(Inventory inventory);
 

@@ -1,11 +1,11 @@
 package com.dotashowcase.inventoryservice.service.result.mapper;
 
-import com.dotashowcase.inventoryservice.model.HistoryAction;
 import com.dotashowcase.inventoryservice.model.Inventory;
-import com.dotashowcase.inventoryservice.model.embedded.HistoryActionMeta;
-import com.dotashowcase.inventoryservice.service.result.dto.HistoryActionDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithHistoriesDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestHistoryDTO;
+import com.dotashowcase.inventoryservice.model.Operation;
+import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,67 +13,64 @@ import java.util.Map;
 
 public class InventoryServiceResultMapper {
 
-    public List<InventoryWithHistoriesDTO> getInventoriesWithHistoriesDTO(
+    public List<InventoryWithOperationsDTO> getInventoriesWithOperationsDTO(
             List<Inventory> inventories,
-            Map<Long, List<HistoryAction>> historyActions
+            Map<Long, List<Operation>> operations
     ) {
-        List<InventoryWithHistoriesDTO> result = new ArrayList<>(inventories.size());
+        List<InventoryWithOperationsDTO> result = new ArrayList<>(inventories.size());
 
         for (Inventory inventory : inventories) {
-            result.add(getInventoryWithHistoriesDTO(
+            result.add(getInventoryWithOperationsDTO(
                     inventory,
-                    historyActions.get(inventory.getSteamId())
+                    operations.get(inventory.getSteamId())
             ));
         }
 
         return result;
     }
 
-    public InventoryWithHistoriesDTO getInventoryWithHistoriesDTO(
-            Inventory inventory,
-            List<HistoryAction> historyActions
-    ) {
-        InventoryWithHistoriesDTO inventoryDTO = new InventoryWithHistoriesDTO();
+    public InventoryWithOperationsDTO getInventoryWithOperationsDTO(Inventory inventory, List<Operation> operations) {
+        InventoryWithOperationsDTO inventoryDTO = new InventoryWithOperationsDTO();
         Long steamId = inventory.getSteamId();
         inventoryDTO.setSteamId(steamId);
 
-        if (historyActions != null) {
-            List<HistoryActionDTO> historyActionDTOs = new ArrayList<>(historyActions.size());
+        if (operations != null) {
+            List<OperationDTO> operationDTOS = new ArrayList<>(operations.size());
 
-            for (HistoryAction historyAction : historyActions) {
-                historyActionDTOs.add(getHistoryActionDTO(historyAction));
+            for (Operation operation : operations) {
+                operationDTOS.add(getOperationDTO(operation));
             }
 
-            inventoryDTO.setActions(historyActionDTOs);
+            inventoryDTO.setOperations(operationDTOS);
         }
 
         return inventoryDTO;
     }
 
-    public InventoryWithLatestHistoryDTO getInventoryWithLatestHistoryDTO(
+    public InventoryWithLatestOperationDTO getInventoryWithLatestOperationDTO(
             Inventory inventory,
-            HistoryAction historyAction
+            Operation operation
     ) {
-        InventoryWithLatestHistoryDTO inventoryDTO = new InventoryWithLatestHistoryDTO();
+        InventoryWithLatestOperationDTO inventoryDTO = new InventoryWithLatestOperationDTO();
         Long steamId = inventory.getSteamId();
         inventoryDTO.setSteamId(steamId);
-        inventoryDTO.setAction(getHistoryActionDTO(historyAction));
+        inventoryDTO.setOperation(getOperationDTO(operation));
 
         return inventoryDTO;
     }
 
-    public HistoryActionDTO getHistoryActionDTO(HistoryAction historyAction) {
-        HistoryActionDTO historyActionDTO = new HistoryActionDTO();
-        historyActionDTO.setVersion(historyAction.getVersion());
-        historyActionDTO.setType(historyAction.getType());
+    public OperationDTO getOperationDTO(Operation operation) {
+        OperationDTO operationDTO = new OperationDTO();
+        operationDTO.setVersion(operation.getVersion());
+        operationDTO.setType(operation.getType());
 
-        HistoryActionMeta historyActionMeta = historyAction.getMeta();
-        historyActionDTO.setOperations(historyActionMeta.getOperations());
-        historyActionDTO.setResponseCount(historyActionMeta.getResponseCount());
-        historyActionDTO.setNumSlots(historyActionMeta.getNumSlots());
+        OperationMeta meta = operation.getMeta();
+        operationDTO.setOperations(meta.getOperations());
+        operationDTO.setResponseCount(meta.getResponseCount());
+        operationDTO.setNumSlots(meta.getNumSlots());
 
-        historyActionDTO.setCreatedAt(historyAction.getCreatedAt());
+        operationDTO.setCreatedAt(operation.getCreatedAt());
 
-        return historyActionDTO;
+        return operationDTO;
     }
 }

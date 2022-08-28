@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Document("inventory_items")
+@Document("items")
 public class InventoryItem {
 
     @Id
@@ -26,11 +26,19 @@ public class InventoryItem {
     @EqualsAndHashCode.Exclude
     private Long itemId;
 
-    @Field("hId")
+    @Field("_oId")
     @EqualsAndHashCode.Exclude
-    private ObjectId historyActionId;
+    private ObjectId operationId;
 
-    @Field("isA")
+    @Field("_odId")
+    @EqualsAndHashCode.Exclude
+    private ObjectId deleteOperationId = null;
+
+    @Field("_oT")
+    @EqualsAndHashCode.Exclude
+    private Operation.Type operationType = Operation.Type.C;
+
+    @Field("_isA")
     @EqualsAndHashCode.Exclude
     private Boolean isActive = true;
 

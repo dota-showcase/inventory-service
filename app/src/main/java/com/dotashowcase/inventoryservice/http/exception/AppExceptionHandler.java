@@ -74,6 +74,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 ? responseStatus.value()
                 : HttpStatus.INTERNAL_SERVER_ERROR;
 
+        // TODO: check all Exception and no return message
         String message = (responseStatus != null)
                 ? responseStatus.reason().length() > 0 ? responseStatus.reason() : ex.getMessage()
                 : ex.getMessage();
