@@ -21,29 +21,29 @@ public class InventoryController {
 
     @GetMapping("inventories/")
     public List<InventoryWithOperationsDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
-        return this.inventoryService.getAll(sort);
+        return inventoryService.getAll(sort);
     }
 
     @GetMapping("inventories/{steamId}")
     public InventoryWithOperationsDTO get(@PathVariable Long steamId) {
-        return this.inventoryService.get(steamId);
+        return inventoryService.get(steamId);
     }
 
     @PostMapping("inventories/")
     @ResponseBody
     public InventoryWithLatestOperationDTO create(@RequestBody InventoryCreateRequest inventoryCreateRequest) {
-        return this.inventoryService.create(inventoryCreateRequest.getSteamId());
+        return inventoryService.create(inventoryCreateRequest.getSteamId());
     }
 
     @PutMapping("inventories/{steamId}")
     @ResponseBody
     public InventoryWithLatestOperationDTO update(@PathVariable Long steamId) {
-        return this.inventoryService.update(steamId);
+        return inventoryService.update(steamId);
     }
 
     @DeleteMapping("inventories/{steamId}")
     public ResponseEntity<Inventory> delete(@PathVariable Long steamId) {
-        this.inventoryService.delete(steamId);
+        inventoryService.delete(steamId);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

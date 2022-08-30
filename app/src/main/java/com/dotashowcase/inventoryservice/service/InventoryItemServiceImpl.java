@@ -5,7 +5,6 @@ import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryChangesDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
@@ -30,21 +29,15 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     private final InventoryItemServiceResultMapper inventoryItemServiceResultMapper;
 
-    private final OperationService operationService;
-
     private final PageMapper<InventoryItem, InventoryItemDTO> pageMapper;
 
     @Autowired
     public InventoryItemServiceImpl(
             InventoryItemDALRepository inventoryItemRepository,
-            OperationService operationService,
             PageMapper<InventoryItem, InventoryItemDTO> pageMapper
     ) {
         Assert.notNull(inventoryItemRepository, "InventoryItemDALRepository must not be null!");
         this.inventoryItemRepository = inventoryItemRepository;
-
-        Assert.notNull(operationService, "OperationService must not be null!");
-        this.operationService = operationService;
 
         Assert.notNull(pageMapper, "PageMapper<InventoryItem, InventoryItemDTO> must not be null!");
         this.pageMapper = pageMapper;
@@ -59,35 +52,6 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         Page<InventoryItem> inventoryItems = inventoryItemRepository.findAll(inventory, pageable);
 
         return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);
-    }
-
-    @Override
-    public InventoryChangesDTO getChanges(Inventory inventory, Integer version) {
-        Operation operation = operationService.getByVersion(inventory, version);
-        List<InventoryItem> items = inventoryItemRepository.findAll(inventory, operation);
-
-        InventoryChangesDTO result = new InventoryChangesDTO();
-
-        List<InventoryItemDTO> createList = result.getCreate();
-        List<InventoryItemDTO> updateList = result.getUpdate();
-        List<InventoryItemDTO> deleteList = result.getDelete();
-
-        for (InventoryItem item : items) {
-            if (item.getDeleteOperationId() != null) {
-                deleteList.add(inventoryItemServiceResultMapper.getInventoryItemDTO(item));
-
-                continue;
-            }
-
-            Operation.Type operationType = item.getOperationType();
-            if (operationType == Operation.Type.C) {
-                createList.add(inventoryItemServiceResultMapper.getInventoryItemDTO(item));
-            } else if (operationType == Operation.Type.U) {
-                updateList.add(inventoryItemServiceResultMapper.getInventoryItemDTO(item));
-            }
-        }
-
-        return result;
     }
 
     @Override
@@ -169,14 +133,14 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         return new OperationCountDTO(createCount, updateCount, deleteCount);
     }
 
+    public long delete(Inventory inventory) {
+        return inventoryItemRepository.removeAll(inventory);
+    }
+
     private void prepareItemToCreate(InventoryItem inventoryItem,
                                      Operation currentOperation,
                                      Operation.Type operationType) {
         inventoryItem.setOperationId(currentOperation.getId());
         inventoryItem.setOperationType(operationType);
-    }
-
-    public long delete(Inventory inventory) {
-        return inventoryItemRepository.removeAll(inventory);
     }
 }

@@ -36,15 +36,17 @@ public class OperationRepository implements OperationDAL {
         return mongoTemplate.findOne(query, Operation.class);
     }
 
-//    @Override
-//    public List<Operation> findLatest(Inventory inventory, int limit) {
-//        Query query = new Query();
-//        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
-//        query.with(Sort.by(Sort.Direction.DESC, "version"));
-//        query.limit(limit);
-//
-//        return mongoTemplate.find(query, Operation.class);
-//    }
+    @Override
+    public List<Operation> findNLatest(Inventory inventory, int limit) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
+        query.with(Sort.by(Sort.Direction.DESC, "version"));
+        if (limit != -1) {
+            query.limit(limit);
+        }
+
+        return mongoTemplate.find(query, Operation.class);
+    }
 
     @Override
     public Operation findByVersion(Inventory inventory, int version) {

@@ -12,7 +12,7 @@ public interface OperationDAL {
 
     Operation findLatest(Inventory inventory);
 
-//    List<Operation> findLatest(Inventory inventory, int limit);
+    List<Operation> findNLatest(Inventory inventory, int limit);
 
     Operation findByVersion(Inventory inventory, int version);
 

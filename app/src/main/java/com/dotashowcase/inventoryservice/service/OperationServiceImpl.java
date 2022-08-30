@@ -50,6 +50,11 @@ public class OperationServiceImpl implements OperationService  {
     }
 
     @Override
+    public List<Operation> getAll(Inventory inventory) {
+        return operationRepository.findNLatest(inventory, -1);
+    }
+
+    @Override
     public Operation getLatest(Inventory inventory) {
        return operationRepository.findLatest(inventory);
     }
