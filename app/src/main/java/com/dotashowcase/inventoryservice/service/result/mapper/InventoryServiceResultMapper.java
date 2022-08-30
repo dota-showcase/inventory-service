@@ -6,6 +6,7 @@ import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationMetaDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,13 +64,19 @@ public class InventoryServiceResultMapper {
         OperationDTO operationDTO = new OperationDTO();
         operationDTO.setVersion(operation.getVersion());
         operationDTO.setType(operation.getType());
+        operationDTO.setCreatedAt(operation.getCreatedAt());
 
         OperationMeta meta = operation.getMeta();
-        operationDTO.setOperations(meta.getOperations());
-        operationDTO.setResponseCount(meta.getResponseCount());
-        operationDTO.setNumSlots(meta.getNumSlots());
 
-        operationDTO.setCreatedAt(operation.getCreatedAt());
+        OperationMetaDTO operationMetaDTO = new OperationMetaDTO();
+
+        operationMetaDTO.setCreateCount(meta.getCreateOperationCount());
+        operationMetaDTO.setUpdateCount(meta.getUpdateOperationCount());
+        operationMetaDTO.setDeleteCount(meta.getDeleteOperationCount());
+        operationMetaDTO.setResponseCount(meta.getResponseCount());
+        operationMetaDTO.setNumSlots(meta.getNumSlots());
+
+        operationDTO.setMeta(operationMetaDTO);
 
         return operationDTO;
     }

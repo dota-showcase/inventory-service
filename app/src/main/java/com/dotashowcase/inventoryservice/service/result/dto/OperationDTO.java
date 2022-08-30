@@ -12,11 +12,7 @@ public class OperationDTO {
 
     private Operation.Type type;
 
-    private Integer operations;
-
-    private Integer responseCount;
-
-    private Integer numSlots;
-
     private Date createdAt;
+
+    private OperationMetaDTO meta;
 }

@@ -2,6 +2,7 @@ package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.support.HistoryRangeCriteria;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public interface OperationService {
             Operation prevOperation
     );
 
-    void createAndSaveMeta(Operation operation, Integer count, Integer operations, Integer numSlots);
+    void createAndSaveMeta(Operation operation, OperationCountDTO operations, Integer count, Integer numSlots);
 
     long delete(Inventory inventory);
 }

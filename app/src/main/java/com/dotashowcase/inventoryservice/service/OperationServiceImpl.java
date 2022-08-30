@@ -5,6 +5,7 @@ import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.repository.OperationRepository;
 import com.dotashowcase.inventoryservice.service.exception.OperationNotFoundException;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,19 +56,10 @@ public class OperationServiceImpl implements OperationService  {
 
     @Override
     public Operation getByVersion(Inventory inventory, Integer version) {
-
         // by default try to find latest
-        if (version == null) {
-            Operation operation = operationRepository.findLatest(inventory);
-
-            if (operation == null) {
-                throw new OperationNotFoundException(inventory.getSteamId());
-            }
-
-            return operation;
-        }
-
-        Operation operation = operationRepository.findByVersion(inventory, version);
+        Operation operation = version == null
+                ? operationRepository.findLatest(inventory)
+                : operationRepository.findByVersion(inventory, version);
 
         if (operation == null) {
             throw new OperationNotFoundException(inventory.getSteamId(), version);
@@ -98,11 +90,13 @@ public class OperationServiceImpl implements OperationService  {
     }
 
     @Override
-    public void createAndSaveMeta(Operation operation, Integer count, Integer operations, Integer numSlots) {
+    public void createAndSaveMeta(Operation operation, OperationCountDTO operations, Integer count, Integer numSlots) {
         OperationMeta meta = new OperationMeta();
 
         meta.setResponseCount(count);
-        meta.setOperations(operations);
+        meta.setCreateOperationCount(operations.getCreate());
+        meta.setUpdateOperationCount(operations.getUpdate());
+        meta.setDeleteOperationCount(operations.getDelete());
         meta.setNumSlots(numSlots);
 
         if (operationRepository.updateMeta(operation, meta) == 0) {

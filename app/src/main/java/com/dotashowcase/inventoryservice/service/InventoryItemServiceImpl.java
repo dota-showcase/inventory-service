@@ -7,6 +7,7 @@ import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryChangesDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryItemServiceResultMapper;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
@@ -104,8 +105,8 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
-    public int sync(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems) {
-        int operations = 0;
+    public OperationCountDTO sync(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems) {
+        int createCount = 0, updateCount = 0, deleteCount = 0;
         List<InventoryItem> steamInventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
         Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAll(inventory);
 
@@ -145,7 +146,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
                 }
             }
 
-            operations += inventoryItemRepository.updateAll(
+            deleteCount += inventoryItemRepository.updateAll(
                     itemIdsToHide,
                     new ArrayList<>(List.of(
                         new AbstractMap.SimpleImmutableEntry<>("_isA", false),
@@ -156,18 +157,16 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 //            operations += inventoryItemRepository.removeAll(inventory, itemIdsToRemove);
         }
 
-        operations += inventoryItemRepository.updateAll(
+        updateCount += inventoryItemRepository.updateAll(
                 itemIdsToUpdate,
                 new ArrayList<>(List.of(
                     new AbstractMap.SimpleImmutableEntry<>("_isA", false)
                 ))
         );
 
-        operations += inventoryItemRepository.insertAll(itemsToCreate).size();
+        createCount += inventoryItemRepository.insertAll(itemsToCreate).size();
 
-        // TODO: store in crd meta
-
-        return operations;
+        return new OperationCountDTO(createCount, updateCount, deleteCount);
     }
 
     private void prepareItemToCreate(InventoryItem inventoryItem,

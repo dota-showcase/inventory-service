@@ -9,6 +9,7 @@ import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryServiceResultMapper;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
@@ -111,7 +112,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         operationService.createAndSaveMeta(
                 operation,
-                savedInventoryItems.size(),
+                new OperationCountDTO(savedInventoryItems.size(), 0, 0),
                 responseItems.size(),
                 inventoryResponseDTO.getNumberBackpackSlots()
         );
@@ -134,12 +135,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         Operation currentOperation = operationService.create(inventory, Operation.Type.U, prevOperation);
 
-        int result = inventoryItemService.sync(inventory, currentOperation, responseItems);
+        OperationCountDTO operationCountDTO = inventoryItemService.sync(inventory, currentOperation, responseItems);
 
         operationService.createAndSaveMeta(
                 currentOperation,
+                operationCountDTO,
                 responseItems.size(),
-                result,
                 inventoryResponseDTO.getNumberBackpackSlots()
         );
 
