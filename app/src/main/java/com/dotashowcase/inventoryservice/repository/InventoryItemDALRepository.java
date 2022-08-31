@@ -39,15 +39,12 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
-    public Map<Long, InventoryItem> findAll(Inventory inventory) {
+    public List<InventoryItem> findAll(Inventory inventory) {
         Query query = new Query();
         setDefaultParams(query, inventory);
         query.addCriteria(Criteria.where("_isA").is(true));
 
-        List<InventoryItem> result = mongoTemplate.find(query, InventoryItem.class);
-
-        return result.stream()
-                .collect(Collectors.toMap(InventoryItem::getItemId, Function.identity()));
+       return mongoTemplate.find(query, InventoryItem.class);
     }
 
     @Override

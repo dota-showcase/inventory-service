@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class InventoryItemServiceImpl implements InventoryItemService {
@@ -48,6 +50,14 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
+    public List<InventoryItemDTO> get(Inventory inventory) {
+        return inventoryItemRepository.findAll(inventory)
+                .stream()
+                .map(inventoryItemServiceResultMapper::getInventoryItemDTO)
+                .toList();
+    }
+
+    @Override
     public PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable) {
         Page<InventoryItem> inventoryItems = inventoryItemRepository.findAll(inventory, pageable);
 
@@ -72,7 +82,9 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     public OperationCountDTO sync(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems) {
         int createCount = 0, updateCount = 0, deleteCount = 0;
         List<InventoryItem> steamInventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
-        Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAll(inventory);
+        Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAll(inventory)
+                .stream()
+                .collect(Collectors.toMap(InventoryItem::getItemId, Function.identity()));
 
         Set<Long> itemIdsToRemove = new HashSet<>(inventoryItemsById.keySet());
         List<InventoryItem> itemsToCreate = new ArrayList<>();

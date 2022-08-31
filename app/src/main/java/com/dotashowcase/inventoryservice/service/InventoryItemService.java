@@ -13,6 +13,8 @@ import java.util.List;
 
 public interface InventoryItemService {
 
+    List<InventoryItemDTO> get(Inventory inventory);
+
     PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable);
 
     List<InventoryItem> create(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems);

@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -29,6 +30,13 @@ public class InventoryItemController {
     private InventoryItemChangesService inventoryItemChangesService;
 
     @GetMapping("inventories/{steamId}/items")
+    public List<InventoryItemDTO> index(@PathVariable Long steamId) {
+        Inventory inventory = inventoryService.findInventory(steamId);
+
+        return inventoryItemService.get(inventory);
+    }
+
+    @GetMapping("inventories/{steamId}/items/page")
     public PageResult<InventoryItemDTO> index(
             @PathVariable Long steamId,
             @PageableDefault(size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable

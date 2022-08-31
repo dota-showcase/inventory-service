@@ -9,14 +9,13 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.AbstractMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public interface InventoryItemDAL {
 
     Page<InventoryItem> findAll(Inventory inventory, Pageable pageable);
 
-    Map<Long, InventoryItem> findAll(Inventory inventory);
+    List<InventoryItem> findAll(Inventory inventory);
 
     List<InventoryItem> findAll(Inventory inventory, Operation operation);
 

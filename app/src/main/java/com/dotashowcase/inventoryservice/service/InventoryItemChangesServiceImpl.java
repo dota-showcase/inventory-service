@@ -36,7 +36,6 @@ public class InventoryItemChangesServiceImpl implements InventoryItemChangesServ
         this.inventoryItemServiceResultMapper = new InventoryItemServiceResultMapper();
     }
 
-
     @Override
     public InventoryChangesDTO get(Inventory inventory, Integer version) {
         Operation operation = operationService.getByVersion(inventory, version);
