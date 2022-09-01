@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
@@ -14,6 +15,8 @@ import java.util.Set;
 public interface InventoryItemDAL {
 
     Page<InventoryItem> findAll(Inventory inventory, Pageable pageable);
+
+    List<InventoryItem> searchAll(Inventory inventory, InventoryItemFilter filter);
 
     List<InventoryItem> findAll(Inventory inventory);
 

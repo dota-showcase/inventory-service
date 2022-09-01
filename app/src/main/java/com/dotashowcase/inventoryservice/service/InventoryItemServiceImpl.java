@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
@@ -50,8 +51,8 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
-    public List<InventoryItemDTO> get(Inventory inventory) {
-        return inventoryItemRepository.findAll(inventory)
+    public List<InventoryItemDTO> get(Inventory inventory, InventoryItemFilter filter) {
+        return inventoryItemRepository.searchAll(inventory, filter)
                 .stream()
                 .map(inventoryItemServiceResultMapper::getInventoryItemDTO)
                 .toList();
@@ -82,7 +83,8 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     public OperationCountDTO sync(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems) {
         int createCount = 0, updateCount = 0, deleteCount = 0;
         List<InventoryItem> steamInventoryItems = inventoryItemMapper.itemDtoToInventoryItem(responseItems);
-        Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository.findAll(inventory)
+        Map<Long, InventoryItem> inventoryItemsById = inventoryItemRepository
+                .findAll(inventory)
                 .stream()
                 .collect(Collectors.toMap(InventoryItem::getItemId, Function.identity()));
 

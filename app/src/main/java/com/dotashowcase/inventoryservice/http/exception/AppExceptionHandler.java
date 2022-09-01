@@ -37,6 +37,8 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 //        return getExceptionBody(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
 //    }
 
+    // TODO: handle validation TypeMismatchException
+
     @ExceptionHandler(SteamException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody

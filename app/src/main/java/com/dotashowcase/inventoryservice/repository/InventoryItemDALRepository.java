@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
@@ -15,8 +16,6 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Repository
 public class InventoryItemDALRepository implements InventoryItemDAL {
@@ -39,12 +38,71 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
+    public List<InventoryItem> searchAll(Inventory inventory, InventoryItemFilter filter) {
+        Query query = new Query();
+        setDefaultParams(query, inventory);
+        query.addCriteria(Criteria.where("_isA").is(true));
+
+        // filter by defIndex
+        if (filter.hasDefIndexes()) {
+            List<Integer> defIndexes = filter.getDefIndexes();
+
+            if (defIndexes.size() == 1) {
+                query.addCriteria(Criteria.where("dIdx").is(defIndexes.get(0)));
+            } else {
+                query.addCriteria(Criteria.where("dIdx").in(defIndexes));
+            }
+        }
+
+        // filter by quality
+        if (filter.hasQualities()) {
+            List<Byte> qualities = filter.getQualities();
+
+            if (qualities.size() == 1) {
+                query.addCriteria(Criteria.where("qlt").is(qualities.get(0)));
+            } else {
+                query.addCriteria(Criteria.where("qlt").in(qualities));
+            }
+        }
+
+        // filter by isTradable
+        if (filter.getIsTradable() != null) {
+            query.addCriteria(Criteria.where("isTr").is(filter.getIsTradable()));
+        }
+
+        // filter by isCraftable
+        if (filter.getIsCraftable() != null) {
+            query.addCriteria(Criteria.where("isCr").is(filter.getIsCraftable()));
+        }
+
+        // filter by itemEquipment
+        if (filter.getIsEquipped() != null) {
+            if (filter.getIsEquipped()) {
+                query.addCriteria(Criteria.where("equips").ne(null));
+            } else {
+                query.addCriteria(Criteria.where("equips").isNull());
+            }
+        }
+
+        // filter by attributes
+        if (filter.getHasAttribute() != null) {
+            if (filter.getHasAttribute()) {
+                query.addCriteria(Criteria.where("attrs").ne(null));
+            } else {
+                query.addCriteria(Criteria.where("attrs").isNull());
+            }
+        }
+
+       return mongoTemplate.find(query, InventoryItem.class);
+    }
+
+    @Override
     public List<InventoryItem> findAll(Inventory inventory) {
         Query query = new Query();
         setDefaultParams(query, inventory);
         query.addCriteria(Criteria.where("_isA").is(true));
 
-       return mongoTemplate.find(query, InventoryItem.class);
+        return mongoTemplate.find(query, InventoryItem.class);
     }
 
     @Override

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @NoArgsConstructor
 public final class SortBuilder {
 
-    public static final Character DESC_SORT_PREFIX = '-';
+    private static final Character DESC_SORT_PREFIX = '-';
 
     /**
      * @param paramName - name field to sort by, optionally prefixed with "-" to sort in DESC

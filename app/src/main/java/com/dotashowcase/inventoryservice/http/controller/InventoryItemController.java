@@ -1,6 +1,7 @@
 package com.dotashowcase.inventoryservice.http.controller;
 
 import com.dotashowcase.inventoryservice.config.AppConstant;
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.service.InventoryItemChangesService;
 import com.dotashowcase.inventoryservice.service.InventoryItemService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/")
@@ -30,10 +32,27 @@ public class InventoryItemController {
     private InventoryItemChangesService inventoryItemChangesService;
 
     @GetMapping("inventories/{steamId}/items")
-    public List<InventoryItemDTO> index(@PathVariable Long steamId) {
+    public List<InventoryItemDTO> index(
+            @PathVariable Long steamId,
+            @RequestParam Optional<List<Integer>> defIndexes,
+            @RequestParam Optional<List<Byte>> qualities,
+            @RequestParam Optional<Boolean> isTradable,
+            @RequestParam Optional<Boolean> isCraftable,
+            @RequestParam Optional<Boolean> isEquipped,
+            @RequestParam Optional<Boolean> hasAttribute
+    ) {
+        InventoryItemFilter filter = new InventoryItemFilter(
+                defIndexes.orElse(null),
+                qualities.orElse(null),
+                isTradable.orElse(null),
+                isCraftable.orElse(null),
+                isEquipped.orElse(null),
+                hasAttribute.orElse(null)
+        );
+
         Inventory inventory = inventoryService.findInventory(steamId);
 
-        return inventoryItemService.get(inventory);
+        return inventoryItemService.get(inventory, filter);
     }
 
     @GetMapping("inventories/{steamId}/items/page")

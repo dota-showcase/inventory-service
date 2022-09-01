@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
@@ -13,7 +14,7 @@ import java.util.List;
 
 public interface InventoryItemService {
 
-    List<InventoryItemDTO> get(Inventory inventory);
+    List<InventoryItemDTO> get(Inventory inventory, InventoryItemFilter filter);
 
     PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable);
 
