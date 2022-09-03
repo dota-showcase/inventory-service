@@ -15,6 +15,10 @@ public final class SortBuilder {
      * @return Sort instance
      */
     public Sort fromRequestParam(String paramName) {
+        if (paramName == null || paramName.length() < 2) {
+            return null;
+        }
+
         char prefix;
         try {
             prefix = paramName.charAt(0);

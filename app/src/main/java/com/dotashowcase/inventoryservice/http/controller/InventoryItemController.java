@@ -34,6 +34,7 @@ public class InventoryItemController {
     @GetMapping("inventories/{steamId}/items")
     public List<InventoryItemDTO> index(
             @PathVariable Long steamId,
+            @RequestParam Optional<String> sort,
             @RequestParam Optional<List<Integer>> defIndexes,
             @RequestParam Optional<List<Byte>> qualities,
             @RequestParam Optional<Boolean> isTradable,
@@ -52,17 +53,33 @@ public class InventoryItemController {
 
         Inventory inventory = inventoryService.findInventory(steamId);
 
-        return inventoryItemService.get(inventory, filter);
+        return inventoryItemService.get(inventory, filter, sort.orElse(null));
     }
 
     @GetMapping("inventories/{steamId}/items/page")
     public PageResult<InventoryItemDTO> index(
             @PathVariable Long steamId,
-            @PageableDefault(size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable
+            @PageableDefault(size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable,
+            @RequestParam Optional<String> sort,
+            @RequestParam Optional<List<Integer>> defIndexes,
+            @RequestParam Optional<List<Byte>> qualities,
+            @RequestParam Optional<Boolean> isTradable,
+            @RequestParam Optional<Boolean> isCraftable,
+            @RequestParam Optional<Boolean> isEquipped,
+            @RequestParam Optional<Boolean> hasAttribute
     ) {
+        InventoryItemFilter filter = new InventoryItemFilter(
+                defIndexes.orElse(null),
+                qualities.orElse(null),
+                isTradable.orElse(null),
+                isCraftable.orElse(null),
+                isEquipped.orElse(null),
+                hasAttribute.orElse(null)
+        );
+
         Inventory inventory = inventoryService.findInventory(steamId);
 
-        return inventoryItemService.get(inventory, pageable);
+        return inventoryItemService.get(inventory, pageable, filter, sort.orElse(null));
     }
 
     @GetMapping("inventories/{steamId}/changes")

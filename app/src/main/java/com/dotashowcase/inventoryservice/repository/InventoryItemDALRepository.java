@@ -8,6 +8,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -24,11 +25,20 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public Page<InventoryItem> findAll(Inventory inventory, Pageable pageable) {
+    public Page<InventoryItem> searchAll(
+            Inventory inventory,
+            Pageable pageable,
+            InventoryItemFilter filter,
+            Sort sort
+    ) {
         Query query = new Query();
         query.with(pageable);
         setDefaultParams(query, inventory);
         query.addCriteria(Criteria.where("_isA").is(true));
+        applyFilter(query, filter);
+        if (sort != null) {
+            query.with(sort);
+        }
 
         return PageableExecutionUtils.getPage(
                 mongoTemplate.find(query, InventoryItem.class),
@@ -38,59 +48,13 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
-    public List<InventoryItem> searchAll(Inventory inventory, InventoryItemFilter filter) {
+    public List<InventoryItem> searchAll(Inventory inventory, InventoryItemFilter filter, Sort sort) {
         Query query = new Query();
         setDefaultParams(query, inventory);
         query.addCriteria(Criteria.where("_isA").is(true));
-
-        // filter by defIndex
-        if (filter.hasDefIndexes()) {
-            List<Integer> defIndexes = filter.getDefIndexes();
-
-            if (defIndexes.size() == 1) {
-                query.addCriteria(Criteria.where("dIdx").is(defIndexes.get(0)));
-            } else {
-                query.addCriteria(Criteria.where("dIdx").in(defIndexes));
-            }
-        }
-
-        // filter by quality
-        if (filter.hasQualities()) {
-            List<Byte> qualities = filter.getQualities();
-
-            if (qualities.size() == 1) {
-                query.addCriteria(Criteria.where("qlt").is(qualities.get(0)));
-            } else {
-                query.addCriteria(Criteria.where("qlt").in(qualities));
-            }
-        }
-
-        // filter by isTradable
-        if (filter.getIsTradable() != null) {
-            query.addCriteria(Criteria.where("isTr").is(filter.getIsTradable()));
-        }
-
-        // filter by isCraftable
-        if (filter.getIsCraftable() != null) {
-            query.addCriteria(Criteria.where("isCr").is(filter.getIsCraftable()));
-        }
-
-        // filter by itemEquipment
-        if (filter.getIsEquipped() != null) {
-            if (filter.getIsEquipped()) {
-                query.addCriteria(Criteria.where("equips").ne(null));
-            } else {
-                query.addCriteria(Criteria.where("equips").isNull());
-            }
-        }
-
-        // filter by attributes
-        if (filter.getHasAttribute() != null) {
-            if (filter.getHasAttribute()) {
-                query.addCriteria(Criteria.where("attrs").ne(null));
-            } else {
-                query.addCriteria(Criteria.where("attrs").isNull());
-            }
+        applyFilter(query, filter);
+        if (sort != null) {
+            query.with(sort);
         }
 
        return mongoTemplate.find(query, InventoryItem.class);
@@ -152,5 +116,57 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 
     private void setDefaultParams(Query query, Inventory inventory) {
         query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
+    }
+
+    private void applyFilter(Query query, InventoryItemFilter filter) {
+        // filter by defIndex
+        if (filter.hasDefIndexes()) {
+            List<Integer> defIndexes = filter.getDefIndexes();
+
+            if (defIndexes.size() == 1) {
+                query.addCriteria(Criteria.where("dIdx").is(defIndexes.get(0)));
+            } else {
+                query.addCriteria(Criteria.where("dIdx").in(defIndexes));
+            }
+        }
+
+        // filter by quality
+        if (filter.hasQualities()) {
+            List<Byte> qualities = filter.getQualities();
+
+            if (qualities.size() == 1) {
+                query.addCriteria(Criteria.where("qlt").is(qualities.get(0)));
+            } else {
+                query.addCriteria(Criteria.where("qlt").in(qualities));
+            }
+        }
+
+        // filter by isTradable
+        if (filter.getIsTradable() != null) {
+            query.addCriteria(Criteria.where("isTr").is(filter.getIsTradable()));
+        }
+
+        // filter by isCraftable
+        if (filter.getIsCraftable() != null) {
+            query.addCriteria(Criteria.where("isCr").is(filter.getIsCraftable()));
+        }
+
+        // filter by itemEquipment
+        if (filter.getIsEquipped() != null) {
+            if (filter.getIsEquipped()) {
+                query.addCriteria(Criteria.where("equips").ne(null));
+            } else {
+                query.addCriteria(Criteria.where("equips").isNull());
+            }
+        }
+
+        // filter by attributes
+        if (filter.getHasAttribute() != null) {
+            if (filter.getHasAttribute()) {
+                query.addCriteria(Criteria.where("attrs").ne(null));
+            } else {
+                query.addCriteria(Criteria.where("attrs").isNull());
+            }
+        }
     }
 }

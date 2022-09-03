@@ -14,9 +14,9 @@ import java.util.List;
 
 public interface InventoryItemService {
 
-    List<InventoryItemDTO> get(Inventory inventory, InventoryItemFilter filter);
+    List<InventoryItemDTO> get(Inventory inventory, InventoryItemFilter filter, String sortBy);
 
-    PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable);
+    PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable, InventoryItemFilter filter, String sortBy);
 
     List<InventoryItem> create(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems);
 

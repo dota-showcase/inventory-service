@@ -12,10 +12,12 @@ import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResul
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryItemServiceResultMapper;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
+import com.dotashowcase.inventoryservice.support.SortBuilder;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -32,15 +34,21 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     private final InventoryItemServiceResultMapper inventoryItemServiceResultMapper;
 
+    private final SortBuilder sortBuilder;
+
     private final PageMapper<InventoryItem, InventoryItemDTO> pageMapper;
 
     @Autowired
     public InventoryItemServiceImpl(
             InventoryItemDALRepository inventoryItemRepository,
+            SortBuilder sortBuilder,
             PageMapper<InventoryItem, InventoryItemDTO> pageMapper
     ) {
         Assert.notNull(inventoryItemRepository, "InventoryItemDALRepository must not be null!");
         this.inventoryItemRepository = inventoryItemRepository;
+
+        Assert.notNull(sortBuilder, "SortBuilder must not be null!");
+        this.sortBuilder = sortBuilder;
 
         Assert.notNull(pageMapper, "PageMapper<InventoryItem, InventoryItemDTO> must not be null!");
         this.pageMapper = pageMapper;
@@ -51,16 +59,24 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
-    public List<InventoryItemDTO> get(Inventory inventory, InventoryItemFilter filter) {
-        return inventoryItemRepository.searchAll(inventory, filter)
+    public List<InventoryItemDTO> get(Inventory inventory, InventoryItemFilter filter, String sortBy) {
+        Sort sort = sortBuilder.fromRequestParam(sortBy);
+
+        return inventoryItemRepository.searchAll(inventory, filter, sort)
                 .stream()
                 .map(inventoryItemServiceResultMapper::getInventoryItemDTO)
                 .toList();
     }
 
     @Override
-    public PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable) {
-        Page<InventoryItem> inventoryItems = inventoryItemRepository.findAll(inventory, pageable);
+    public PageResult<InventoryItemDTO> get(
+            Inventory inventory,
+            Pageable pageable,
+            InventoryItemFilter filter,
+            String sortBy
+    ) {
+        Sort sort = sortBuilder.fromRequestParam(sortBy);
+        Page<InventoryItem> inventoryItems = inventoryItemRepository.searchAll(inventory, pageable, filter, sort);
 
         return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);
     }

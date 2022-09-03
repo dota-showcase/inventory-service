@@ -7,6 +7,7 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.AbstractMap;
 import java.util.List;
@@ -14,9 +15,9 @@ import java.util.Set;
 
 public interface InventoryItemDAL {
 
-    Page<InventoryItem> findAll(Inventory inventory, Pageable pageable);
+    Page<InventoryItem> searchAll(Inventory inventory, Pageable pageable, InventoryItemFilter filter, Sort sort);
 
-    List<InventoryItem> searchAll(Inventory inventory, InventoryItemFilter filter);
+    List<InventoryItem> searchAll(Inventory inventory, InventoryItemFilter filter, Sort sort);
 
     List<InventoryItem> findAll(Inventory inventory);
 
