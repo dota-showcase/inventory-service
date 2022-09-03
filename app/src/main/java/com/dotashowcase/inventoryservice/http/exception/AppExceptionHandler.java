@@ -11,14 +11,22 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 /**
  * Handles Steam Client exceptions
@@ -37,13 +45,59 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 //        return getExceptionBody(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
 //    }
 
-    // TODO: handle validation TypeMismatchException
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    @ResponseBody
+    public ResponseEntity<Object> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            WebRequest request
+    ) {
+
+        Throwable cause = ex;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+
+        final Map<String, Object> body = getExceptionBody(
+                ((ServletWebRequest)request).getRequest().getRequestURI(),
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                ex.getName() + ": " + cause.getMessage()
+        );
+
+        return new ResponseEntity<>(body, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    @ResponseBody
+    ResponseEntity<Object> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
+        final Map<String, Object> body = getExceptionBody(
+                ((ServletWebRequest)request).getRequest().getRequestURI(),
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                "Validation failed"
+        );
+
+        List<String> errors = new ArrayList<>();
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+            // get param name from path
+            String paramName = String.valueOf(StreamSupport
+                    .stream(violation.getPropertyPath().spliterator(), false)
+                    .reduce((first, second) -> second)
+                    .orElse(null));
+
+            errors.add(paramName + ": " + violation.getMessage());
+        }
+
+        body.put("validation", errors);
+
+        return new ResponseEntity<>(body, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
 
     @ExceptionHandler(SteamException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public Map<String, Object> handleSteamException(final SteamException ex, HttpServletRequest request) {
-        final Map<String, Object> body = getExceptionBody(request, HttpStatus.BAD_REQUEST, ex.getMessage());
+        final Map<String, Object> body = getExceptionBody(request.getRequestURI(), HttpStatus.BAD_REQUEST, ex.getMessage());
 
         final Map<String, Object> steamBody = new LinkedHashMap<>();
 
@@ -81,7 +135,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 ? responseStatus.reason().length() > 0 ? responseStatus.reason() : ex.getMessage()
                 : ex.getMessage();
 
-        Map<String, Object> body = getExceptionBody(request, status, message);
+        Map<String, Object> body = getExceptionBody(request.getRequestURI(), status, message);
 
         log.error(LOG_MESSAGE_TEMPLATE, body);
 
@@ -96,7 +150,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(body, status);
     }
 
-    private Map<String, Object> getExceptionBody(final HttpServletRequest request,
+    private Map<String, Object> getExceptionBody(final String requestURI,
                                                  final HttpStatus status,
                                                  final String message) {
         final Map<String, Object> body = new LinkedHashMap<>();
@@ -104,7 +158,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
         body.put("status", status.value());
         body.put("error", status.getReasonPhrase());
         body.put("message", message);
-        body.put("path", request.getRequestURI());
+        body.put("path", requestURI);
 
         return body;
     }

@@ -9,15 +9,18 @@ import com.dotashowcase.inventoryservice.service.InventoryService;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryChangesDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
+import com.dotashowcase.inventoryservice.support.validator.SteamIdConstraint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Validated
 @RestController
 @RequestMapping("api/v1/")
 public class InventoryItemController {
@@ -33,7 +36,7 @@ public class InventoryItemController {
 
     @GetMapping("inventories/{steamId}/items")
     public List<InventoryItemDTO> index(
-            @PathVariable Long steamId,
+            @PathVariable @SteamIdConstraint Long steamId,
             @RequestParam Optional<String> sort,
             @RequestParam Optional<List<Integer>> defIndexes,
             @RequestParam Optional<List<Byte>> qualities,
@@ -58,7 +61,7 @@ public class InventoryItemController {
 
     @GetMapping("inventories/{steamId}/items/page")
     public PageResult<InventoryItemDTO> index(
-            @PathVariable Long steamId,
+            @PathVariable @SteamIdConstraint Long steamId,
             @PageableDefault(size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable,
             @RequestParam Optional<String> sort,
             @RequestParam Optional<List<Integer>> defIndexes,
@@ -83,14 +86,17 @@ public class InventoryItemController {
     }
 
     @GetMapping("inventories/{steamId}/changes")
-    public Map<Integer, InventoryChangesDTO> getChanges(@PathVariable Long steamId) {
+    public Map<Integer, InventoryChangesDTO> getChanges(@PathVariable @SteamIdConstraint Long steamId) {
         Inventory inventory = inventoryService.findInventory(steamId);
 
         return inventoryItemChangesService.get(inventory);
     }
 
     @GetMapping("inventories/{steamId}/changes/{version}")
-    public InventoryChangesDTO getChanges(@PathVariable Long steamId, @PathVariable Integer version) {
+    public InventoryChangesDTO getChanges(
+            @PathVariable @SteamIdConstraint Long steamId,
+            @PathVariable Integer version
+    ) {
         Inventory inventory = inventoryService.findInventory(steamId);
 
         return inventoryItemChangesService.get(inventory, version == -1 ? null : version);
