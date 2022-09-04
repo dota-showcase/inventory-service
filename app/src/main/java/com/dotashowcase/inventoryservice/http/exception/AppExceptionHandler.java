@@ -1,10 +1,13 @@
 package com.dotashowcase.inventoryservice.http.exception;
 
+import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
+import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimiterException;
 import com.dotashowcase.inventoryservice.steamclient.exception.BadRequestException;
 import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
 import com.dotashowcase.inventoryservice.steamclient.exception.SteamException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -94,16 +97,14 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(SteamException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public Map<String, Object> handleSteamException(final SteamException ex, HttpServletRequest request) {
-        final Map<String, Object> body = getExceptionBody(request.getRequestURI(), HttpStatus.BAD_REQUEST, ex.getMessage());
-
         final Map<String, Object> steamBody = new LinkedHashMap<>();
 
+        HttpStatus steamHttpStatus = HttpStatus.BAD_REQUEST;
         if (ex instanceof BadRequestException) {
             HttpStatus resolvedHttpStatus = HttpStatus.resolve(((BadRequestException) ex).getSteamHttpStatusCode());
-            HttpStatus steamHttpStatus = resolvedHttpStatus != null ? resolvedHttpStatus : HttpStatus.BAD_REQUEST;
+            steamHttpStatus = resolvedHttpStatus != null ? resolvedHttpStatus : HttpStatus.BAD_REQUEST;
 
             steamBody.put("type", "Steam Server Error");
             steamBody.put("status", steamHttpStatus.value());
@@ -116,11 +117,31 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
             steamBody.put("message", "Steam responded with a description of the inventory request error");
         }
 
+        final Map<String, Object> body = getExceptionBody(
+                request.getRequestURI(),
+                steamHttpStatus,
+                ex.getMessage()
+        );
+
         body.put("steam", steamBody);
 
         log.error(LOG_MESSAGE_TEMPLATE, body);
 
         return body;
+    }
+
+    @ExceptionHandler({RateLimiterException.class})
+    public ResponseEntity<Map<String, Object>> handleAllExceptions(RateLimiterException ex, HttpServletRequest request) {
+        final Map<String, Object> body = getExceptionBody(
+                request.getRequestURI(),
+                HttpStatus.TOO_MANY_REQUESTS,
+                ex.getMessage()
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(RateLimitHandler.HEADER_RETRY_AFTER, String.valueOf(ex.getWaitForRefill()));
+
+        return new ResponseEntity<>(body, headers, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     @ExceptionHandler({Exception.class})
@@ -130,7 +151,6 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 ? responseStatus.value()
                 : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        // TODO: check all Exception and no return message
         String message = (responseStatus != null)
                 ? responseStatus.reason().length() > 0 ? responseStatus.reason() : ex.getMessage()
                 : ex.getMessage();

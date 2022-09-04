@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.http.controller;
 
+import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
 import com.dotashowcase.inventoryservice.http.request.InventoryCreateRequest;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.service.InventoryService;
@@ -7,6 +8,7 @@ import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestO
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 import com.dotashowcase.inventoryservice.support.validator.SteamIdConstraint;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +24,9 @@ public class InventoryController {
 
     @Autowired
     private InventoryService inventoryService;
+
+    @Autowired
+    private RateLimitHandler handler;
 
     @GetMapping("inventories/")
     public List<InventoryWithOperationsDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
@@ -41,8 +46,12 @@ public class InventoryController {
 
     @PutMapping("inventories/{steamId}")
     @ResponseBody
-    public InventoryWithLatestOperationDTO update(@PathVariable @SteamIdConstraint Long steamId) {
-        return inventoryService.update(steamId);
+    public ResponseEntity<InventoryWithLatestOperationDTO> update(@PathVariable @SteamIdConstraint Long steamId) {
+        HttpHeaders responseHeaders = handler.run(steamId);
+
+        return ResponseEntity.ok()
+                .headers(responseHeaders)
+                .body(inventoryService.update(steamId));
     }
 
     @DeleteMapping("inventories/{steamId}")
