@@ -112,7 +112,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         operationService.createAndSaveMeta(
                 operation,
-                new OperationCountDTO(savedInventoryItems.size(), 0, 0),
+                new OperationCountDTO(savedInventoryItems.size(), 0, 0, 0),
                 responseItems.size(),
                 inventoryResponseDTO.getNumberBackpackSlots()
         );
@@ -130,7 +130,6 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         UserInventoryResponseDTO inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
-
         List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
 
         Operation currentOperation = operationService.create(inventory, Operation.Type.U, prevOperation);

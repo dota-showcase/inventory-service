@@ -98,6 +98,7 @@ public class OperationServiceImpl implements OperationService  {
     public void createAndSaveMeta(Operation operation, OperationCountDTO operations, Integer count, Integer numSlots) {
         OperationMeta meta = new OperationMeta();
 
+        meta.setItemCount(operations.getInventorySize());
         meta.setResponseCount(count);
         meta.setCreateOperationCount(operations.getCreate());
         meta.setUpdateOperationCount(operations.getUpdate());

@@ -108,6 +108,8 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         List<InventoryItem> itemsToCreate = new ArrayList<>();
         Set<ObjectId> itemIdsToUpdate = new HashSet<>();
 
+        Long steamId = inventory.getSteamId();
+
         for (InventoryItem steamInventoryItem : steamInventoryItems) {
             Long id = steamInventoryItem.getItemId();
             itemIdsToRemove.remove(id);
@@ -127,6 +129,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
             }
 
             prepareItemToCreate(steamInventoryItem, currentOperation, Operation.Type.C);
+            steamInventoryItem.setSteamId(steamId);
             itemsToCreate.add(steamInventoryItem);
         }
 
@@ -160,7 +163,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
         createCount += inventoryItemRepository.insertAll(itemsToCreate).size();
 
-        return new OperationCountDTO(createCount, updateCount, deleteCount);
+        return new OperationCountDTO(createCount, updateCount, deleteCount, inventoryItemsById.size());
     }
 
     public long delete(Inventory inventory) {

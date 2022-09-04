@@ -70,10 +70,11 @@ public class InventoryServiceResultMapper {
 
         OperationMetaDTO operationMetaDTO = new OperationMetaDTO();
 
-        operationMetaDTO.setCreateCount(meta.getCreateOperationCount());
-        operationMetaDTO.setUpdateCount(meta.getUpdateOperationCount());
-        operationMetaDTO.setDeleteCount(meta.getDeleteOperationCount());
+        operationMetaDTO.setItemCount(meta.getItemCount());
         operationMetaDTO.setResponseCount(meta.getResponseCount());
+        operationMetaDTO.setCreated(meta.getCreateOperationCount());
+        operationMetaDTO.setUpdated(meta.getUpdateOperationCount());
+        operationMetaDTO.setDeleted(meta.getDeleteOperationCount());
         operationMetaDTO.setNumSlots(meta.getNumSlots());
 
         operationDTO.setMeta(operationMetaDTO);
