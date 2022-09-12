@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -21,6 +22,7 @@ public class Operation {
     private ObjectId id;
 
     @Field
+    @Indexed(name = "operations__steam_id")
     private Long steamId;
 
     @Field

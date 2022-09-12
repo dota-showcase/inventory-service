@@ -58,7 +58,6 @@ public class InventoryItemChangesServiceImpl implements InventoryItemChangesServ
         return result;
     }
 
-    // TODO: separated service?
     private InventoryChangesDTO mapChanges(List<InventoryItem> items) {
         InventoryChangesDTO result = new InventoryChangesDTO();
 
