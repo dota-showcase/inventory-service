@@ -85,13 +85,23 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 
     @Override
     public long updateAll(Set<ObjectId> ids, List<AbstractMap.SimpleImmutableEntry<String, Object>> updateEntry) {
-        Criteria criteria = Criteria.where("_id").in(ids);
-        Query query = new Query(criteria);
         Update update = new Update();
 
+        int count = 0;
         for (AbstractMap.SimpleImmutableEntry<String, Object> entry : updateEntry) {
-            update.set(entry.getKey(), entry.getValue());
+            String key = entry.getKey();
+            if (InventoryItem.fillable.contains(key)) {
+                update.set(key, entry.getValue());
+                ++count;
+            }
         }
+
+        if (count == 0) {
+            return 0L;
+        }
+
+        Criteria criteria = Criteria.where("_id").in(ids);
+        Query query = new Query(criteria);
 
         return mongoTemplate.updateMulti(query, update, InventoryItem.class).getModifiedCount();
     }

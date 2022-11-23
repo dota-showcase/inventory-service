@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
@@ -86,4 +87,13 @@ public class InventoryItem {
 
     @Field("attrs")
     private List<ItemAttribute> attributes;
+
+    public static List<String> fillable = new ArrayList<>();
+
+    static {
+        fillable.add("_isA");
+        fillable.add("_odId");
+        fillable.add("isTr");
+        fillable.add("isCr");
+    }
 }

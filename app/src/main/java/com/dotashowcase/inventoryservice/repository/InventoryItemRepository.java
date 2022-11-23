@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.repository.Query;
 
 import java.util.List;
 
+// TODO: remove
 public interface InventoryItemRepository extends MongoRepository<InventoryItem, Long> {
 
 //    @Query("{defindex:'?0'}")

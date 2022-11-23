@@ -1,8 +1,11 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
+import com.dotashowcase.inventoryservice.model.embedded.ItemAttribute;
+import com.dotashowcase.inventoryservice.model.embedded.ItemEquipment;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -10,6 +13,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -35,6 +42,10 @@ class InventoryItemRepositoryTest {
 
     @BeforeEach
     public void setup() {
+        // A - active, H - hidden, R - removed (hidden)
+        // #1 (4 total) - 100R 101A(101H) 102A
+        // #2 (1 total) - 200A
+
         Long steamId1 = 100000000000L;
         Inventory inventory1 = new Inventory(steamId1);
         inventoryRepository.save(inventory1);
@@ -58,8 +69,13 @@ class InventoryItemRepositoryTest {
         inventoryItem1.setLevel((byte)1);
         inventoryItem1.setInventoryToken(1L);
         inventoryItem1.setQuantity(1);
+        inventoryItem1.setQuality((byte)1);
         inventoryItem1.setStyle((byte)1);
+        inventoryItem1.setIsTradable(true);
+        inventoryItem1.setIsCraftable(true);
         inventoryItem1.setCustomName("inventory item #1");
+        inventoryItem1.setItemEquipment(List.of(new ItemEquipment(1, 1)));
+        inventoryItem1.setAttributes(List.of(new ItemAttribute(7, "1", 1.20, null)));
         mongoTemplate.insert(inventoryItem1);
 
         Long itemId2 = 101L;
@@ -73,8 +89,13 @@ class InventoryItemRepositoryTest {
         inventoryItem2.setLevel((byte)1);
         inventoryItem2.setInventoryToken(1L);
         inventoryItem2.setQuantity(1);
+        inventoryItem2.setQuality((byte)2);
         inventoryItem2.setStyle((byte)1);
+        inventoryItem2.setIsTradable(true);
+        inventoryItem2.setIsCraftable(true);
         inventoryItem2.setCustomName("inventory item #2");
+        inventoryItem2.setItemEquipment(List.of(new ItemEquipment(1, 2)));
+        inventoryItem2.setAttributes(List.of(new ItemAttribute(8, "2", 2.20, null)));
         mongoTemplate.insert(inventoryItem2);
 
         Long itemId3 = 102L;
@@ -109,9 +130,20 @@ class InventoryItemRepositoryTest {
         inventoryItem4.setLevel((byte)1);
         inventoryItem4.setInventoryToken(1L);
         inventoryItem4.setQuantity(1);
+        inventoryItem4.setQuality((byte)2);
         inventoryItem4.setStyle((byte)1);
+        inventoryItem4.setIsTradable(true);
+        inventoryItem4.setIsCraftable(true);
         inventoryItem4.setCustomName("inventory item #2 - update");
+        inventoryItem4.setItemEquipment(List.of(new ItemEquipment(1, 2)));
+        inventoryItem4.setAttributes(List.of(new ItemAttribute(8, "2", 2.20, null)));
         mongoTemplate.insert(inventoryItem4);
+
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("_id").is(inventoryItem2.getId())),
+                Update.update("_isA", false),
+                InventoryItem.class
+        );
 
         // remove item #100
         Operation operation3 = new Operation();
@@ -129,7 +161,7 @@ class InventoryItemRepositoryTest {
 
         mongoTemplate.updateFirst(
                 Query.query(Criteria.where("_id").is(inventoryItem1.getId())),
-                Update.update("isActive", false),
+                Update.update("_isA", false),
                 InventoryItem.class
         );
 
@@ -157,7 +189,12 @@ class InventoryItemRepositoryTest {
         inventoryItem21.setInventoryToken(1L);
         inventoryItem21.setQuantity(1);
         inventoryItem21.setStyle((byte)1);
+        inventoryItem21.setQuality((byte)4);
+        inventoryItem21.setIsTradable(true);
+        inventoryItem21.setIsCraftable(true);
         inventoryItem21.setCustomName("inventory item #2-1");
+        inventoryItem21.setItemEquipment(List.of(new ItemEquipment(1, 2)));
+        inventoryItem2.setAttributes(List.of(new ItemAttribute(8, "2", 2.20, null)));
         mongoTemplate.insert(inventoryItem21);
     }
 
@@ -166,6 +203,255 @@ class InventoryItemRepositoryTest {
         mongoTemplate.remove(new Query(), Inventory.class.getAnnotation(Document.class).value());
         mongoTemplate.remove(new Query(), Operation.class.getAnnotation(Document.class).value());
         mongoTemplate.remove(new Query(), InventoryItem.class.getAnnotation(Document.class).value());
+    }
+
+    @Test
+    void itShouldSearchAllInventoryItems() {
+        // given
+        Long steamId1 = 100000000000L;
+        Inventory inventory = inventoryRepository.findById(steamId1).get();
+
+        // add one more item - 103
+        Operation operation = new Operation();
+        operation.setSteamId(steamId1);
+        operation.setType(Operation.Type.U);
+        operation.setVersion(4);
+        operation.setMeta(new OperationMeta());
+        mongoTemplate.insert(operation);
+
+        Long itemId1 = 103L;
+        Integer defIndex1 = 203;
+        InventoryItem inventoryItem4 = new InventoryItem();
+        inventoryItem4.setItemId(itemId1);
+        inventoryItem4.setOperationId(operation.getId());
+        inventoryItem4.setSteamId(steamId1);
+        inventoryItem4.setOriginalId(itemId1);
+        inventoryItem4.setDefIndex(defIndex1);
+        inventoryItem4.setQuality((byte)3);
+        inventoryItem4.setStyle((byte)1);
+        inventoryItem4.setIsTradable(true);
+        inventoryItem4.setIsCraftable(true);
+        inventoryItem4.setCustomName("inventory item #4");
+        inventoryItem4.setItemEquipment(List.of(new ItemEquipment(1, 3)));
+        inventoryItem4.setAttributes(List.of(new ItemAttribute(7, "1", 1.20, null)));
+        mongoTemplate.insert(inventoryItem4);
+
+        // TODO: fix pagination field name + add test
+        Pageable firstPageWithTwoItems = PageRequest.of(0, 2);
+        Pageable firstPageWithAllItems = PageRequest.of(0, 4);
+
+        // 200R, 201U, 203A - inventory #1; 300A - inventory #2; 999 - n/a
+        InventoryItemFilter filterDefIndexes = InventoryItemFilter.builder()
+                .defIndexes(List.of(200, 201, 203, 300, 999))
+                .build();
+
+        // 1R, 2U, 3A - inventory #1; 4A - inventory #2; 999 - n/a
+        InventoryItemFilter filterQualities = InventoryItemFilter.builder()
+                .qualities(List.of((byte)1, (byte)2, (byte)3, (byte)4, (byte)99))
+                .build();
+
+        InventoryItemFilter filterIsTradable = InventoryItemFilter.builder()
+                .isTradable(true)
+                .build();
+
+        InventoryItemFilter filterIsCraftable = InventoryItemFilter.builder()
+                .isCraftable(true)
+                .build();
+
+        InventoryItemFilter filterIsEquipped = InventoryItemFilter.builder()
+                .isEquipped(true)
+                .build();
+
+        InventoryItemFilter filterHasAttribute = InventoryItemFilter.builder()
+                .hasAttribute(true)
+                .build();
+
+        InventoryItemFilter filterAll = InventoryItemFilter.builder()
+                .defIndexes(List.of(200, 201, 203, 300, 999))
+                .qualities(List.of((byte)1, (byte)2, (byte)3, (byte)4, (byte)99))
+                .isTradable(true)
+                .isCraftable(true)
+                .isEquipped(true)
+                .hasAttribute(true)
+                .build();
+
+        Sort byDefIndex = Sort.by(Sort.Direction.ASC, "defIndex");
+
+        // when #1
+        Page<InventoryItem> twoItemsByDefIndex = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterDefIndexes, byDefIndex);
+        List<InventoryItem> twoItemsByDefIndex2 = underTest.searchAll(inventory, filterDefIndexes, byDefIndex);
+
+        // when #2
+        Page<InventoryItem> twoItemsByQualities = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterQualities, byDefIndex);
+        List<InventoryItem> twoItemsByQualities2 = underTest.searchAll(inventory, filterQualities, byDefIndex);
+
+        // when #3
+        Page<InventoryItem> twoItemsByTradable = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterIsTradable, byDefIndex);
+        List<InventoryItem> twoItemsByTradable2 = underTest.searchAll(inventory, filterIsTradable, byDefIndex);
+
+        // when #4
+        Page<InventoryItem> twoItemsByCraftable = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterIsCraftable, byDefIndex);
+        List<InventoryItem> twoItemsByCraftable2 = underTest.searchAll(inventory, filterIsCraftable, byDefIndex);
+
+        // when #5
+        Page<InventoryItem> twoItemsByEquipped = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterIsEquipped, byDefIndex);
+        List<InventoryItem> twoItemsByEquipped2 = underTest.searchAll(inventory, filterIsEquipped, byDefIndex);
+
+        // when #6
+        Page<InventoryItem> twoItemsByAttribute = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterHasAttribute, byDefIndex);
+        List<InventoryItem> twoItemsByAttribute2 = underTest.searchAll(inventory, filterHasAttribute, byDefIndex);
+
+        // when #7
+        Page<InventoryItem> twoItemsByAll = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterAll, byDefIndex);
+        List<InventoryItem> twoItemsByAll2 = underTest.searchAll(inventory, filterAll, byDefIndex);
+
+
+        List<InventoryItem> itemsAllEmpty = underTest.findAll(inventory);
+        List<InventoryItem> content = twoItemsByQualities.getContent();
+
+        // then #1
+        assertThat(twoItemsByDefIndex.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByDefIndex.getContent())
+                .extracting("defIndex")
+                .containsSequence(201, 203);
+
+        assertThat(twoItemsByDefIndex2)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByDefIndex2)
+                .extracting("defIndex")
+                .containsSequence(201, 203);
+
+        // then #2
+        assertThat(twoItemsByQualities.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByQualities.getContent())
+                .extracting("quality")
+                .containsSequence((byte)2, (byte)3);
+
+        assertThat(twoItemsByQualities2)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByQualities2)
+                .extracting("quality")
+                .containsSequence((byte)2, (byte)3);
+
+        // then #3
+        assertThat(twoItemsByTradable.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByTradable.getContent())
+                .extracting("isTradable")
+                .contains(true)
+                .hasSize(2);
+
+        assertThat(twoItemsByTradable2)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByTradable2)
+                .extracting("isTradable")
+                .contains(true)
+                .hasSize(2);
+
+        // then #4
+        assertThat(twoItemsByCraftable.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByCraftable.getContent())
+                .extracting("isCraftable")
+                .contains(true)
+                .hasSize(2);
+
+        assertThat(twoItemsByCraftable2)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByCraftable2)
+                .extracting("isCraftable")
+                .contains(true)
+                .hasSize(2);
+
+        // then #5
+        assertThat(twoItemsByEquipped.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByEquipped.getContent())
+                .extracting("itemEquipment")
+                .hasSize(2);
+
+        assertThat(twoItemsByEquipped2)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByEquipped2)
+                .extracting("itemEquipment")
+                .hasSize(2);
+
+        // then #6
+        assertThat(twoItemsByAttribute.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByAttribute.getContent())
+                .extracting("attributes")
+                .hasSize(2);
+
+        assertThat(twoItemsByAttribute2)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByAttribute2)
+                .extracting("attributes")
+                .hasSize(2);
+
+        // then #7
+        assertThat(twoItemsByAll.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByAll.getContent())
+                .extracting("defIndex")
+                .containsSequence(201, 203);
+
+        assertThat(twoItemsByAll2)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByAll2)
+                .extracting("defIndex")
+                .containsSequence(201, 203);
     }
 
     @Test
@@ -302,7 +588,7 @@ class InventoryItemRepositoryTest {
 
         // then
         assertThat(updateCount).isEqualTo(3L);
-        assertThat(updateCountNotExistProp).isEqualTo(0L); // TODO: fix
+        assertThat(updateCountNotExistProp).isEqualTo(0L);
         assertThat(updateCountNotExistItem).isEqualTo(0L);
     }
 
