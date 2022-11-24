@@ -95,5 +95,6 @@ public class InventoryItem {
         fillable.add("_odId");
         fillable.add("isTr");
         fillable.add("isCr");
+        fillable.add("qnt");
     }
 }

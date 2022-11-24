@@ -42,9 +42,9 @@ class InventoryItemRepositoryTest {
 
     @BeforeEach
     public void setup() {
-        // A - active, H - hidden, R - removed (hidden)
         // #1 (4 total) - 100R 101A(101H) 102A
         // #2 (1 total) - 200A
+        // A - active, H - hidden, R - removed (hidden)
 
         Long steamId1 = 100000000000L;
         Inventory inventory1 = new Inventory(steamId1);
@@ -236,16 +236,16 @@ class InventoryItemRepositoryTest {
         inventoryItem4.setAttributes(List.of(new ItemAttribute(7, "1", 1.20, null)));
         mongoTemplate.insert(inventoryItem4);
 
-        // TODO: fix pagination field name + add test
-        Pageable firstPageWithTwoItems = PageRequest.of(0, 2);
         Pageable firstPageWithAllItems = PageRequest.of(0, 4);
+        Pageable secondPageWithOneItem = PageRequest.of(1, 1);
+        Pageable thirdPageWithZeroItem = PageRequest.of(2, 1);
 
         // 200R, 201U, 203A - inventory #1; 300A - inventory #2; 999 - n/a
         InventoryItemFilter filterDefIndexes = InventoryItemFilter.builder()
                 .defIndexes(List.of(200, 201, 203, 300, 999))
                 .build();
 
-        // 1R, 2U, 3A - inventory #1; 4A - inventory #2; 999 - n/a
+        // 1R, 2U, 3A - inventory #1; 4A - inventory #2; 99 - n/a
         InventoryItemFilter filterQualities = InventoryItemFilter.builder()
                 .qualities(List.of((byte)1, (byte)2, (byte)3, (byte)4, (byte)99))
                 .build();
@@ -276,6 +276,7 @@ class InventoryItemRepositoryTest {
                 .build();
 
         Sort byDefIndex = Sort.by(Sort.Direction.ASC, "defIndex");
+        Sort byDefIndexDesc = Sort.by(Sort.Direction.DESC, "defIndex");
 
         // when #1
         Page<InventoryItem> twoItemsByDefIndex = underTest
@@ -312,9 +313,16 @@ class InventoryItemRepositoryTest {
                 .searchAll(inventory, firstPageWithAllItems, filterAll, byDefIndex);
         List<InventoryItem> twoItemsByAll2 = underTest.searchAll(inventory, filterAll, byDefIndex);
 
+        // when #8
+        Page<InventoryItem> secondPageOneItemByAll = underTest
+                .searchAll(inventory, secondPageWithOneItem, filterAll, byDefIndex);
 
-        List<InventoryItem> itemsAllEmpty = underTest.findAll(inventory);
-        List<InventoryItem> content = twoItemsByQualities.getContent();
+        Page<InventoryItem> zeroItemByAll = underTest
+                .searchAll(inventory, thirdPageWithZeroItem, filterAll, byDefIndex);
+
+        // when #9
+        Page<InventoryItem> twoItemsByAllDefindexDesc = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterAll, byDefIndexDesc);
 
         // then #1
         assertThat(twoItemsByDefIndex.getContent())
@@ -452,6 +460,29 @@ class InventoryItemRepositoryTest {
         assertThat(twoItemsByAll2)
                 .extracting("defIndex")
                 .containsSequence(201, 203);
+
+        // then #8
+        assertThat(secondPageOneItemByAll.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(1);
+
+        assertThat(secondPageOneItemByAll.getContent())
+                .extracting("defIndex")
+                .containsSequence(203);
+
+        assertThat(zeroItemByAll.getContent())
+                .hasSize(0);
+
+        // then #9
+        assertThat(twoItemsByAllDefindexDesc.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByAllDefindexDesc.getContent())
+                .extracting("defIndex")
+                .containsSequence(203, 201);
     }
 
     @Test
@@ -484,7 +515,7 @@ class InventoryItemRepositoryTest {
         assertThat(itemsAll)
                 .extracting("steamId")
                 .contains(steamId1)
-                .hasSize(3);
+                .hasSize(2);
 
         assertThat(itemsAllEmpty)
                 .hasSize(0);
