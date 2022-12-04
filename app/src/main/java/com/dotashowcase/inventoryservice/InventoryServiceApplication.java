@@ -6,7 +6,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @SpringBootApplication
-@EnableMongoRepositories
+@EnableMongoRepositories(basePackages = "com.dotashowcase.inventoryservice")
 @PropertySource("classpath:environment.properties")
 public class InventoryServiceApplication {
 
