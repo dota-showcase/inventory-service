@@ -67,7 +67,11 @@ public class OperationServiceImpl implements OperationService  {
                 : operationRepository.findByVersion(inventory, version);
 
         if (operation == null) {
-            throw new OperationNotFoundException(inventory.getSteamId(), version);
+            if (version != null) {
+                throw new OperationNotFoundException(inventory.getSteamId(), version);
+            } else {
+                throw new OperationNotFoundException(inventory.getSteamId());
+            }
         }
 
         return operation;
