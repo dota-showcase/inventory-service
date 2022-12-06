@@ -5,6 +5,7 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.repository.OperationRepository;
 import com.dotashowcase.inventoryservice.service.exception.OperationNotFoundException;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -287,10 +288,67 @@ class OperationServiceTest {
     }
 
     @Test
-    void createAndSaveMeta() {
+    void canCreateAndSaveMeta() {
+        // given
+        Long steamId = 100000000000L;
+        int version = 2;
+
+        Operation operation = new Operation();
+        operation.setSteamId(steamId);
+        operation.setType(Operation.Type.C);
+        operation.setVersion(version);
+
+        OperationCountDTO operationCountDTO = new OperationCountDTO(30, 20, 10, 1000);
+        Integer count = 500;
+        Integer numSlots = 10000;
+
+        // when
+        underTest.createAndSaveMeta(operation, operationCountDTO, count, numSlots);
+
+        // then
+        ArgumentCaptor<Operation> operationArgumentCaptor = ArgumentCaptor.forClass(Operation.class);
+        ArgumentCaptor<OperationMeta> metaArgumentCaptor = ArgumentCaptor.forClass(OperationMeta.class);
+        verify(operationRepository).updateMeta(operationArgumentCaptor.capture(), metaArgumentCaptor.capture());
+
+        Operation captorOperation = operationArgumentCaptor.getValue();
+        OperationMeta captorOperationMeta = metaArgumentCaptor.getValue();
+        OperationMeta innerOperationMeta = captorOperation.getMeta();
+
+        assertThat(innerOperationMeta).extracting(OperationMeta::getCreateOperationCount)
+                .isEqualTo(30)
+                .isEqualTo(captorOperationMeta.getCreateOperationCount());
+
+        assertThat(innerOperationMeta).extracting(OperationMeta::getUpdateOperationCount)
+                .isEqualTo(20)
+                .isEqualTo(captorOperationMeta.getUpdateOperationCount());
+
+        assertThat(innerOperationMeta).extracting(OperationMeta::getDeleteOperationCount)
+                .isEqualTo(10)
+                .isEqualTo(captorOperationMeta.getDeleteOperationCount());
+
+        assertThat(innerOperationMeta).extracting(OperationMeta::getItemCount)
+                .isEqualTo(1000 + 30 - 10)
+                .isEqualTo(captorOperationMeta.getItemCount());
+
+        assertThat(innerOperationMeta).extracting(OperationMeta::getResponseCount)
+                .isEqualTo(500)
+                .isEqualTo(captorOperationMeta.getResponseCount());
+
+        assertThat(innerOperationMeta).extracting(OperationMeta::getNumSlots)
+                .isEqualTo(10000)
+                .isEqualTo(captorOperationMeta.getNumSlots());
     }
 
     @Test
-    void delete() {
+    void canDelete() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        // when
+        underTest.delete(inventory);
+
+        // then
+        verify(operationRepository).removeAll(inventory);
     }
 }
