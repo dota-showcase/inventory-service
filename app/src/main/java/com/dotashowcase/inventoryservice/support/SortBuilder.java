@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @NoArgsConstructor
-public final class SortBuilder {
+public class SortBuilder {
 
     private static final Character DESC_SORT_PREFIX = '-';
 
