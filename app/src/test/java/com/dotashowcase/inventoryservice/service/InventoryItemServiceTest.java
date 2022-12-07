@@ -191,7 +191,7 @@ class InventoryItemServiceTest {
     }
 
     @Test
-    void create() {
+    void canCreate() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -250,6 +250,15 @@ class InventoryItemServiceTest {
     }
 
     @Test
-    void delete() {
+    void canDelete() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        // when
+        underTest.delete(inventory);
+
+        // then
+        verify(inventoryItemRepository).removeAll(inventory);
     }
 }
