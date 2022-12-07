@@ -7,9 +7,10 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
-import com.dotashowcase.inventoryservice.service.result.mapper.InventoryItemServiceResultMapper;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
+import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import com.dotashowcase.inventoryservice.support.SortBuilder;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,11 +40,8 @@ class InventoryItemServiceTest {
 
     private InventoryItemService underTest;
 
-    private InventoryItemServiceResultMapper inventoryItemServiceResultMapper;
-
     @BeforeEach
     void setUp() {
-        inventoryItemServiceResultMapper = new InventoryItemServiceResultMapper();
         underTest = new InventoryItemServiceImpl(inventoryItemRepository, sortBuilder, pageMapper);
     }
 
@@ -194,6 +192,57 @@ class InventoryItemServiceTest {
 
     @Test
     void create() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        Operation operation = new Operation();
+        operation.setId(new ObjectId());
+        operation.setSteamId(steamId);
+        operation.setType(Operation.Type.C);
+        operation.setVersion(1);
+        operation.setMeta(new OperationMeta());
+
+        Long itemId1 = 100L;
+        Integer defIndex1 = 200;
+        ItemDTO item1 = new ItemDTO();
+        item1.setId(itemId1);
+        item1.setOriginal_id(itemId1);
+        item1.setDefindex(defIndex1);
+        item1.setLevel((byte)1);
+        item1.setQuality((byte)1);
+        item1.setInventory(1L);
+        item1.setQuantity(1);
+        item1.setFlag_cannot_craft(true);
+        item1.setFlag_cannot_trade(true);
+
+        Long itemId2 = 101L;
+        Integer defIndex2 = 201;
+        ItemDTO item2 = new ItemDTO();
+        item2.setId(itemId2);
+        item2.setOriginal_id(itemId2);
+        item2.setDefindex(defIndex2);
+        item2.setLevel((byte)1);
+        item2.setQuality((byte)1);
+        item2.setInventory(1L);
+        item2.setQuantity(1);
+        item2.setFlag_cannot_craft(true);
+        item2.setFlag_cannot_trade(true);
+
+        List<ItemDTO> items = List.of(item1, item2);
+
+        // when
+        underTest.create(inventory, operation, items);
+
+        // then
+        ArgumentCaptor<List<InventoryItem>> inventoryItemsArgumentCaptor = ArgumentCaptor.forClass((Class)List.class);
+        verify(inventoryItemRepository).insertAll(inventoryItemsArgumentCaptor.capture());
+
+        assertThat(inventoryItemsArgumentCaptor.getValue().get(0).getOperationId()).isEqualTo(operation.getId());
+        assertThat(inventoryItemsArgumentCaptor.getValue().get(0).getSteamId()).isEqualTo(steamId);
+
+        assertThat(inventoryItemsArgumentCaptor.getValue().get(1).getOperationId()).isEqualTo(operation.getId());
+        assertThat(inventoryItemsArgumentCaptor.getValue().get(1).getSteamId()).isEqualTo(steamId);
     }
 
     @Test
