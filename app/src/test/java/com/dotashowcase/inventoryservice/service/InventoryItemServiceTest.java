@@ -246,10 +246,6 @@ class InventoryItemServiceTest {
     }
 
     @Test
-    void sync() {
-    }
-
-    @Test
     void canDelete() {
         // given
         Long steamId = 100000000000L;
