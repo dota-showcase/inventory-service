@@ -136,12 +136,16 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         if (itemIdsToRemove.size() > 0) {
             Set<ObjectId> itemIdsToHide = new HashSet<>();
 
-            for (InventoryItem steamInventoryItem : steamInventoryItems) {
-                Long itemId = steamInventoryItem.getItemId();
-                if (itemIdsToRemove.contains(itemId)) {
-                    itemIdsToHide.add(inventoryItemsById.get(itemId).getId());
-                }
+            for (Long itemId : itemIdsToRemove) {
+                itemIdsToHide.add(inventoryItemsById.get(itemId).getId());
             }
+
+//            for (InventoryItem steamInventoryItem : steamInventoryItems) {
+//                Long itemId = steamInventoryItem.getItemId();
+//                if (itemIdsToRemove.contains(itemId)) {
+//                    itemIdsToHide.add(inventoryItemsById.get(itemId).getId());
+//                }
+//            }
 
             deleteCount += inventoryItemRepository.updateAll(
                     itemIdsToHide,
