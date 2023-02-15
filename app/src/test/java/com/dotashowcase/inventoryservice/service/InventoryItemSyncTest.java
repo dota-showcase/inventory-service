@@ -348,4 +348,132 @@ class InventoryItemSyncTest {
         verify(inventoryItemRepository).insertAll(insertArgumentCaptor.capture());
         assertThat(insertArgumentCaptor.getValue().size()).isEqualTo(0);
     }
+
+    @Test
+    void canMarkInventoryItemsAsUpdated() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        Operation operation1 = new Operation();
+        operation1.setSteamId(steamId);
+        operation1.setType(Operation.Type.C);
+        operation1.setVersion(1);
+
+        Long itemId1 = 100L;
+        Integer defIndex1 = 200;
+        ObjectId objectId1 = new ObjectId();
+        InventoryItem inventoryItem1 = new InventoryItem();
+        inventoryItem1.setId(objectId1);
+        inventoryItem1.setItemId(itemId1);
+        inventoryItem1.setOperationId(operation1.getId());
+        inventoryItem1.setSteamId(steamId);
+        inventoryItem1.setOriginalId(itemId1);
+        inventoryItem1.setDefIndex(defIndex1);
+        inventoryItem1.setLevel((byte) 1);
+        inventoryItem1.setInventoryToken(1000L);
+        inventoryItem1.setQuantity(1);
+        inventoryItem1.setQuality((byte) 1);
+        inventoryItem1.setStyle((byte) 1);
+        inventoryItem1.setIsTradable(true);
+        inventoryItem1.setIsCraftable(true);
+        inventoryItem1.setCustomName("Sample #1");
+        inventoryItem1.setItemEquipment(List.of(new ItemEquipment(1, 1)));
+        inventoryItem1.setAttributes(List.of(new ItemAttribute(7, "1", 1.0, null)));
+
+        Long itemId2 = 101L;
+        Integer defIndex2 = 201;
+        ObjectId objectId2 = new ObjectId();
+        InventoryItem inventoryItem2 = new InventoryItem();
+        inventoryItem2.setId(objectId2);
+        inventoryItem2.setItemId(itemId2);
+        inventoryItem2.setOperationId(operation1.getId());
+        inventoryItem2.setSteamId(steamId);
+        inventoryItem2.setOriginalId(itemId2);
+        inventoryItem2.setDefIndex(defIndex2);
+        inventoryItem2.setLevel((byte) 1);
+        inventoryItem2.setInventoryToken(1000L);
+        inventoryItem2.setQuantity(1);
+        inventoryItem2.setQuality((byte) 1);
+        inventoryItem2.setStyle((byte) 1);
+        inventoryItem2.setIsTradable(true);
+        inventoryItem2.setIsCraftable(true);
+        inventoryItem2.setCustomName("Sample #2");
+        inventoryItem2.setItemEquipment(List.of(new ItemEquipment(1, 2)));
+        inventoryItem2.setAttributes(List.of(new ItemAttribute(8, "2", 1.0, null)));
+
+        when(inventoryItemRepository.findAll(inventory)).thenReturn(List.of(inventoryItem1, inventoryItem2));
+
+        Operation operation2 = new Operation();
+        operation2.setId(new ObjectId());
+        operation2.setSteamId(steamId);
+        operation2.setType(Operation.Type.U);
+        operation2.setVersion(2);
+
+        ItemDTO item1 = new ItemDTO();
+        item1.setId(itemId1);
+        item1.setOriginal_id(itemId1);
+        item1.setDefindex(defIndex1);
+        item1.setLevel((byte) 1);
+        item1.setQuality((byte) 1);
+        item1.setInventory(1000L);
+        item1.setQuantity(1);
+        item1.setFlag_cannot_craft(true);
+        item1.setFlag_cannot_trade(true);
+        item1.setStyle((byte) 1);
+        item1.setCustom_name("Sample #1");
+        ItemEquipDTO itemEquip11 = new ItemEquipDTO();
+        itemEquip11.setEquip_class(1);
+        itemEquip11.setSlot(1);
+        item1.setEquipped(List.of(itemEquip11));
+        ItemAttributeDTO itemAttribute11 = new ItemAttributeDTO();
+        itemAttribute11.setDefindex(7);
+        itemAttribute11.setValue("1");
+        itemAttribute11.setFloat_value(1.0);
+        item1.setAttributes(List.of(itemAttribute11));
+
+        ItemDTO item2 = new ItemDTO();
+        item2.setId(itemId2);
+        item2.setOriginal_id(itemId2);
+        item2.setDefindex(defIndex2);
+        item2.setLevel((byte) 1);
+        item2.setQuality((byte) 1);
+        item2.setInventory(1000L);
+        item2.setQuantity(1);
+        item2.setFlag_cannot_craft(true);
+        item2.setFlag_cannot_trade(true);
+        item2.setStyle((byte) 1);
+        item2.setCustom_name("Sample #2 - updated");
+        ItemEquipDTO itemEquip21 = new ItemEquipDTO();
+        itemEquip21.setEquip_class(1);
+        itemEquip21.setSlot(2);
+        item2.setEquipped(List.of(itemEquip21));
+        ItemAttributeDTO itemAttribute21 = new ItemAttributeDTO();
+        itemAttribute21.setDefindex(8);
+        itemAttribute21.setValue("2");
+        itemAttribute21.setFloat_value(1.0);
+        item2.setAttributes(List.of(itemAttribute21));
+
+        List<ItemDTO> items = List.of(item1, item2);
+
+        // when
+        underTest.sync(inventory, operation2, items);
+
+        // then
+        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
+        verify(inventoryItemRepository, times(1)).updateAll(
+                updateArgumentCaptor.capture(),
+                ArgumentMatchers.anyList()
+        );
+
+        assertThat(updateArgumentCaptor.getValue().size()).isEqualTo(1);
+        assertThat(updateArgumentCaptor.getValue().iterator().next().compareTo(objectId2)).isEqualTo(0);
+
+        ArgumentCaptor<List<InventoryItem>> insertArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
+        verify(inventoryItemRepository).insertAll(insertArgumentCaptor.capture());
+        assertThat(insertArgumentCaptor.getValue().size()).isEqualTo(1);
+        assertThat(insertArgumentCaptor.getValue().get(0).getItemId()).isEqualTo(itemId2);
+        assertThat(insertArgumentCaptor.getValue().get(0).getCustomName()).isEqualTo("Sample #2 - updated");
+        assertThat(insertArgumentCaptor.getValue().get(0).getIsActive()).isEqualTo(true);
+    }
 }
