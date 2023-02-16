@@ -15,10 +15,6 @@ import java.util.List;
 public class InventoryItemMapper {
 
     public List<InventoryItem> itemDtoToInventoryItem(List<ItemDTO> items) {
-        if (items == null) {
-            return null;
-        }
-
         List<InventoryItem> list = new ArrayList<>(items.size());
         for (ItemDTO item : items) {
             list.add(itemDtoToInventoryItem(item));

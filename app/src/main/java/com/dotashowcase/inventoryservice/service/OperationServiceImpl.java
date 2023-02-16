@@ -107,7 +107,9 @@ public class OperationServiceImpl implements OperationService  {
         meta.setCreateOperationCount(operations.getCreate());
         meta.setUpdateOperationCount(operations.getUpdate());
         meta.setDeleteOperationCount(operations.getDelete());
-        meta.setNumSlots(numSlots);
+        if (numSlots != null) {
+            meta.setNumSlots(numSlots);
+        }
 
         if (operationRepository.updateMeta(operation, meta) == 0) {
             log.warn("Failed to store OperationMeta {} for Operation _id - {}", meta, operation.getId());
