@@ -164,7 +164,7 @@ class SteamClientTest {
     }
 
     @Test
-    void willThrowWheNoItems() {
+    void willThrowWhenNoItems() {
         // given
         String responseBody = """
                 {
