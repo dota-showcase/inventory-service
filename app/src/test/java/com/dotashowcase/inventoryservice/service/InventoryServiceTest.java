@@ -6,6 +6,7 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
+import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
@@ -187,14 +188,113 @@ class InventoryServiceTest {
     }
 
     @Test
-    void update() {
+    void canUpdate() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        Operation prevOperation = new Operation();
+        prevOperation.setSteamId(steamId);
+        prevOperation.setType(Operation.Type.C);
+        prevOperation.setVersion(1);
+        prevOperation.setMeta(new OperationMeta());
+
+        Operation currentOperation = new Operation();
+        currentOperation.setSteamId(steamId);
+        currentOperation.setType(Operation.Type.U);
+        currentOperation.setVersion(2);
+        currentOperation.setMeta(new OperationMeta());
+
+        UserInventoryResponseDTO inventoryResponseDTO = new UserInventoryResponseDTO();
+        inventoryResponseDTO.setStatus(1);
+        inventoryResponseDTO.setNumberBackpackSlots(1000);
+        ItemDTO itemDTO1 = new ItemDTO();
+        itemDTO1.setId(100L);
+        itemDTO1.setOriginal_id(100L);
+        itemDTO1.setDefindex(300);
+        itemDTO1.setLevel((byte) 1);
+        itemDTO1.setQuantity(1);
+        itemDTO1.setQuality((byte) 1);
+        itemDTO1.setInventory(1000L);
+
+        inventoryResponseDTO.setItems(List.of(itemDTO1));
+
+        InventoryItem inventoryItem1 = new InventoryItem();
+        inventoryItem1.setItemId(100L);
+        inventoryItem1.setSteamId(steamId);
+        inventoryItem1.setOriginalId(100L);
+        inventoryItem1.setDefIndex(300);
+        inventoryItem1.setLevel((byte)1);
+        inventoryItem1.setQuantity(1);
+        inventoryItem1.setQuality((byte)1);
+        inventoryItem1.setInventoryToken(1000L);
+
+        OperationCountDTO operationCountDTO = new OperationCountDTO(1, 0, 0, 1);
+
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
+        when(operationService.getLatest(inventory)).thenReturn(prevOperation);
+        when(steamClient.fetchUserInventory(steamId)).thenReturn(inventoryResponseDTO);
+        when(operationService.create(inventory, Operation.Type.U, prevOperation)).thenReturn(currentOperation);
+        when(inventoryItemService.sync(inventory, currentOperation, inventoryResponseDTO.getItems()))
+                .thenReturn(operationCountDTO);
+
+        // when
+        underTest.update(steamId);
+
+        // then
+        verify(steamClient).fetchUserInventory(steamId);
+        verify(operationService).create(inventory, Operation.Type.U, prevOperation);
+        verify(inventoryItemService).sync(inventory, currentOperation, inventoryResponseDTO.getItems());
+        verify(operationService).createAndSaveMeta(
+                currentOperation,
+                operationCountDTO,
+                1,
+                inventoryResponseDTO.getNumberBackpackSlots()
+        );
     }
 
     @Test
-    void delete() {
+    void willThrowWhenUpdateNotExistingInventory() {
+        // given
+        Long steamId = 100000000000L;
+
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(null);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.update(steamId))
+                .isInstanceOf(InventoryNotFoundException.class);
     }
 
     @Test
-    void findInventory() {
+    void willThrowWhenUpdateInventoryNoPreviousOperation() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
+        when(operationService.getLatest(inventory)).thenReturn(null);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.update(steamId))
+                .isInstanceOf(InventoryException.class)
+                .hasMessageContaining("Cannot find Inventory Operation resource");
+    }
+
+    @Test
+    void canDelete() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
+
+        // when
+        underTest.delete(steamId);
+
+        // then
+        verify(inventoryRepository).delete(inventory);
+        verify(operationService).delete(inventory);
+        verify(inventoryItemService).delete(inventory);
     }
 }
