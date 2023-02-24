@@ -27,11 +27,15 @@ jobs:
         java-version: '17'
         distribution: 'corretto'
         cache: maven
+        
+    - uses: actions/checkout@master
+    - name: copy file
+      uses: canastro/copy-file-action@master
+      with:
+        source: "app/src/main/resources/environment.properties.example"
+        target: "app/src/main/resources/environment.properties" 
+      
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-      working-directory: app
-
-    - name: Test with Maven
-      run: mvn test
       working-directory: app
 
