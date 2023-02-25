@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.*;
 
 import java.util.List;
@@ -27,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(MongoTestConfig.class)
 class InventoryItemServiceTest {
 
     @Mock
@@ -46,7 +49,7 @@ class InventoryItemServiceTest {
     }
 
     @Test
-    void canGet() {
+    void itShouldGetInventoryItems() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -113,7 +116,7 @@ class InventoryItemServiceTest {
     }
 
     @Test
-    void canGetPage() {
+    void itShouldGetPageWithInventoryItems() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -191,7 +194,7 @@ class InventoryItemServiceTest {
     }
 
     @Test
-    void canCreate() {
+    void itShouldCreateInventoryItems() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -246,7 +249,7 @@ class InventoryItemServiceTest {
     }
 
     @Test
-    void canDelete() {
+    void itShouldDeleteInventoryItems() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);

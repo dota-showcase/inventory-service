@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.annotation.Import;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(MongoTestConfig.class)
 class InventoryItemChangesServiceTest {
 
     @Mock
@@ -37,7 +40,7 @@ class InventoryItemChangesServiceTest {
     }
 
     @Test
-    void canGetByVersion() {
+    void itShouldGetByVersion() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -129,12 +132,12 @@ class InventoryItemChangesServiceTest {
     }
 
     @Test
-    void canGetAllVersions() {
+    void itShouldGetAllVersions() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
         Integer version1 = 1;
-        Integer version2 = 1;
+        Integer version2 = 2;
 
         Operation operation1 = new Operation();
         operation1.setId(new ObjectId());

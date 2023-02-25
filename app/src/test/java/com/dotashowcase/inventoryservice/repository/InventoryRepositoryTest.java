@@ -1,23 +1,22 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.context.annotation.Import;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @DataMongoTest
+@Import(MongoTestConfig.class)
 class InventoryRepositoryTest {
 
     @Autowired
-    InventoryRepository underTest;
-
-    @BeforeEach
-    void setUp() {
-    }
+    private InventoryRepository underTest;
 
     @AfterEach
     void tearDown() {

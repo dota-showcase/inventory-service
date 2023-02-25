@@ -1,10 +1,5 @@
 version: "3.8"
 
-networks:
-  inventory-network:
-    name: inventory_network
-    driver: bridge
-
 services:
   inventory-service-mongodb:
     container_name: inventory-service-mongodb
@@ -19,33 +14,3 @@ services:
       - MONGO_INITDB_DATABASE=$MONGODB_DB_NAME
     ports:
       - "27017:27017"
-    networks:
-      - inventory-network
-
-  inventory-service:
-    container_name: inventory-service
-    build: ./app
-    working_dir: /app
-    restart: on-failure
-    env_file: ./.env
-    environment:
-      SPRING_APPLICATION_JSON: '{
-          "spring.profiles.active": "$APP_ENV",
-          "spring.application.name": "$APP_NAME",
-          "spring.data.mongodb.authentication-database": "admin",
-          "spring.data.mongodb.username": "$MONGODB_ROOT_USER_NAME",
-          "spring.data.mongodb.password": "$MONGODB_ROOT_USER_PASSWORD",
-          "spring.data.mongodb.database": "$MONGODB_DB_NAME",
-          "spring.data.mongodb.host": "$MONGODB_HOST",
-          "spring.data.mongodb.port": "$MONGODB_PORT"
-        }'
-    ports:
-      - $SPRING_LOCAL_PORT:$SPRING_DOCKER_PORT
-    volumes:
-      - ./app:/app
-      - ~/.m2:/root/.m2
-    command: mvn clean spring-boot:run
-    networks:
-      - inventory-network
-    depends_on:
-      - inventory-service-mongodb

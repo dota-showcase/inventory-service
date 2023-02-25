@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
@@ -21,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.annotation.Import;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@Import(MongoTestConfig.class)
 class InventoryItemSyncTest {
 
     @Mock
@@ -49,7 +52,7 @@ class InventoryItemSyncTest {
     }
 
     @Test
-    void canWhenNoInventoryItems() {
+    void itShoudSyncWhenNoInventoryItems() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -130,7 +133,7 @@ class InventoryItemSyncTest {
     }
 
     @Test
-    void canSkipTheSameInventoryItems() {
+    void itShouldSyncSkipTheSameInventoryItems() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -248,7 +251,7 @@ class InventoryItemSyncTest {
     }
 
     @Test
-    void canMarkInventoryItemsAsDeleted() {
+    void itShouldMarkInventoryItemsAsDeleted() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -350,7 +353,7 @@ class InventoryItemSyncTest {
     }
 
     @Test
-    void canMarkInventoryItemsAsUpdated() {
+    void itShouldMarkInventoryItemsAsUpdated() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -478,7 +481,7 @@ class InventoryItemSyncTest {
     }
 
     @Test
-    void canSync() {
+    void itShouldSync() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);

@@ -43,7 +43,7 @@ class SteamClientTest {
     }
 
     @Test
-    void canFetchUserInventory() {
+    void itShouldFetchUserInventory() {
         // given
         String responseBody = """
                 {

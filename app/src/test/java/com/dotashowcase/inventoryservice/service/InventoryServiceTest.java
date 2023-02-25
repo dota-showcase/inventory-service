@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(MongoTestConfig.class)
 class InventoryServiceTest {
 
     @Mock
@@ -56,7 +59,7 @@ class InventoryServiceTest {
     }
 
     @Test
-    void canGetAllWithSort() {
+    void itShouldGetAllWithSort() {
         // given
         String sortBy = "-steamId";
 
@@ -72,7 +75,7 @@ class InventoryServiceTest {
     }
 
     @Test
-    void canGetAllWithNoSort() {
+    void itShouldGetAllWithNoSort() {
         // given
         // when
         underTest.getAll(null);
@@ -84,7 +87,7 @@ class InventoryServiceTest {
     }
 
     @Test
-    void canGetBySteamId() {
+    void itShouldGetBySteamId() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -114,7 +117,7 @@ class InventoryServiceTest {
     }
 
     @Test
-    void canCreate() {
+    void itShouldCreateInventory() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -188,7 +191,7 @@ class InventoryServiceTest {
     }
 
     @Test
-    void canUpdate() {
+    void itShouldUpdateInventory() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -283,7 +286,7 @@ class InventoryServiceTest {
     }
 
     @Test
-    void canDelete() {
+    void itShouldDeleteInventory() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);

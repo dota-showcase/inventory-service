@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
@@ -13,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.context.annotation.Import;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.*;
 
 @DataMongoTest
 @ExtendWith(MockitoExtension.class)
+@Import(MongoTestConfig.class)
 class OperationServiceTest {
 
     @Mock
@@ -37,7 +40,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canGetAll() {
+    void itShouldGetAllOperations() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -57,7 +60,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canGetAllByIds() {
+    void itShouldGetAllOperationsByIds() {
         // given
         Long steamId1 = 100000000000L;
         Long steamId2 = 100000000001L;
@@ -108,7 +111,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canGetLatest() {
+    void itShouldGetLatestOperation() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -124,7 +127,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canGetByVersionLatest() {
+    void itShouldGetLatestOperationByVersion() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -150,7 +153,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canGetByVersion() {
+    void itShouldGetOperationByVersion() {
         // given
         Long steamId = 100000000000L;
         Integer version = 1;
@@ -204,7 +207,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canCreateOnlyByInventory() {
+    void itShouldCreateOperationOnlyByInventory() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -229,7 +232,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canCreateWithInventoryAndType() {
+    void itShouldCreateOperationByInventoryAndType() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -255,7 +258,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canCreateWithAll() {
+    void itShouldCreateOperationByAll() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -288,7 +291,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canCreateAndSaveMeta() {
+    void itShouldCreateAndSaveMeta() {
         // given
         Long steamId = 100000000000L;
         int version = 2;
@@ -340,7 +343,7 @@ class OperationServiceTest {
     }
 
     @Test
-    void canDelete() {
+    void itShouldDeleteOperation() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);

@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service.result.mapper;
 
+import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
@@ -7,12 +8,14 @@ import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.*;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Import(MongoTestConfig.class)
 class PageMapperTest {
 
     private InventoryItemServiceResultMapper inventoryItemServiceResultMapper;
@@ -26,7 +29,7 @@ class PageMapperTest {
     }
 
     @Test
-    void catGetPageResult() {
+    void itShouldGetPageResult() {
         // given
         Long steamId1 = 100000000000L;
 

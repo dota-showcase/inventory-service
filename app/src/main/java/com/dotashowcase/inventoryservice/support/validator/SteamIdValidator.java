@@ -1,7 +1,7 @@
 package com.dotashowcase.inventoryservice.support.validator;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class SteamIdValidator implements ConstraintValidator<SteamIdConstraint, Long> {
 

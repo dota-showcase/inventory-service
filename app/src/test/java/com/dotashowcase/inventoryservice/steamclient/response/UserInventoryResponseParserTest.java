@@ -18,7 +18,7 @@ class UserInventoryResponseParserTest {
     }
 
     @Test
-    void canParseNormalResponse() {
+    void itShouldParseNormalResponse() {
         // given
         String responseBody = """
                 {
@@ -213,7 +213,7 @@ class UserInventoryResponseParserTest {
     }
 
     @Test
-    void canParseWhenNoStatus() {
+    void itShouldParseWhenNoStatus() {
         // given
         String responseBody = """
                 {
@@ -235,7 +235,7 @@ class UserInventoryResponseParserTest {
     }
 
     @Test
-    void canParseWhenNoSlots() {
+    void itShouldParseWhenNoSlots() {
         // given
         String responseBody = """
                 {
@@ -257,7 +257,7 @@ class UserInventoryResponseParserTest {
     }
 
     @Test
-    void canParseWhenNoItems() {
+    void itShouldParseWhenNoItems() {
         // given
         String responseBody = """
                 {

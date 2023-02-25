@@ -7,8 +7,9 @@ import com.dotashowcase.inventoryservice.steamclient.response.UserInventoryRespo
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.exception.BadResponseBodyException;
 
-import org.apache.http.client.utils.URIBuilder;
+//import org.apache.http.client.utils.URIBuilder;
 
+import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;

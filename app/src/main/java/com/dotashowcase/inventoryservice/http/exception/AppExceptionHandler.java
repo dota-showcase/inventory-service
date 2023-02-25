@@ -5,6 +5,9 @@ import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimiterException;
 import com.dotashowcase.inventoryservice.steamclient.exception.BadRequestException;
 import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
 import com.dotashowcase.inventoryservice.steamclient.exception.SteamException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -19,9 +22,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
@@ -31,9 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
-/**
- * Handles Steam Client exceptions
- */
 @ControllerAdvice
 public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 

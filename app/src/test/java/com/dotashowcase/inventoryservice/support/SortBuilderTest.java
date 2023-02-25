@@ -16,7 +16,7 @@ class SortBuilderTest {
     }
 
     @Test
-    void canBuildFromRequest() {
+    void itShouldBuildFromRequest() {
         // given
         String paramName1 = null;
         String paramName2 = "a";
