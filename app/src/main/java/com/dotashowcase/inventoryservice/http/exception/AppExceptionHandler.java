@@ -38,13 +38,6 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final String LOG_MESSAGE_TEMPLATE = "Body '{}'";
 
-//    @ExceptionHandler(SteamClientException.class)
-//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-//    @ResponseBody
-//    public Map<String, Object> handleSteamClientException(final SteamClientException ex, WebRequest request) {
-//        return getExceptionBody(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
-
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     @ResponseBody

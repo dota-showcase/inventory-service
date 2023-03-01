@@ -7,6 +7,10 @@ import com.dotashowcase.inventoryservice.service.InventoryService;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 import com.dotashowcase.inventoryservice.support.validator.SteamIdConstraint;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "inventory", description = "")
 @Validated
 @RestController
 @RequestMapping("api/v1/")
@@ -28,6 +33,11 @@ public class InventoryController {
     @Autowired
     private RateLimitHandler handler;
 
+    @Operation(summary = "foo", description = "bar")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Invalid ID supplied"),
+            @ApiResponse(responseCode = "404", description = "Customer not found")
+    })
     @GetMapping("inventories/")
     public List<InventoryWithOperationsDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
         return inventoryService.getAll(sort);

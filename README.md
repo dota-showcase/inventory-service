@@ -1,6 +1,6 @@
 # Dota Showcase - Inventory Service
 
-REST API service to store and track changes of Steam user's Dota 2 inventory items.
+REST API service to store and track changes of steam user's dota 2 inventory items.
 
 ## Features
 
@@ -12,6 +12,7 @@ REST API service to store and track changes of Steam user's Dota 2 inventory ite
 ### Prerequisites
 
 - Java 17
+- Apache Maven
 - MongoDB 5.0
 
 ### Installation
@@ -31,3 +32,11 @@ REST API service to store and track changes of Steam user's Dota 2 inventory ite
     ```bash
     docker compose -f docker-compose.prod.yml up -d
     ```
+
+## Resources
+
+- [Steam API - GetPlayerItems](https://wiki.teamfortress.com/wiki/WebAPI/GetPlayerItems)
+
+## License
+
+The GNU General Public License v3.0. Please see [License File](LICENSE) for more information.

@@ -10,6 +10,7 @@ import com.dotashowcase.inventoryservice.service.result.dto.InventoryChangesDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.support.validator.SteamIdConstraint;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Tag(name = "inventory-item", description = "the inventory item API")
 @Validated
 @RestController
 @RequestMapping("api/v1/")
