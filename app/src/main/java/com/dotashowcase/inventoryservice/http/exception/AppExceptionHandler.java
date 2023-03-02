@@ -1,5 +1,8 @@
 package com.dotashowcase.inventoryservice.http.exception;
 
+import com.dotashowcase.inventoryservice.http.exception.response.ErrorResponse;
+import com.dotashowcase.inventoryservice.http.exception.response.SteamErrorResponse;
+import com.dotashowcase.inventoryservice.http.exception.response.ValidationErrorResponse;
 import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
 import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimiterException;
 import com.dotashowcase.inventoryservice.steamclient.exception.BadRequestException;
@@ -26,9 +29,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.StreamSupport;
 
 @ControllerAdvice
@@ -51,24 +52,18 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
             cause = cause.getCause();
         }
 
-        final Map<String, Object> body = getExceptionBody(
-                ((ServletWebRequest)request).getRequest().getRequestURI(),
-                HttpStatus.UNPROCESSABLE_ENTITY,
+        final ErrorResponse errorResponse = getValidationErrorResponse(
+                ((ServletWebRequest) request).getRequest().getRequestURI(),
                 ex.getName() + ": " + cause.getMessage()
         );
 
-        return new ResponseEntity<>(body, HttpStatus.UNPROCESSABLE_ENTITY);
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     @ResponseBody
     ResponseEntity<Object> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
-        final Map<String, Object> body = getExceptionBody(
-                ((ServletWebRequest)request).getRequest().getRequestURI(),
-                HttpStatus.UNPROCESSABLE_ENTITY,
-                "Validation failed"
-        );
 
         List<String> errors = new ArrayList<>();
         for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
@@ -81,48 +76,52 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
             errors.add(paramName + ": " + violation.getMessage());
         }
 
-        body.put("validation", errors);
+        final ErrorResponse errorResponse = getValidationErrorResponse(
+                ((ServletWebRequest) request).getRequest().getRequestURI(),
+                "Validation failed",
+                errors
+        );
 
-        return new ResponseEntity<>(body, HttpStatus.UNPROCESSABLE_ENTITY);
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(SteamException.class)
     @ResponseBody
-    public Map<String, Object> handleSteamException(final SteamException ex, HttpServletRequest request) {
-        final Map<String, Object> steamBody = new LinkedHashMap<>();
+    public SteamErrorResponse handleSteamException(final SteamException ex, HttpServletRequest request) {
+        SteamErrorResponse.SteamErrorDetail steamErrorDetail = new SteamErrorResponse.SteamErrorDetail();
 
         HttpStatus steamHttpStatus = HttpStatus.BAD_REQUEST;
         if (ex instanceof BadRequestException) {
             HttpStatus resolvedHttpStatus = HttpStatus.resolve(((BadRequestException) ex).getSteamHttpStatusCode());
             steamHttpStatus = resolvedHttpStatus != null ? resolvedHttpStatus : HttpStatus.BAD_REQUEST;
 
-            steamBody.put("type", "Steam Server Error");
-            steamBody.put("status", steamHttpStatus.value());
-            steamBody.put("error", steamHttpStatus.getReasonPhrase());
-            steamBody.put("message", ((BadRequestException) ex).getSteamHttpMessage());
+            steamErrorDetail.setType("Steam Server Error");
+            steamErrorDetail.setStatus(steamHttpStatus.value());
+            steamErrorDetail.setError(steamHttpStatus.getReasonPhrase());
+            steamErrorDetail.setMessage(((BadRequestException) ex).getSteamHttpMessage());
         } else if (ex instanceof InventoryStatusException) {
-            steamBody.put("type", "Inventory Error");
-            steamBody.put("status", ((InventoryStatusException) ex).getSteamInnerStatusCode());
-            steamBody.put("error", ((InventoryStatusException) ex).getSteamInnerMessage());
-            steamBody.put("message", "Steam responded with a description of the inventory request error");
+
+            steamErrorDetail.setType("Inventory Error");
+            steamErrorDetail.setStatus(((InventoryStatusException) ex).getSteamInnerStatusCode());
+            steamErrorDetail.setError(((InventoryStatusException) ex).getSteamInnerMessage());
+            steamErrorDetail.setMessage("Steam responded with a description of the inventory request error");
         }
 
-        final Map<String, Object> body = getExceptionBody(
+        final SteamErrorResponse steamErrorResponse = getSteamErrorResponse(
                 request.getRequestURI(),
                 steamHttpStatus,
-                ex.getMessage()
+                ex.getMessage(),
+                steamErrorDetail
         );
 
-        body.put("steam", steamBody);
+        log.error(LOG_MESSAGE_TEMPLATE, steamErrorResponse);
 
-        log.error(LOG_MESSAGE_TEMPLATE, body);
-
-        return body;
+        return steamErrorResponse;
     }
 
     @ExceptionHandler({RateLimiterException.class})
-    public ResponseEntity<Map<String, Object>> handleAllExceptions(RateLimiterException ex, HttpServletRequest request) {
-        final Map<String, Object> body = getExceptionBody(
+    public ResponseEntity<ErrorResponse> handleAllExceptions(RateLimiterException ex, HttpServletRequest request) {
+        final ErrorResponse errorResponse = getErrorResponse(
                 request.getRequestURI(),
                 HttpStatus.TOO_MANY_REQUESTS,
                 ex.getMessage()
@@ -131,7 +130,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
         HttpHeaders headers = new HttpHeaders();
         headers.add(RateLimitHandler.HEADER_RETRY_AFTER, String.valueOf(ex.getWaitForRefill()));
 
-        return new ResponseEntity<>(body, headers, HttpStatus.TOO_MANY_REQUESTS);
+        return new ResponseEntity<>(errorResponse, headers, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     @ExceptionHandler({Exception.class})
@@ -145,9 +144,9 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 ? responseStatus.reason().length() > 0 ? responseStatus.reason() : ex.getMessage()
                 : ex.getMessage();
 
-        Map<String, Object> body = getExceptionBody(request.getRequestURI(), status, message);
+        ErrorResponse errorResponse = getErrorResponse(request.getRequestURI(), status, message);
 
-        log.error(LOG_MESSAGE_TEMPLATE, body);
+        log.error(LOG_MESSAGE_TEMPLATE, errorResponse);
 
         if (status.value() >= HttpStatus.INTERNAL_SERVER_ERROR.value()) {
             StringWriter sw = new StringWriter();
@@ -157,19 +156,59 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
             log.error(sw.toString());
         }
 
-        return new ResponseEntity<>(body, status);
+        return new ResponseEntity<>(errorResponse, status);
     }
 
-    private Map<String, Object> getExceptionBody(final String requestURI,
-                                                 final HttpStatus status,
-                                                 final String message) {
-        final Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", Instant.now());
-        body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
-        body.put("message", message);
-        body.put("path", requestURI);
+    private ErrorResponse getErrorResponse(final String requestURI,
+                                           final HttpStatus status,
+                                           final String message) {
+        return new ErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                requestURI
+        );
+    }
 
-        return body;
+    private ValidationErrorResponse getValidationErrorResponse(final String requestURI, final String message) {
+        HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+
+        return new ValidationErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                requestURI
+        );
+    }
+
+    private ValidationErrorResponse getValidationErrorResponse(final String requestURI,
+                                                               final String message,
+                                                               List<String> errors) {
+        HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+
+        return new ValidationErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                requestURI,
+                errors
+        );
+    }
+
+    private SteamErrorResponse getSteamErrorResponse(final String requestURI,
+                                                     final HttpStatus status,
+                                                     final String message,
+                                                     SteamErrorResponse.SteamErrorDetail steamErrorDetail) {
+        return new SteamErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                requestURI,
+                steamErrorDetail
+        );
     }
 }

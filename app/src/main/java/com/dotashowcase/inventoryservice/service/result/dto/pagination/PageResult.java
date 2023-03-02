@@ -1,25 +1,27 @@
 package com.dotashowcase.inventoryservice.service.result.dto.pagination;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
 
+@Schema(title="PageResult")
 @Data
 public class PageResult<Type> {
 
-    List<Type> data;
+    private List<Type> data;
 
-    Pagination pagination;
+    private Pagination pagination;
 
     @Data
     public static class Pagination {
 
-        Integer currentPage;
+        private Integer currentPage;
 
-        Integer totalPages;
+        private Integer totalPages;
 
-        Integer itemsOnPage;
+        private Integer itemsOnPage;
 
-        Long totalItems;
+        private Long totalItems;
     }
 }

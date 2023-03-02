@@ -7,13 +7,35 @@ REST API service to store and track changes of steam user's dota 2 inventory ite
 * Inventory history - created, updated, deleted items
 * Rate limiter
 
+## API Docs
+
+Swagger OpenAPI 3 is available by path:
+
+* UI:   `host:port/swagger-ui.html`
+* JSON: `host:port/api-docs`
+
+### Inventory Endpoints
+
+* Show Inventories: `GET /api/v1/inventories/`
+* Create an Inventory (load items from steam): `POST /api/v1/inventories/:steamid/`
+* Show an Inventory: `GET /api/v1/inventories/:steamid/`
+* Update an Inventory (reload items from steam): `PUT /api/v1/inventories/:steamid/`
+* Delete an Inventory: `DELETE /api/v1/inventories/:steamid/`
+
+### Inventory Items Endpoints
+
+* Show Inventory Items: `GET /api/v1/inventories/:steamid/items/`
+* Show Inventory Items (pagination): `GET /api/v1/inventories/:steamid/items/page/`
+* Show Inventory Items changes: `GET /api/v1/inventories/:steamid/changes/`
+* Show Inventory Items changes (for a version): `GET /api/v1/inventories/:steamid/changes/:version/`
+
 ## Getting Started
 
 ### Prerequisites
 
-- Java 17
-- Apache Maven
-- MongoDB 5.0
+* Java 17
+* Apache Maven
+* MongoDB 5.0
 
 ### Installation
 

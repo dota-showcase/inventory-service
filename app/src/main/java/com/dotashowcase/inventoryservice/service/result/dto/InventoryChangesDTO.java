@@ -1,18 +1,20 @@
 package com.dotashowcase.inventoryservice.service.result.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Schema(title="InventoryChanges")
 @Data
 public class InventoryChangesDTO {
 
-    List<InventoryItemDTO> create;
+    private List<InventoryItemDTO> create;
 
-    List<InventoryItemDTO> update;
+    private List<InventoryItemDTO> update;
 
-    List<InventoryItemDTO> delete;
+    private List<InventoryItemDTO> delete;
 
     public InventoryChangesDTO() {
         this.create = new ArrayList<>();
