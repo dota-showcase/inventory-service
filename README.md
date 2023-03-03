@@ -6,6 +6,7 @@ REST API service to store and track changes of steam user's dota 2 inventory ite
 
 * Inventory history - created, updated, deleted items
 * Rate limiter
+* Unit tests
 
 ## API Docs
 
@@ -54,6 +55,29 @@ Swagger OpenAPI 3 is available by path:
     ```bash
     docker compose -f docker-compose.prod.yml up -d
     ```
+
+## Data Model
+
+Conceptual entity relation diagram (Barker's system):
+
+![](entity-relation-diagram.png)
+
+## Back-of-the-envelope Estimations
+
+###  Storage Space
+
+Assumptions:
+
+* Average inventory item size - 500 bytes.
+* Average user has 7000 inventory items.
+* Users update inventory once per day. Each day it increased by some small coefficient (0.05).
+* Data is stored for a year.
+
+Estimate:
+
+* User inventory size: 500 * 7000 = 3.5 MB
+* User inventory size for a year: 3.5 MB + (365 * 0.05 * 3.5) = ~70 MB
+* **Storage for 100K users: 70MB * 1000000 = 7 GB**
 
 ## Resources
 
