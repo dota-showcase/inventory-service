@@ -34,9 +34,9 @@ Swagger OpenAPI 3 is available by path:
 
 ### Prerequisites
 
-* Java 17
+* Java 21
 * Apache Maven
-* MongoDB 5.0
+* MongoDB 8.0
 
 ### Installation
 
