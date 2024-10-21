@@ -20,7 +20,8 @@ public class InventoryItemServiceResultMapper {
         inventoryItemDTO.setLevel(inventoryItem.getLevel());
         inventoryItemDTO.setQuality(inventoryItem.getQuality());
         inventoryItemDTO.setInventoryToken(inventoryItem.getInventoryToken());
-        inventoryItemDTO.setQuantity(inventoryItem.getQuantity());
+        inventoryItemDTO.setPosition(inventoryItem.getInventoryPosition());
+        inventoryItemDTO.setUses(inventoryItem.getQuantity());
         inventoryItemDTO.setIsTradable(inventoryItem.getIsTradable());
         inventoryItemDTO.setIsCraftable(inventoryItem.getIsCraftable());
         inventoryItemDTO.setStyle(inventoryItem.getStyle());

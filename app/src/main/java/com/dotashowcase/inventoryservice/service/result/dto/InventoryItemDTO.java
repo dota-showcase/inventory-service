@@ -21,7 +21,9 @@ public class InventoryItemDTO {
 
     private Long inventoryToken;
 
-    private Integer quantity;
+    private Integer position;
+
+    private Integer uses;
 
     private Boolean isTradable;
 

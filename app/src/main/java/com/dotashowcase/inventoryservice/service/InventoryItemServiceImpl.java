@@ -111,11 +111,11 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         Long steamId = inventory.getSteamId();
 
         for (InventoryItem steamInventoryItem : steamInventoryItems) {
-            Long id = steamInventoryItem.getItemId();
-            itemIdsToRemove.remove(id);
+            Long itemId = steamInventoryItem.getItemId();
+            itemIdsToRemove.remove(itemId);
 
-            if (inventoryItemsById.containsKey(id)) {
-                InventoryItem storedInventoryItem = inventoryItemsById.get(id);
+            if (inventoryItemsById.containsKey(itemId)) {
+                InventoryItem storedInventoryItem = inventoryItemsById.get(itemId);
 
                 if (!Objects.equals(steamInventoryItem, storedInventoryItem)) {
                     itemIdsToUpdate.add(storedInventoryItem.getId());
@@ -133,14 +133,14 @@ public class InventoryItemServiceImpl implements InventoryItemService {
             itemsToCreate.add(steamInventoryItem);
         }
 
-        if (itemIdsToRemove.size() > 0) {
+        if (!itemIdsToRemove.isEmpty()) {
             Set<ObjectId> itemIdsToHide = new HashSet<>();
 
             for (Long itemId : itemIdsToRemove) {
                 itemIdsToHide.add(inventoryItemsById.get(itemId).getId());
             }
 
-            deleteCount += inventoryItemRepository.updateAll(
+            deleteCount += (int)inventoryItemRepository.updateAll(
                     itemIdsToHide,
                     new ArrayList<>(List.of(
                         new AbstractMap.SimpleImmutableEntry<>("_isA", false),
@@ -151,7 +151,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 //            operations += inventoryItemRepository.removeAll(inventory, itemIdsToRemove);
         }
 
-        updateCount += inventoryItemRepository.updateAll(
+        updateCount += (int)inventoryItemRepository.updateAll(
                 itemIdsToUpdate,
                 new ArrayList<>(List.of(
                     new AbstractMap.SimpleImmutableEntry<>("_isA", false)

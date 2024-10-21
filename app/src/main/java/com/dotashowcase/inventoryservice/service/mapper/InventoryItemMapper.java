@@ -31,6 +31,7 @@ public class InventoryItemMapper {
         inventoryItem.setDefIndex(item.getDefindex());
         inventoryItem.setLevel(item.getLevel());
         inventoryItem.setInventoryToken(item.getInventory());
+        inventoryItem.setInventoryPosition(getInventoryPosition(item.getInventory()));
         inventoryItem.setQuantity(item.getQuantity());
         inventoryItem.setQuality(item.getQuality());
         inventoryItem.setIsTradable(item.getFlag_cannot_craft());
@@ -97,5 +98,14 @@ public class InventoryItemMapper {
         accountInfo.setPersonalName(accountInfoDTO.getPersonaname());
 
         return accountInfo;
+    }
+
+    private int getInventoryPosition(Long inventoryToken) {
+        if (inventoryToken == null) {
+            return 0;
+        }
+
+        // lower two bytes
+        return (int) (inventoryToken & 0xFFFF);
     }
 }

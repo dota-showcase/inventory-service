@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Docs:
- * https://wiki.teamfortress.com/wiki/WebAPI/GetPlayerItems
+ * <a href="https://wiki.teamfortress.com/wiki/WebAPI/GetPlayerItems">...</a>
  */
 @Component
 public class InventoryStatusHandler {

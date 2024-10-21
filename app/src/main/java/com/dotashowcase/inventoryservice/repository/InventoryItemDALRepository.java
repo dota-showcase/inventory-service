@@ -87,7 +87,7 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     public long updateAll(Set<ObjectId> ids, List<AbstractMap.SimpleImmutableEntry<String, Object>> updateEntry) {
         Update update = new Update();
 
-        if (ids.size() == 0) {
+        if (ids.isEmpty()) {
             return 0L;
         }
 

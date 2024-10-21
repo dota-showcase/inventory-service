@@ -59,7 +59,7 @@ public class SteamClient {
             response = restTemplate.exchange(uri, HttpMethod.GET, null, String.class);
         } catch (RestClientResponseException restClientResponseException) {
             throw BadRequestException.steamApiError(
-                    restClientResponseException.getRawStatusCode(),
+                    restClientResponseException.getStatusCode().value(),
                     restClientResponseException.getMessage()
             );
         }

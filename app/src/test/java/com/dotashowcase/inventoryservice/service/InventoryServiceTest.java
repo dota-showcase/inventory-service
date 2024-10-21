@@ -152,6 +152,7 @@ class InventoryServiceTest {
         inventoryItem1.setQuantity(1);
         inventoryItem1.setQuality((byte)1);
         inventoryItem1.setInventoryToken(1000L);
+        inventoryItem1.setInventoryPosition(1000);
 
         when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(null);
         when(steamClient.fetchUserInventory(steamId)).thenReturn(inventoryResponseDTO);
@@ -231,6 +232,7 @@ class InventoryServiceTest {
         inventoryItem1.setQuantity(1);
         inventoryItem1.setQuality((byte)1);
         inventoryItem1.setInventoryToken(1000L);
+        inventoryItem1.setInventoryPosition(1000);
 
         OperationCountDTO operationCountDTO = new OperationCountDTO(1, 0, 0, 1);
 

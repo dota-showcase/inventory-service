@@ -83,6 +83,16 @@ Estimate:
 
 - [Steam API - GetPlayerItems](https://wiki.teamfortress.com/wiki/WebAPI/GetPlayerItems)
 
+## Issues
+
+### Run tests on linux - problem with flapdoodle embedded mongo db
+Download & install libssl1.1 latest version:
+
+```bash
+wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+ ```
+
 ## License
 
 The GNU General Public License v3.0. Please see [License File](LICENSE) for more information.

@@ -114,7 +114,7 @@ class InventoryItemSyncTest {
         underTest.sync(inventory, operation1, items);
 
         // then
-        ArgumentCaptor<Set<ObjectId>> inventoryItemUpdateArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
+        ArgumentCaptor<Set<ObjectId>> inventoryItemUpdateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
         verify(inventoryItemRepository, times(1)).updateAll(
                 inventoryItemUpdateArgumentCaptor.capture(),
                 ArgumentMatchers.anyList()
@@ -153,6 +153,7 @@ class InventoryItemSyncTest {
         inventoryItem1.setDefIndex(defIndex1);
         inventoryItem1.setLevel((byte) 1);
         inventoryItem1.setInventoryToken(1000L);
+        inventoryItem1.setInventoryPosition(1000);
         inventoryItem1.setQuantity(1);
         inventoryItem1.setQuality((byte) 1);
         inventoryItem1.setStyle((byte) 1);
@@ -172,6 +173,7 @@ class InventoryItemSyncTest {
         inventoryItem2.setDefIndex(defIndex2);
         inventoryItem2.setLevel((byte) 1);
         inventoryItem2.setInventoryToken(1000L);
+        inventoryItem2.setInventoryPosition(1000);
         inventoryItem2.setQuantity(1);
         inventoryItem2.setQuality((byte) 1);
         inventoryItem2.setStyle((byte) 1);
@@ -238,7 +240,7 @@ class InventoryItemSyncTest {
         underTest.sync(inventory, operation2, items);
 
         // then
-        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
+        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
         verify(inventoryItemRepository, times(1)).updateAll(
                 updateArgumentCaptor.capture(),
                 ArgumentMatchers.anyList()
@@ -271,6 +273,7 @@ class InventoryItemSyncTest {
         inventoryItem1.setDefIndex(defIndex1);
         inventoryItem1.setLevel((byte) 1);
         inventoryItem1.setInventoryToken(1000L);
+        inventoryItem1.setInventoryPosition(1000);
         inventoryItem1.setQuantity(1);
         inventoryItem1.setQuality((byte) 1);
         inventoryItem1.setStyle((byte) 1);
@@ -292,6 +295,7 @@ class InventoryItemSyncTest {
         inventoryItem2.setDefIndex(defIndex2);
         inventoryItem2.setLevel((byte) 1);
         inventoryItem2.setInventoryToken(1000L);
+        inventoryItem2.setInventoryPosition(1000);
         inventoryItem2.setQuantity(1);
         inventoryItem2.setQuality((byte) 1);
         inventoryItem2.setStyle((byte) 1);
@@ -337,7 +341,7 @@ class InventoryItemSyncTest {
         underTest.sync(inventory, operation2, items);
 
         // then
-        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
+        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
         verify(inventoryItemRepository, times(2)).updateAll(
                 updateArgumentCaptor.capture(),
                 ArgumentMatchers.anyList()
@@ -375,6 +379,7 @@ class InventoryItemSyncTest {
         inventoryItem1.setDefIndex(defIndex1);
         inventoryItem1.setLevel((byte) 1);
         inventoryItem1.setInventoryToken(1000L);
+        inventoryItem1.setInventoryPosition(1000);
         inventoryItem1.setQuantity(1);
         inventoryItem1.setQuality((byte) 1);
         inventoryItem1.setStyle((byte) 1);
@@ -396,6 +401,7 @@ class InventoryItemSyncTest {
         inventoryItem2.setDefIndex(defIndex2);
         inventoryItem2.setLevel((byte) 1);
         inventoryItem2.setInventoryToken(1000L);
+        inventoryItem2.setInventoryPosition(1000);
         inventoryItem2.setQuantity(1);
         inventoryItem2.setQuality((byte) 1);
         inventoryItem2.setStyle((byte) 1);
@@ -463,7 +469,7 @@ class InventoryItemSyncTest {
         underTest.sync(inventory, operation2, items);
 
         // then
-        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
+        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
         verify(inventoryItemRepository, times(1)).updateAll(
                 updateArgumentCaptor.capture(),
                 ArgumentMatchers.anyList()
@@ -505,6 +511,7 @@ class InventoryItemSyncTest {
         inventoryItem1.setDefIndex(defIndex1);
         inventoryItem1.setLevel((byte) 1);
         inventoryItem1.setInventoryToken(1000L);
+        inventoryItem1.setInventoryPosition(1000);
         inventoryItem1.setQuantity(1);
         inventoryItem1.setQuality((byte) 1);
         inventoryItem1.setStyle((byte) 1);
@@ -527,6 +534,7 @@ class InventoryItemSyncTest {
         inventoryItem2.setDefIndex(defIndex2);
         inventoryItem2.setLevel((byte) 1);
         inventoryItem2.setInventoryToken(1000L);
+        inventoryItem2.setInventoryPosition(1000);
         inventoryItem2.setQuantity(1);
         inventoryItem2.setQuality((byte) 1);
         inventoryItem2.setStyle((byte) 1);
@@ -550,6 +558,7 @@ class InventoryItemSyncTest {
         inventoryItem3.setDefIndex(defIndex3);
         inventoryItem3.setLevel((byte) 1);
         inventoryItem3.setInventoryToken(1000L);
+        inventoryItem3.setInventoryPosition(1000);
         inventoryItem3.setQuantity(1);
         inventoryItem3.setQuality((byte) 1);
         inventoryItem3.setStyle((byte) 1);
@@ -570,6 +579,7 @@ class InventoryItemSyncTest {
         inventoryItem31.setDefIndex(defIndex3);
         inventoryItem31.setLevel((byte) 1);
         inventoryItem31.setInventoryToken(1000L);
+        inventoryItem31.setInventoryPosition(1000);
         inventoryItem31.setQuantity(1);
         inventoryItem31.setQuality((byte) 1);
         inventoryItem31.setStyle((byte) 1);
@@ -663,7 +673,7 @@ class InventoryItemSyncTest {
         underTest.sync(inventory, operation2, items);
 
         // then
-        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
+        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
         verify(inventoryItemRepository, times(2)).updateAll(
                 updateArgumentCaptor.capture(),
                 ArgumentMatchers.anyList()
