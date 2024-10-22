@@ -165,4 +165,18 @@ public class InventoryServiceImpl implements InventoryService {
 
         return inventory;
     }
+
+    @Override
+    public Inventory findInventoryWithLatestOperation(Long steamId) {
+        Inventory inventory = findInventory(steamId);
+        Operation operation = operationService.getLatest(inventory);
+
+        if (operation == null) {
+            throw new InventoryException("Cannot find Inventory Operation resource");
+        }
+
+        inventory.setLatestOperation(operation);
+
+        return inventory;
+    }
 }

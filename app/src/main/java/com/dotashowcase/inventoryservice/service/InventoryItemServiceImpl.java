@@ -7,6 +7,7 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryItemServiceResultMapper;
@@ -77,6 +78,13 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     ) {
         Sort sort = sortBuilder.fromRequestParam(sortBy);
         Page<InventoryItem> inventoryItems = inventoryItemRepository.searchAll(inventory, pageable, filter, sort);
+
+        return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);
+    }
+
+    @Override
+    public PageResult<InventoryItemDTO> getPositioned(Inventory inventory, int page) {
+        Page<InventoryItem> inventoryItems = inventoryItemRepository.findPositionedPage(inventory, page);
 
         return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);
     }

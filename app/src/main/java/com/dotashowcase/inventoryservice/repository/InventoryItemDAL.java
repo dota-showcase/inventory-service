@@ -19,6 +19,8 @@ public interface InventoryItemDAL {
 
     List<InventoryItem> searchAll(Inventory inventory, InventoryItemFilter filter, Sort sort);
 
+    Page<InventoryItem> findPositionedPage(Inventory inventory, int page);
+
     List<InventoryItem> findAll(Inventory inventory);
 
     List<InventoryItem> findAll(Inventory inventory, Operation operation);

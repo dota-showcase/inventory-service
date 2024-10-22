@@ -121,6 +121,29 @@ public class InventoryItemController {
         return inventoryItemService.get(inventory, pageable, filter, sort.orElse(null));
     }
 
+    @Operation(description = "Get a paged position list of user's inventory items")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = PageResult.class)))),
+            @ApiResponse(responseCode = "404", description = "Inventory not exists", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ValidationErrorResponse.class)))
+    })
+    @GetMapping("inventories/{steamId}/items/page-positioned")
+    public PageResult<InventoryItemDTO> getPagedPositionedList(
+            @PathVariable @SteamIdConstraint Long steamId,
+            @RequestParam Optional<Integer> page
+    ) {
+        Inventory inventory = inventoryService.findInventoryWithLatestOperation(steamId);
+
+        return inventoryItemService.getPositioned(inventory, page.filter((val) -> val > 0).orElse(1));
+    }
+
     @Operation(description = "Get list of user's inventory items grouped by operations")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(

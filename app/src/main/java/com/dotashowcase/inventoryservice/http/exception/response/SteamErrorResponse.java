@@ -6,7 +6,7 @@ import java.time.Instant;
 
 public class SteamErrorResponse extends ErrorResponse {
 
-    private SteamErrorDetail steamBody;
+    private final SteamErrorDetail steamBody;
 
     public SteamErrorResponse(
             Instant timestamp,

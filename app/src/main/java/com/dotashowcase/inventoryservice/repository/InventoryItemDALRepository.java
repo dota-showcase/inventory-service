@@ -1,14 +1,13 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.config.AppConstant;
 import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -76,6 +75,30 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         query.addCriteria(Criteria.where("_oId").is(operation.getId()));
 
         return mongoTemplate.find(query, InventoryItem.class);
+    }
+
+    @Override
+    public Page<InventoryItem> findPositionedPage(Inventory inventory, int page) {
+        Query query = new Query();
+        setDefaultParams(query, inventory);
+        query.addCriteria(Criteria.where("_isA").is(true));
+
+        // 1 - [1, 13)
+        // 2 - [13, 25)
+        // 3 - [25, 37)
+        int fromPosition = ((page - 1) * AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) + 1;
+        int toPosition = fromPosition + AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE;
+
+        query.addCriteria(Criteria.where("pos").gte(fromPosition).lt(toPosition));
+        query.with(Sort.by(Sort.Direction.ASC, "pos"));
+
+        Pageable pageable = PageRequest.of(page, AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE);
+
+        return new PageImpl<>(
+                mongoTemplate.find(query, InventoryItem.class),
+                pageable,
+                inventory.getLatestOperation().getMeta().getNumSlots()
+        );
     }
 
     @Override

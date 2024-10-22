@@ -18,6 +18,8 @@ public interface InventoryItemService {
 
     PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable, InventoryItemFilter filter, String sortBy);
 
+    PageResult<InventoryItemDTO> getPositioned(Inventory inventory, int page);
+
     List<InventoryItem> create(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems);
 
     OperationCountDTO sync(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems);

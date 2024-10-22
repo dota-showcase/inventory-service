@@ -10,6 +10,8 @@ public interface InventoryService {
 
     Inventory findInventory(Long steamId);
 
+    Inventory findInventoryWithLatestOperation(Long steamId);
+
     List<InventoryWithOperationsDTO> getAll(String sortBy);
 
     InventoryWithOperationsDTO get(Long steamId);

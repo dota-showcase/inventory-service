@@ -3,6 +3,7 @@ package com.dotashowcase.inventoryservice.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @NoArgsConstructor
@@ -16,4 +17,7 @@ public class Inventory {
     public Inventory(Long steamId) {
         this.steamId = steamId;
     }
+
+    @Transient
+    private Operation latestOperation;
 }
