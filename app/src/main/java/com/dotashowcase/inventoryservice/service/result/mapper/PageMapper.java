@@ -41,7 +41,7 @@ public class PageMapper<T, R> {
         pageResult.setData(page.getContent().stream().map(mapper).toList());
 
         PageResult.Pagination pagination = new PageResult.Pagination();
-        pagination.setCurrentPage(page.getNumber());
+        pagination.setCurrentPage(page.getNumber() + 1);
         pagination.setTotalPages(page.getTotalPages());
         pagination.setItemsOnPage(page.getNumberOfElements());
         pagination.setTotalItems(page.getTotalElements());

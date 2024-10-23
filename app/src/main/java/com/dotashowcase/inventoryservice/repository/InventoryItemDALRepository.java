@@ -83,16 +83,17 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         setDefaultParams(query, inventory);
         query.addCriteria(Criteria.where("_isA").is(true));
 
-        // 1 - [1, 13)
-        // 2 - [13, 25)
-        // 3 - [25, 37)
+        // page #1 - [1, 13)
+        // page #2 - [13, 25)
+        // page #3 - [25, 37)
         int fromPosition = ((page - 1) * AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) + 1;
         int toPosition = fromPosition + AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE;
 
         query.addCriteria(Criteria.where("pos").gte(fromPosition).lt(toPosition));
         query.with(Sort.by(Sort.Direction.ASC, "pos"));
 
-        Pageable pageable = PageRequest.of(page, AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE);
+        // (page - 1) - to make compatible with PageMapper and config 'one-indexed-parameters'
+        Pageable pageable = PageRequest.of(page - 1, AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE);
 
         return new PageImpl<>(
                 mongoTemplate.find(query, InventoryItem.class),

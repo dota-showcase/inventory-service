@@ -111,7 +111,7 @@ class PageMapperTest {
         assertThat(data.get(1).getDefIndex()).isEqualTo(defIndex2);
         assertThat(data.get(2).getDefIndex()).isEqualTo(defIndex3);
 
-        assertThat(pagination.getCurrentPage()).isEqualTo(0);
+        assertThat(pagination.getCurrentPage()).isEqualTo(1);
         assertThat(pagination.getItemsOnPage()).isEqualTo(3);
         assertThat(pagination.getTotalPages()).isEqualTo(1);
         assertThat(pagination.getTotalItems()).isEqualTo(3);

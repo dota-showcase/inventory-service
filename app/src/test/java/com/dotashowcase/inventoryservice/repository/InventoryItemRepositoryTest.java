@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.config.AppConstant;
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
@@ -58,7 +59,16 @@ class InventoryItemRepositoryTest {
         operation1.setSteamId(steamId1);
         operation1.setType(Operation.Type.C);
         operation1.setVersion(1);
-        operation1.setMeta(new OperationMeta());
+
+        OperationMeta operationMeta1 = new OperationMeta();
+        operationMeta1.setResponseCount(3);
+        operationMeta1.setItemCount(3);
+        operationMeta1.setCreateOperationCount(3);
+        operationMeta1.setUpdateOperationCount(0);
+        operationMeta1.setDeleteOperationCount(0);
+        operationMeta1.setNumSlots(10120);
+
+        operation1.setMeta(operationMeta1);
         mongoTemplate.insert(operation1);
 
         Long itemId1 = 100L;
@@ -71,6 +81,7 @@ class InventoryItemRepositoryTest {
         inventoryItem1.setDefIndex(defIndex1);
         inventoryItem1.setLevel((byte)1);
         inventoryItem1.setInventoryToken(1L);
+        inventoryItem1.setInventoryPosition(1);
         inventoryItem1.setQuantity(1);
         inventoryItem1.setQuality((byte)1);
         inventoryItem1.setStyle((byte)1);
@@ -90,7 +101,8 @@ class InventoryItemRepositoryTest {
         inventoryItem2.setOriginalId(itemId2);
         inventoryItem2.setDefIndex(defIndex2);
         inventoryItem2.setLevel((byte)1);
-        inventoryItem2.setInventoryToken(1L);
+        inventoryItem2.setInventoryToken(48L);
+        inventoryItem2.setInventoryPosition(AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE);
         inventoryItem2.setQuantity(1);
         inventoryItem2.setQuality((byte)2);
         inventoryItem2.setStyle((byte)1);
@@ -110,7 +122,8 @@ class InventoryItemRepositoryTest {
         inventoryItem3.setOriginalId(itemId3);
         inventoryItem3.setDefIndex(defIndex3);
         inventoryItem3.setLevel((byte)1);
-        inventoryItem3.setInventoryToken(1L);
+        inventoryItem3.setInventoryToken(49L);
+        inventoryItem3.setInventoryPosition(AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE + 1);
         inventoryItem3.setQuantity(1);
         inventoryItem3.setStyle((byte)1);
         inventoryItem3.setCustomName("inventory item #3");
@@ -131,7 +144,8 @@ class InventoryItemRepositoryTest {
         inventoryItem4.setOriginalId(itemId2);
         inventoryItem4.setDefIndex(defIndex2);
         inventoryItem4.setLevel((byte)1);
-        inventoryItem4.setInventoryToken(1L);
+        inventoryItem4.setInventoryToken(48L);
+        inventoryItem4.setInventoryPosition(AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE);
         inventoryItem4.setQuantity(1);
         inventoryItem4.setQuality((byte)2);
         inventoryItem4.setStyle((byte)1);
@@ -190,6 +204,7 @@ class InventoryItemRepositoryTest {
         inventoryItem21.setDefIndex(defIndex21);
         inventoryItem21.setLevel((byte)1);
         inventoryItem21.setInventoryToken(1L);
+        inventoryItem21.setInventoryPosition(1);
         inventoryItem21.setQuantity(1);
         inventoryItem21.setStyle((byte)1);
         inventoryItem21.setQuality((byte)4);
@@ -529,6 +544,51 @@ class InventoryItemRepositoryTest {
                 .hasSize(3);
 
         assertThat(itemsOperationEmpty)
+                .hasSize(0);
+    }
+
+    @Test
+    void itShouldFindPositionedPage() {
+        // given
+        Long steamId1 = 100000000000L;
+        Inventory inventory = inventoryRepository.findById(steamId1).get();
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
+        query.addCriteria(Criteria.where("type").is(Operation.Type.C));
+
+        Operation operation = mongoTemplate.findOne(query, Operation.class);
+
+        inventory.setLatestOperation(operation);
+
+        // when
+
+        List<InventoryItem> itemsAll = underTest.findAll(inventory);
+
+        Page<InventoryItem> firstItemPage = underTest.findPositionedPage(inventory, 1);
+        Page<InventoryItem> secondItemPage = underTest.findPositionedPage(inventory, 2);
+        Page<InventoryItem> thirdItemPage = underTest.findPositionedPage(inventory, 3);
+
+        // then
+        assertThat(firstItemPage.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(1);
+
+        assertThat(firstItemPage.getContent())
+                .extracting("defIndex")
+                .containsSequence(201);
+
+        assertThat(secondItemPage.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(1);
+
+        assertThat(secondItemPage.getContent())
+                .extracting("defIndex")
+                .containsSequence(202);
+
+        assertThat(thirdItemPage.getContent())
                 .hasSize(0);
     }
 
