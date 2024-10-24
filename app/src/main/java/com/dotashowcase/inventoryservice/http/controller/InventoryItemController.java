@@ -144,6 +144,26 @@ public class InventoryItemController {
         return inventoryItemService.getPositioned(inventory, page.filter((val) -> val > 0).orElse(1));
     }
 
+    @Operation(description = "Get a unique list of all dota ids (defIndex) user's inventory items")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = PageResult.class)))),
+            @ApiResponse(responseCode = "404", description = "Inventory not exists", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ValidationErrorResponse.class)))
+    })
+    @GetMapping("inventories/{steamId}/items/def-indexes")
+    public List<Integer> getDefIndexes(@PathVariable @SteamIdConstraint Long steamId) {
+        Inventory inventory = inventoryService.findInventory(steamId);
+
+        return inventoryItemService.getAllDefIndexes(inventory);
+    }
+
     @Operation(description = "Get list of user's inventory items grouped by operations")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(

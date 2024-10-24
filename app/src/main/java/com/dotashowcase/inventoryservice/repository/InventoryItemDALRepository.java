@@ -103,6 +103,16 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
+    public List<Integer> findPluckedField(Inventory inventory, String fieldName) {
+        Query query = new Query();
+        setDefaultParams(query, inventory);
+        query.addCriteria(Criteria.where("_isA").is(true));
+        query.with(Sort.by(Sort.Direction.ASC, "dIdx"));
+
+        return mongoTemplate.findDistinct(query, fieldName, InventoryItem.class, Integer.class);
+    }
+
+    @Override
     public List<InventoryItem> insertAll(List<InventoryItem> inventoryItems) {
         return (List<InventoryItem>) mongoTemplate.insertAll(inventoryItems);
     }

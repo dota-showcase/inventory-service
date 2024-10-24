@@ -7,7 +7,6 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryItemServiceResultMapper;
@@ -87,6 +86,11 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         Page<InventoryItem> inventoryItems = inventoryItemRepository.findPositionedPage(inventory, page);
 
         return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);
+    }
+
+    @Override
+    public List<Integer> getAllDefIndexes(Inventory inventory) {
+        return inventoryItemRepository.findPluckedField(inventory, "defIndex");
     }
 
     @Override

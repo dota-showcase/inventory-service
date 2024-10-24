@@ -20,6 +20,8 @@ public interface InventoryItemService {
 
     PageResult<InventoryItemDTO> getPositioned(Inventory inventory, int page);
 
+    List<Integer> getAllDefIndexes(Inventory inventory);
+
     List<InventoryItem> create(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems);
 
     OperationCountDTO sync(Inventory inventory, Operation currentOperation, List<ItemDTO> responseItems);

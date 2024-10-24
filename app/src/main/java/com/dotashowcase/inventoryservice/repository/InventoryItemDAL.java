@@ -21,6 +21,8 @@ public interface InventoryItemDAL {
 
     Page<InventoryItem> findPositionedPage(Inventory inventory, int page);
 
+    List<Integer> findPluckedField(Inventory inventory, String fieldName);
+
     List<InventoryItem> findAll(Inventory inventory);
 
     List<InventoryItem> findAll(Inventory inventory, Operation operation);
