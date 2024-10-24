@@ -34,8 +34,10 @@ public class InventoryItemMapper {
         inventoryItem.setInventoryPosition(getInventoryPosition(item.getInventory()));
         inventoryItem.setQuantity(item.getQuantity());
         inventoryItem.setQuality(item.getQuality());
-        inventoryItem.setIsTradable(item.getFlag_cannot_craft());
-        inventoryItem.setIsCraftable(item.getFlag_cannot_craft());
+        // A boolean value that is true if the item cannot be traded. Assume false if not present.
+        inventoryItem.setIsTradable(item.getFlag_cannot_trade() == null || !item.getFlag_cannot_trade());
+        // A boolean value that is true if the item cannot be used in crafting. Assume false if not present.
+        inventoryItem.setIsCraftable(item.getFlag_cannot_craft() == null || !item.getFlag_cannot_craft());
         inventoryItem.setStyle(item.getStyle());
         inventoryItem.setCustomName(item.getCustom_name());
         inventoryItem.setCustomDesc(item.getCustom_desc());

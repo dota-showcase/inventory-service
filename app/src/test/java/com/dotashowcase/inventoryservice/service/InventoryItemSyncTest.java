@@ -198,8 +198,8 @@ class InventoryItemSyncTest {
         item1.setQuality((byte) 1);
         item1.setInventory(1000L);
         item1.setQuantity(1);
-        item1.setFlag_cannot_craft(true);
-        item1.setFlag_cannot_trade(true);
+        item1.setFlag_cannot_craft(false);
+        item1.setFlag_cannot_trade(false);
         item1.setStyle((byte) 1);
         item1.setCustom_name("Sample #1");
         ItemEquipDTO itemEquip11 = new ItemEquipDTO();
@@ -220,8 +220,8 @@ class InventoryItemSyncTest {
         item2.setQuality((byte) 1);
         item2.setInventory(1000L);
         item2.setQuantity(1);
-        item2.setFlag_cannot_craft(true);
-        item2.setFlag_cannot_trade(true);
+        item2.setFlag_cannot_craft(false);
+        item2.setFlag_cannot_trade(false);
         item2.setStyle((byte) 1);
         item2.setCustom_name("Sample #2");
         ItemEquipDTO itemEquip21 = new ItemEquipDTO();
@@ -321,8 +321,8 @@ class InventoryItemSyncTest {
         item1.setQuality((byte) 1);
         item1.setInventory(1000L);
         item1.setQuantity(1);
-        item1.setFlag_cannot_craft(true);
-        item1.setFlag_cannot_trade(true);
+        item1.setFlag_cannot_craft(false);
+        item1.setFlag_cannot_trade(false);
         item1.setStyle((byte) 1);
         item1.setCustom_name("Sample #1");
         ItemEquipDTO itemEquip11 = new ItemEquipDTO();
@@ -427,8 +427,8 @@ class InventoryItemSyncTest {
         item1.setQuality((byte) 1);
         item1.setInventory(1000L);
         item1.setQuantity(1);
-        item1.setFlag_cannot_craft(true);
-        item1.setFlag_cannot_trade(true);
+        item1.setFlag_cannot_craft(false);
+        item1.setFlag_cannot_trade(false);
         item1.setStyle((byte) 1);
         item1.setCustom_name("Sample #1");
         ItemEquipDTO itemEquip11 = new ItemEquipDTO();
@@ -449,8 +449,8 @@ class InventoryItemSyncTest {
         item2.setQuality((byte) 1);
         item2.setInventory(1000L);
         item2.setQuantity(1);
-        item2.setFlag_cannot_craft(true);
-        item2.setFlag_cannot_trade(true);
+        item2.setFlag_cannot_craft(false);
+        item2.setFlag_cannot_trade(false);
         item2.setStyle((byte) 1);
         item2.setCustom_name("Sample #2 - updated");
         ItemEquipDTO itemEquip21 = new ItemEquipDTO();
@@ -601,8 +601,8 @@ class InventoryItemSyncTest {
         item1.setQuality((byte) 1);
         item1.setInventory(1000L);
         item1.setQuantity(1);
-        item1.setFlag_cannot_craft(true);
-        item1.setFlag_cannot_trade(true);
+        item1.setFlag_cannot_craft(false);
+        item1.setFlag_cannot_trade(false);
         item1.setStyle((byte) 1);
         item1.setCustom_name("Sample #1 - updated");
         ItemEquipDTO itemEquip11 = new ItemEquipDTO();
@@ -623,8 +623,8 @@ class InventoryItemSyncTest {
         item3.setQuality((byte) 1);
         item3.setInventory(1000L);
         item3.setQuantity(1);
-        item3.setFlag_cannot_craft(true);
-        item3.setFlag_cannot_trade(true);
+        item3.setFlag_cannot_craft(false);
+        item3.setFlag_cannot_trade(false);
         item3.setStyle((byte) 1);
         item3.setCustom_name("Sample #3 - updated");
         ItemEquipDTO itemEquip31 = new ItemEquipDTO();
@@ -647,8 +647,8 @@ class InventoryItemSyncTest {
         item4.setQuality((byte) 1);
         item4.setInventory(1000L);
         item4.setQuantity(1);
-        item4.setFlag_cannot_craft(true);
-        item4.setFlag_cannot_trade(true);
+        item4.setFlag_cannot_craft(false);
+        item4.setFlag_cannot_trade(false);
         item4.setStyle((byte) 1);
         item4.setCustom_name("Sample #4");
         ItemEquipDTO itemEquip41 = new ItemEquipDTO();
