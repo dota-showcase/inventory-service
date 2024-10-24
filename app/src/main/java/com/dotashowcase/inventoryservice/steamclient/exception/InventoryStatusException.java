@@ -6,22 +6,33 @@ package com.dotashowcase.inventoryservice.steamclient.exception;
  */
 public class InventoryStatusException extends SteamException {
 
-    private final int steamInnerStatusCode;
+    private final int steamHttpStatusCode;
+
+    private final int steamInventoryStatusCode;
 
     private final String steamInnerMessage;
 
-    private InventoryStatusException(int steamInnerStatusCode, String message) {
+    private InventoryStatusException(int steamHttpStatusCode, int steamInventoryStatusCode, String message) {
         super("Inventory status - " + message);
-        this.steamInnerStatusCode = steamInnerStatusCode;
+        this.steamHttpStatusCode = steamHttpStatusCode;
+        this.steamInventoryStatusCode = steamInventoryStatusCode;
         this.steamInnerMessage = message;
     }
 
-    public static InventoryStatusException itemsNotPresent(int steamInnerStatusCode, String message) {
-        return new InventoryStatusException(steamInnerStatusCode, message);
+    public static InventoryStatusException itemsNotPresent(
+            int    steamHttpStatusCode,
+            int    steamInnerStatusCode,
+            String message
+    ) {
+        return new InventoryStatusException(steamHttpStatusCode, steamInnerStatusCode, message);
     }
 
-    public int getSteamInnerStatusCode() {
-        return this.steamInnerStatusCode;
+    public int getSteamHttpStatusCode() {
+        return this.steamHttpStatusCode;
+    }
+
+    public int getSteamInventoryStatusCode() {
+        return this.steamInventoryStatusCode;
     }
 
     public String getSteamInnerMessage() {

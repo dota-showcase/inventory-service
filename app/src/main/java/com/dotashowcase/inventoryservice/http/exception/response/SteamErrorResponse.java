@@ -29,7 +29,9 @@ public class SteamErrorResponse extends ErrorResponse {
 
         private String type;
 
-        private int status;
+        private int httpStatus;
+
+        private Integer inventoryStatus;
 
         private String error;
 

@@ -75,15 +75,19 @@ public class SteamClient {
         int inventoryStatus = userInventoryResponseDTO.getStatus();
         if (!inventoryStatusHandler.isOk(inventoryStatus)) {
             throw InventoryStatusException.itemsNotPresent(
-                    inventoryStatus, inventoryStatusHandler.getStatusMessage(inventoryStatus)
+                    response.getStatusCode().value(),
+                    inventoryStatus,
+                    inventoryStatusHandler.getStatusMessage(inventoryStatus)
             );
         }
 
         if (!userInventoryResponseDTO.hasItems()) {
-            int inventoryStatusNoItems = inventoryStatusHandler.getNoItemsCode();
+            int noItemsInventoryStatus = inventoryStatusHandler.getNoItemsCode();
 
             throw InventoryStatusException.itemsNotPresent(
-                    inventoryStatusNoItems, inventoryStatusHandler.getStatusMessage(inventoryStatusNoItems)
+                    response.getStatusCode().value(),
+                    noItemsInventoryStatus,
+                    inventoryStatusHandler.getStatusMessage(noItemsInventoryStatus)
             );
         }
 

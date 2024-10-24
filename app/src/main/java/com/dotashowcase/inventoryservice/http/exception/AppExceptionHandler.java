@@ -96,13 +96,14 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
             steamHttpStatus = resolvedHttpStatus != null ? resolvedHttpStatus : HttpStatus.BAD_REQUEST;
 
             steamErrorDetail.setType("Steam Server Error");
-            steamErrorDetail.setStatus(steamHttpStatus.value());
+            steamErrorDetail.setHttpStatus(steamHttpStatus.value());
             steamErrorDetail.setError(steamHttpStatus.getReasonPhrase());
             steamErrorDetail.setMessage(((BadRequestException) ex).getSteamHttpMessage());
         } else if (ex instanceof InventoryStatusException) {
 
             steamErrorDetail.setType("Inventory Error");
-            steamErrorDetail.setStatus(((InventoryStatusException) ex).getSteamInnerStatusCode());
+            steamErrorDetail.setHttpStatus(((InventoryStatusException) ex).getSteamHttpStatusCode());
+            steamErrorDetail.setInventoryStatus(((InventoryStatusException) ex).getSteamInventoryStatusCode());
             steamErrorDetail.setError(((InventoryStatusException) ex).getSteamInnerMessage());
             steamErrorDetail.setMessage("Steam responded with a description of the inventory request error");
         }
