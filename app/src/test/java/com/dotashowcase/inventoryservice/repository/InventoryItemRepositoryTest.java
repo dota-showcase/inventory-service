@@ -562,9 +562,6 @@ class InventoryItemRepositoryTest {
         inventory.setLatestOperation(operation);
 
         // when
-
-        List<InventoryItem> itemsAll = underTest.findAll(inventory);
-
         Page<InventoryItem> firstItemPage = underTest.findPositionedPage(inventory, 1);
         Page<InventoryItem> secondItemPage = underTest.findPositionedPage(inventory, 2);
         Page<InventoryItem> thirdItemPage = underTest.findPositionedPage(inventory, 3);
@@ -590,6 +587,23 @@ class InventoryItemRepositoryTest {
 
         assertThat(thirdItemPage.getContent())
                 .hasSize(0);
+    }
+
+    @Test
+    void itShouldFindPluckedField() {
+        // given
+        Long steamId1 = 100000000000L;
+        Inventory inventory = inventoryRepository.findById(steamId1).get();
+
+        // when
+        List<Integer> itemDefIndexes = underTest.findPluckedField(inventory, "defIndex");
+
+        // then
+        assertThat(itemDefIndexes)
+                .hasSize(2);
+
+        assertThat(itemDefIndexes)
+                .containsSequence(201, 202);
     }
 
     @Test

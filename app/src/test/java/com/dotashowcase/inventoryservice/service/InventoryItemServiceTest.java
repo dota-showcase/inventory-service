@@ -269,6 +269,25 @@ class InventoryItemServiceTest {
     }
 
     @Test
+    void itShouldGetAllDefIndexes() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        Integer defIndex1 = 200;
+        Integer defIndex2 = 201;
+
+        when(inventoryItemRepository.findPluckedField(inventory, "defIndex"))
+                .thenReturn(List.of(defIndex1, defIndex2));
+
+        // when
+        underTest.getAllDefIndexes(inventory);
+
+        // then
+        verify(inventoryItemRepository).findPluckedField(inventory, "defIndex");
+    }
+
+    @Test
     void itShouldCreateInventoryItems() {
         // given
         Long steamId = 100000000000L;
