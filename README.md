@@ -69,15 +69,15 @@ Conceptual entity relation diagram (Barker's system):
 Assumptions:
 
 * Average inventory item size - 500 bytes.
-* Average user has 7000 inventory items.
+* Average user has 5000 inventory items.
 * Users update inventory once per day. Each day it increased by some small coefficient (0.05).
 * Data is stored for a year.
 
 Estimate:
 
-* User inventory size: 500 * 7000 = 3.5 MB
-* User inventory size for a year: 3.5 MB + (365 * 0.05 * 3.5) = ~70 MB
-* **Storage for 100K users: 70MB * 1000000 = 7 GB**
+* User inventory size: 500 * 5000 = 2.5 MB
+* User inventory size for a year: 2.5 MB + (365 * 0.05 * 3.5) = ~65 MB
+* **Storage for 100K users: 65MB * 1000000 = 650 GB**
 
 ## Resources
 
