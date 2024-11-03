@@ -9,6 +9,10 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -16,6 +20,9 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.addFields;
+import static org.springframework.data.mongodb.core.aggregation.ArrayOperators.IndexOfArray.arrayOf;
 
 @Repository
 public class InventoryItemDALRepository implements InventoryItemDAL {
@@ -30,39 +37,100 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
             InventoryItemFilter filter,
             Sort sort
     ) {
-        Query query = new Query();
-        query.with(pageable);
-        setDefaultParams(query, inventory);
-        query.addCriteria(Criteria.where("_isA").is(true));
-        applyFilter(query, filter);
-        if (sort != null) {
-            query.with(sort);
+        List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
+        List<Criteria> filterCriteria = getFilterCriteria(filter);
+
+        // main query
+        List<AggregationOperation> operations = new ArrayList<>();
+
+        defaultCriteria.forEach(criteria -> operations.add(Aggregation.match(criteria)));
+        operations.add(Aggregation.match(Criteria.where("_isA").is(true)));
+        filterCriteria.forEach(criteria -> operations.add(Aggregation.match(criteria)));
+
+        // main query pagination
+        operations.add(Aggregation.skip((long) pageable.getPageNumber() * pageable.getPageSize()));
+        operations.add(Aggregation.limit(pageable.getPageSize()));
+
+        // main query sort
+        if (sort == null) {
+            if (filter.hasDefIndexes()) {
+                operations.add(addFields()
+                        .addField("defIndexSort").withValue(arrayOf(filter.getDefIndexes()).indexOf("$dIdx"))
+                        .build()
+                );
+
+                operations.add(Aggregation.sort(Sort.by(Sort.Direction.ASC, "defIndexSort")));
+            }
+        } else {
+            operations.add(Aggregation.sort(sort));
         }
 
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+
+        AggregationResults<InventoryItem> results = mongoTemplate.aggregate(
+                aggregation,
+                InventoryItem.class.getAnnotation(Document.class).value(),
+                InventoryItem.class
+        );
+
+        // count query
+        Query countQuery = new Query();
+        defaultCriteria.forEach(countQuery::addCriteria);
+
+        countQuery.addCriteria(Criteria.where("_isA").is(true));
+
+        filterCriteria.forEach(countQuery::addCriteria);
+
         return PageableExecutionUtils.getPage(
-                mongoTemplate.find(query, InventoryItem.class),
+                results.getMappedResults(),
                 pageable,
-                () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), InventoryItem.class)
+                () -> mongoTemplate.count(countQuery.limit(-1).skip(-1), InventoryItem.class)
         );
     }
 
     @Override
     public List<InventoryItem> searchAll(Inventory inventory, InventoryItemFilter filter, Sort sort) {
-        Query query = new Query();
-        setDefaultParams(query, inventory);
-        query.addCriteria(Criteria.where("_isA").is(true));
-        applyFilter(query, filter);
-        if (sort != null) {
-            query.with(sort);
+        List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
+        List<Criteria> filterCriteria = getFilterCriteria(filter);
+
+        List<AggregationOperation> operations = new ArrayList<>();
+
+        defaultCriteria.forEach(criteria -> operations.add(Aggregation.match(criteria)));
+        operations.add(Aggregation.match(Criteria.where("_isA").is(true)));
+        filterCriteria.forEach(criteria -> operations.add(Aggregation.match(criteria)));
+
+        // sort
+        if (sort == null) {
+            if (filter.hasDefIndexes()) {
+                operations.add(addFields()
+                        .addField("defIndexSort").withValue(arrayOf(filter.getDefIndexes()).indexOf("$dIdx"))
+                        .build()
+                );
+
+                operations.add(Aggregation.sort(Sort.by(Sort.Direction.ASC, "defIndexSort")));
+            }
+        } else {
+            operations.add(Aggregation.sort(sort));
         }
 
-       return mongoTemplate.find(query, InventoryItem.class);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+
+        AggregationResults<InventoryItem> results = mongoTemplate.aggregate(
+                aggregation,
+                InventoryItem.class.getAnnotation(Document.class).value(),
+                InventoryItem.class
+        );
+
+        return results.getMappedResults();
     }
 
     @Override
     public List<InventoryItem> findAll(Inventory inventory) {
         Query query = new Query();
-        setDefaultParams(query, inventory);
+
+        List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
+        defaultCriteria.forEach(query::addCriteria);
+
         query.addCriteria(Criteria.where("_isA").is(true));
 
         return mongoTemplate.find(query, InventoryItem.class);
@@ -71,7 +139,10 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     @Override
     public List<InventoryItem> findAll(Inventory inventory, Operation operation) {
         Query query = new Query();
-        setDefaultParams(query, inventory);
+
+        List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
+        defaultCriteria.forEach(query::addCriteria);
+
         query.addCriteria(Criteria.where("_oId").is(operation.getId()));
 
         return mongoTemplate.find(query, InventoryItem.class);
@@ -80,7 +151,10 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     @Override
     public Page<InventoryItem> findPositionedPage(Inventory inventory, int page) {
         Query query = new Query();
-        setDefaultParams(query, inventory);
+
+        List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
+        defaultCriteria.forEach(query::addCriteria);
+
         query.addCriteria(Criteria.where("_isA").is(true));
 
         // page #1 - [1, 13)
@@ -105,7 +179,10 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     @Override
     public List<Integer> findPluckedField(Inventory inventory, String fieldName) {
         Query query = new Query();
-        setDefaultParams(query, inventory);
+
+        List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
+        defaultCriteria.forEach(query::addCriteria);
+
         query.addCriteria(Criteria.where("_isA").is(true));
         query.with(Sort.by(Sort.Direction.ASC, "dIdx"));
 
@@ -147,11 +224,14 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     @Override
     public long removeAll(Inventory inventory) {
         Query query = new Query();
-        this.setDefaultParams(query, inventory);
+
+        List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
+        defaultCriteria.forEach(query::addCriteria);
 
         return mongoTemplate.remove(query, InventoryItem.class).getDeletedCount();
     }
 
+    // TODO:
 //    @Override
 //    public long removeAll(Inventory inventory, Set<Long> ids) {
 //        Query query = new Query();
@@ -162,19 +242,25 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 //        return mongoTemplate.remove(query, InventoryItem.class).getDeletedCount();
 //    }
 
-    private void setDefaultParams(Query query, Inventory inventory) {
-        query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
+    private List<Criteria> getDefaultCriteria(Inventory inventory) {
+        List<Criteria> criteriaList = new ArrayList<>();
+
+        criteriaList.add(Criteria.where("steamId").is(inventory.getSteamId()));
+
+        return criteriaList;
     }
 
-    private void applyFilter(Query query, InventoryItemFilter filter) {
+    private List<Criteria> getFilterCriteria(InventoryItemFilter filter) {
+        List<Criteria> criteriaList = new ArrayList<>();
+
         // filter by defIndex
         if (filter.hasDefIndexes()) {
             List<Integer> defIndexes = filter.getDefIndexes();
 
             if (defIndexes.size() == 1) {
-                query.addCriteria(Criteria.where("dIdx").is(defIndexes.get(0)));
+                criteriaList.add(Criteria.where("dIdx").is(defIndexes.getFirst()));
             } else {
-                query.addCriteria(Criteria.where("dIdx").in(defIndexes));
+                criteriaList.add(Criteria.where("dIdx").in(defIndexes));
             }
         }
 
@@ -183,38 +269,40 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
             List<Byte> qualities = filter.getQualities();
 
             if (qualities.size() == 1) {
-                query.addCriteria(Criteria.where("qlt").is(qualities.get(0)));
+                criteriaList.add(Criteria.where("qlt").is(qualities.getFirst()));
             } else {
-                query.addCriteria(Criteria.where("qlt").in(qualities));
+                criteriaList.add(Criteria.where("qlt").in(qualities));
             }
         }
 
         // filter by isTradable
         if (filter.getIsTradable() != null) {
-            query.addCriteria(Criteria.where("isTr").is(filter.getIsTradable()));
+            criteriaList.add(Criteria.where("isTr").is(filter.getIsTradable()));
         }
 
         // filter by isCraftable
         if (filter.getIsCraftable() != null) {
-            query.addCriteria(Criteria.where("isCr").is(filter.getIsCraftable()));
+            criteriaList.add(Criteria.where("isCr").is(filter.getIsCraftable()));
         }
 
         // filter by itemEquipment
         if (filter.getIsEquipped() != null) {
             if (filter.getIsEquipped()) {
-                query.addCriteria(Criteria.where("equips").ne(null));
+                criteriaList.add(Criteria.where("equips").ne(null));
             } else {
-                query.addCriteria(Criteria.where("equips").isNull());
+                criteriaList.add(Criteria.where("equips").isNull());
             }
         }
 
         // filter by attributes
         if (filter.getHasAttribute() != null) {
             if (filter.getHasAttribute()) {
-                query.addCriteria(Criteria.where("attrs").ne(null));
+                criteriaList.add(Criteria.where("attrs").ne(null));
             } else {
-                query.addCriteria(Criteria.where("attrs").isNull());
+                criteriaList.add(Criteria.where("attrs").isNull());
             }
         }
+
+        return criteriaList;
     }
 }

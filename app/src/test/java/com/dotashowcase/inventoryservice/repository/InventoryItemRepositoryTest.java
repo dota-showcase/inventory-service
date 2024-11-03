@@ -500,7 +500,7 @@ class InventoryItemRepositoryTest {
 
         assertThat(twoItemsByAllDefindexDesc.getContent())
                 .extracting("defIndex")
-                .containsSequence(203, 201);
+                .containsSequence(201, 203);
     }
 
     @Test

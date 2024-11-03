@@ -26,7 +26,9 @@ Swagger OpenAPI 3 is available by path:
 ### Inventory Items Endpoints
 
 * Show Inventory Items: `GET /api/v1/inventories/:steamid/items/`
-* Show Inventory Items (pagination): `GET /api/v1/inventories/:steamid/items/page/`
+* Show (Search) Inventory Items (pagination and filter with large payloads): `POST /api/v1/inventories/:steamid/items/search/`
+* Show Inventory Items (positioned pagination): `GET /api/v1/inventories/:steamid/items/page-positioned/`
+* Show Inventory Items 'defIndex' fields: `GET /api/v1/inventories/:steamId/items/def-indexes`
 * Show Inventory Items changes: `GET /api/v1/inventories/:steamid/changes/`
 * Show Inventory Items changes (for a version): `GET /api/v1/inventories/:steamid/changes/:version/`
 
@@ -75,9 +77,9 @@ Assumptions:
 
 Estimate:
 
-* User inventory size: 500 * 5000 = 2.5 MB
+* User inventory size: 500 B * 5000 = 2.5 MB
 * User inventory size for a year: 2.5 MB + (365 * 0.05 * 3.5) = ~65 MB
-* **Storage for 100K users: 65MB * 1000000 = 650 GB**
+* **Storage for 100K users: 65MB * 100000 = 65 GB**
 
 ## Resources
 
