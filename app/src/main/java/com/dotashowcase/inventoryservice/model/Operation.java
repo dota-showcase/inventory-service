@@ -26,6 +26,7 @@ public class Operation {
     private Long steamId;
 
     @Field
+    @Indexed(name = "operations__version")
     private Integer version = 1;
 
     @Field

@@ -7,9 +7,7 @@ import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.*;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryServiceResultMapper;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
@@ -42,9 +40,9 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final SteamClient steamClient;
 
-    private final InventoryServiceResultMapper inventoryServiceResultMapper;
-
     private final PageMapper<Inventory, InventoryWithLatestOperationDTO> pageMapper;
+
+    private final InventoryServiceResultMapper inventoryServiceResultMapper;
 
     @Autowired
     public InventoryServiceImpl(
@@ -77,23 +75,21 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public List<InventoryWithOperationsDTO> getAll(String sortBy) {
+    public List<InventoryDTO> getAll(String sortBy) {
         Sort sort = sortBuilder.fromRequestParam(sortBy);
 
         List<Inventory> inventories = sort != null
                 ? inventoryRepository.findAll(sort)
                 : inventoryRepository.findAll();
 
-        Map<Long, List<Operation>> operations = operationService.getAll(
-                inventories.stream().map(Inventory::getSteamId).toList()
-        );
-
-        return inventoryServiceResultMapper.getInventoriesWithOperationsDTO(inventories, operations);
+        return inventories
+                .stream()
+                .map(inventoryServiceResultMapper::getInventoryDTO)
+                .toList();
     }
 
     @Override
     public PageResult<InventoryWithLatestOperationDTO> getPage(Pageable pageable, String sortBy) {
-
         Sort sort = sortBuilder.fromRequestParam(sortBy);
 
         Pageable innerPageable = sort != null
@@ -121,13 +117,11 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public InventoryWithOperationsDTO get(Long steamId) {
+    public InventoryWithLatestOperationDTO get(Long steamId) {
         Inventory inventory = findInventory(steamId);
+        Operation operation = operationService.getLatest(inventory);
 
-        // process inventory as list
-        Map<Long, List<Operation>> operations = operationService.getAll(List.of(steamId));
-
-        return inventoryServiceResultMapper.getInventoryWithOperationsDTO(inventory, operations.get(steamId));
+        return inventoryServiceResultMapper.getInventoryWithLatestOperationDTO(inventory, operation);
     }
 
     @Override
@@ -220,4 +214,6 @@ public class InventoryServiceImpl implements InventoryService {
 
         return inventory;
     }
+
+
 }

@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jdk.jfr.Unsigned;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -167,25 +168,25 @@ public class InventoryItemController {
         return inventoryItemService.getAllDefIndexes(inventory);
     }
 
-    @Operation(description = "Get list of user's inventory items grouped by operations")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(
-                    mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = InventoryChangesDTO.class)))),
-            @ApiResponse(responseCode = "404", description = "Inventory not exists", content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ValidationErrorResponse.class)))
-    })
-    @GetMapping("inventories/{steamId}/changes")
-    public Map<Integer, InventoryChangesDTO> getChanges(@PathVariable @SteamIdConstraint Long steamId) {
-        Inventory inventory = inventoryService.findInventory(steamId);
-
-        return inventoryItemChangesService.get(inventory);
-    }
+//    @Operation(description = "Get list of user's inventory items grouped by operations")
+//    @ApiResponses(value = {
+//            @ApiResponse(responseCode = "200", content = @Content(
+//                    mediaType = "application/json",
+//                    array = @ArraySchema(schema = @Schema(implementation = InventoryChangesDTO.class)))),
+//            @ApiResponse(responseCode = "404", description = "Inventory not exists", content = @Content(
+//                    mediaType = "application/json",
+//                    schema = @Schema(implementation = ErrorResponse.class))
+//            ),
+//            @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
+//                    mediaType = "application/json",
+//                    schema = @Schema(implementation = ValidationErrorResponse.class)))
+//    })
+//    @GetMapping("inventories/{steamId}/changes")
+//    public Map<Integer, InventoryChangesDTO> getChanges(@PathVariable @SteamIdConstraint Long steamId) {
+//        Inventory inventory = inventoryService.findInventory(steamId);
+//
+//        return inventoryItemChangesService.get(inventory);
+//    }
 
     @Operation(description = "Get a list of user's inventory items by an operation")
     @ApiResponses(value = {

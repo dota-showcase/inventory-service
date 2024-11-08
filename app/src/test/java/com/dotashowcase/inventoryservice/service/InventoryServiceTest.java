@@ -28,7 +28,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -76,7 +75,6 @@ class InventoryServiceTest {
         // then
         verify(sortBuilder).fromRequestParam(sortBy);
         verify(inventoryRepository).findAll(any(Sort.class));
-        verify(operationService).getAll(anyList());
     }
 
     @Test
@@ -88,7 +86,6 @@ class InventoryServiceTest {
         // then
         verify(sortBuilder).fromRequestParam(null);
         verify(inventoryRepository).findAll();
-        verify(operationService).getAll(anyList());
     }
 
     @Test
@@ -103,7 +100,7 @@ class InventoryServiceTest {
         underTest.get(steamId);
 
         // then
-        verify(operationService).getAll(List.of(steamId));
+//        verify(operationService).getAll(List.of(steamId));
     }
 
     @Test

@@ -6,10 +6,9 @@ import com.dotashowcase.inventoryservice.http.exception.response.SteamErrorRespo
 import com.dotashowcase.inventoryservice.http.exception.response.ValidationErrorResponse;
 import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
 import com.dotashowcase.inventoryservice.http.request.InventoryCreateRequest;
-import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.service.InventoryService;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.support.validator.SteamIdConstraint;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,22 +42,22 @@ public class InventoryController {
     @Autowired
     private RateLimitHandler rateLimitHandler;
 
-    @Operation(description = "Get a list of all inventories, including operations")
+    @Operation(description = "Get a list of all inventories")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(
                     mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = InventoryWithOperationsDTO.class)))),
+                    array = @ArraySchema(schema = @Schema(implementation = InventoryDTO.class)))),
     })
     @GetMapping("inventories/")
-    public List<InventoryWithOperationsDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
+    public List<InventoryDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
         return inventoryService.getAll(sort);
     }
 
-    @Operation(description = "Get a list of all inventories, including operations")
+    @Operation(description = "Get a list of all inventories, including latest operation")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(
                     mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = InventoryWithOperationsDTO.class)))),
+                    array = @ArraySchema(schema = @Schema(implementation = InventoryWithLatestOperationDTO.class)))),
     })
     @GetMapping("inventories/search")
     public PageResult<InventoryWithLatestOperationDTO> search(
@@ -68,11 +67,11 @@ public class InventoryController {
         return inventoryService.getPage(pageable, sort);
     }
 
-    @Operation(description = "Get an inventory, including operations")
+    @Operation(description = "Get an inventory, including latest operation")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = InventoryWithOperationsDTO.class))
+                    schema = @Schema(implementation = InventoryWithLatestOperationDTO.class))
             ),
             @ApiResponse(responseCode = "404", description = "Inventory not exists", content = @Content(
                     mediaType = "application/json",
@@ -83,7 +82,7 @@ public class InventoryController {
                     schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
     @GetMapping("inventories/{steamId}")
-    public InventoryWithOperationsDTO get(@PathVariable @SteamIdConstraint Long steamId) {
+    public InventoryWithLatestOperationDTO get(@PathVariable @SteamIdConstraint Long steamId) {
         return inventoryService.get(steamId);
     }
 
@@ -162,7 +161,7 @@ public class InventoryController {
             )
     })
     @DeleteMapping("inventories/{steamId}")
-    public ResponseEntity<Inventory> delete(@PathVariable @SteamIdConstraint Long steamId) {
+    public ResponseEntity<Void> delete(@PathVariable @SteamIdConstraint Long steamId) {
         inventoryService.delete(steamId);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

@@ -3,18 +3,23 @@ package com.dotashowcase.inventoryservice.repository;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
 public interface OperationDAL {
 
-    List<Operation> findByInventories(List<Long> inventoryIds);
+    // TODO: tmp not used, because of bug in vendor
+    List<Operation> aggregateLatestByInventories(List<Long> inventoryIds);
 
-    List<Operation> findLatestByInventories(List<Long> inventoryIds);
+    // TODO: tmp method to replace aggregateLatestByInventories
+    List<Operation> findLatestByInventoriesNPlusOne(List<Long> inventorySteamIds);
+
+    Page<Operation> searchAll(Inventory inventory, Pageable pageable, Sort sort);
 
     Operation findLatest(Inventory inventory);
-
-    List<Operation> findNLatest(Inventory inventory, int limit);
 
     Operation findByVersion(Inventory inventory, int version);
 

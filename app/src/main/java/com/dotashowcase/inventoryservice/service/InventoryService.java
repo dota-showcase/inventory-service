@@ -1,8 +1,8 @@
 package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.model.Inventory;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import org.springframework.data.domain.Pageable;
 
@@ -14,11 +14,11 @@ public interface InventoryService {
 
     Inventory findInventoryWithLatestOperation(Long steamId);
 
-    List<InventoryWithOperationsDTO> getAll(String sortBy);
+    List<InventoryDTO> getAll(String sortBy);
 
     PageResult<InventoryWithLatestOperationDTO> getPage(Pageable pageable, String sortBy);
 
-    InventoryWithOperationsDTO get(Long steamId);
+    InventoryWithLatestOperationDTO get(Long steamId);
 
     InventoryWithLatestOperationDTO create(Long steamId);
 

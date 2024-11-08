@@ -8,6 +8,10 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Query;
@@ -36,36 +40,76 @@ class OperationRepositoryTest {
         Inventory inventory1 = new Inventory(steamId1);
         inventoryRepository.save(inventory1);
 
+        // operation #1
         Operation operation1 = new Operation();
         operation1.setSteamId(steamId1);
         operation1.setType(Operation.Type.C);
         operation1.setVersion(1);
-        operation1.setMeta(new OperationMeta());
+
+        OperationMeta operationMeta1 = new OperationMeta();
+        operationMeta1.setResponseCount(3);
+        operationMeta1.setItemCount(3);
+        operationMeta1.setCreateOperationCount(3);
+        operationMeta1.setUpdateOperationCount(0);
+        operationMeta1.setDeleteOperationCount(0);
+        operationMeta1.setNumSlots(10120);
+        operation1.setMeta(operationMeta1);
+
         mongoTemplate.insert(operation1);
 
+        // operation #2
         Operation operation2 = new Operation();
         operation2.setSteamId(steamId1);
         operation2.setType(Operation.Type.U);
         operation2.setVersion(2);
-        operation2.setMeta(new OperationMeta());
+
+        OperationMeta operationMeta2 = new OperationMeta();
+        operationMeta2.setResponseCount(3);
+        operationMeta2.setItemCount(3);
+        operationMeta2.setCreateOperationCount(0);
+        operationMeta2.setUpdateOperationCount(0);
+        operationMeta2.setDeleteOperationCount(0);
+        operationMeta2.setNumSlots(10120);
+        operation2.setMeta(operationMeta2);
+
         mongoTemplate.insert(operation2);
 
+        // operation #3
         Operation operation3 = new Operation();
         operation3.setSteamId(steamId1);
         operation3.setType(Operation.Type.U);
         operation3.setVersion(3);
-        operation3.setMeta(new OperationMeta());
+
+        OperationMeta operationMeta3 = new OperationMeta();
+        operationMeta3.setResponseCount(5);
+        operationMeta3.setItemCount(5);
+        operationMeta3.setCreateOperationCount(2);
+        operationMeta3.setUpdateOperationCount(0);
+        operationMeta3.setDeleteOperationCount(0);
+        operationMeta3.setNumSlots(10120);
+        operation3.setMeta(operationMeta3);
+
         mongoTemplate.insert(operation3);
 
         Long steamId2 = 100000000001L;
         Inventory inventory2 = new Inventory(steamId2);
         inventoryRepository.save(inventory2);
 
+        // operation #4
         Operation operation4 = new Operation();
         operation4.setSteamId(steamId2);
         operation4.setType(Operation.Type.C);
         operation4.setVersion(1);
-        operation4.setMeta(new OperationMeta());
+
+        OperationMeta operationMeta4 = new OperationMeta();
+        operationMeta4.setResponseCount(10);
+        operationMeta4.setItemCount(10);
+        operationMeta4.setCreateOperationCount(10);
+        operationMeta4.setUpdateOperationCount(0);
+        operationMeta4.setDeleteOperationCount(0);
+        operationMeta4.setNumSlots(10520);
+        operation4.setMeta(operationMeta4);
+
         mongoTemplate.insert(operation4);
     }
 
@@ -76,13 +120,16 @@ class OperationRepositoryTest {
     }
 
     @Test
-    void itShouldFindOperationsByInventories() {
+    void itShouldAggregateLatestOperationsByInventories() {
         // given
         Long steamId1 = 100000000000L;
         Long steamId2 = 100000000001L;
 
+        Integer steamId1Version3 = 3;
+        Integer steamId2Version1 = 1;
+
         // when
-        List<Operation> expected = underTest.findByInventories(new ArrayList<>() {{
+        List<Operation> expected = underTest.findLatestByInventoriesNPlusOne(new ArrayList<>() {{
             add(steamId1);
             add(steamId2);
         }});
@@ -91,7 +138,44 @@ class OperationRepositoryTest {
         assertThat(expected)
                 .extracting("steamId")
                 .contains(steamId1, steamId2)
-                .hasSize(4);
+                .hasSize(2);
+
+        assertThat(expected)
+                .extracting("version")
+                .contains(steamId1Version3, steamId2Version1)
+                .hasSize(2);
+    }
+
+    @Test
+    void itShouldFindLatestOperationsByInventories() {
+        // given
+        Long steamId1 = 100000000000L;
+
+        Integer steamId1Version3 = 3;
+        Integer steamId1Version2 = 2;
+        Integer steamId1Version1 = 1;
+
+        Inventory inventory = inventoryRepository.findById(steamId1).get();
+
+        Pageable firstPageWithAllItems = PageRequest.of(0, 10);
+        Pageable secondPageWithOneItem = PageRequest.of(1, 2);
+
+        Sort sortBy = Sort.by(Sort.Direction.DESC, "version");
+
+        // when
+        Page<Operation> firstPage = underTest.searchAll(inventory, firstPageWithAllItems, sortBy);
+        Page<Operation> secondPage = underTest.searchAll(inventory, secondPageWithOneItem, sortBy);
+
+        // then
+        assertThat(firstPage.getContent())
+                .extracting("version")
+                .contains(steamId1Version3, steamId1Version2, steamId1Version1)
+                .hasSize(3);
+
+        assertThat(secondPage.getContent())
+                .extracting("version")
+                .contains(steamId1Version1)
+                .hasSize(1);
     }
 
     @Test
@@ -110,57 +194,19 @@ class OperationRepositoryTest {
     }
 
     @Test
-    void itShouldFindNLatestOperations() {
-        // given
-        Long steamId1 = 100000000000L;
-        Inventory inventory = inventoryRepository.findById(steamId1).get();
-
-        // when
-        List<Operation> nLatest1 = underTest.findNLatest(inventory, 1);
-        List<Operation> nLatest2 = underTest.findNLatest(inventory, 2);
-        List<Operation> nLatest3 = underTest.findNLatest(inventory, 3);
-        List<Operation> nLatest4 = underTest.findNLatest(inventory, 4);
-        List<Operation> nLatest5 = underTest.findNLatest(inventory, -1);
-
-        // then
-        assertThat(nLatest1)
-                .extracting("steamId")
-                .contains(steamId1)
-                .hasSize(1);
-
-        assertThat(nLatest2)
-                .extracting("steamId")
-                .contains(steamId1)
-                .hasSize(2);
-
-        assertThat(nLatest3)
-                .extracting("steamId")
-                .contains(steamId1)
-                .hasSize(3);
-
-        assertThat(nLatest4)
-                .extracting("steamId")
-                .contains(steamId1)
-                .hasSize(3);
-
-        assertThat(nLatest5)
-                .extracting("steamId")
-                .contains(steamId1)
-                .hasSize(3);
-    }
-
-    @Test
     void itShouldFindOperationByVersion() {
         // given
         Long steamId1 = 100000000000L;
         Inventory inventory = inventoryRepository.findById(steamId1).get();
 
         // when
+        Operation byVersion0 = underTest.findByVersion(inventory, 0);
         Operation byVersion1 = underTest.findByVersion(inventory, 1);
         Operation byVersion2 = underTest.findByVersion(inventory, 3);
         Operation byVersion3 = underTest.findByVersion(inventory, 10);
 
         // then
+        assertThat(byVersion0).isNull();
         assertThat(byVersion1.getVersion()).isEqualTo(1);
         assertThat(byVersion2.getVersion()).isEqualTo(3);
         assertThat(byVersion3).isNull();

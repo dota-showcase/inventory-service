@@ -7,13 +7,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OperationCountDTO {
 
-    private int inventorySize = 0;
-
     private int create = 0;
 
     private int update = 0;
 
     private int delete = 0;
+
+    private int inventorySize = 0;
 
     public OperationCountDTO(int create, int update, int delete, int initInventorySize) {
         this.create = create;

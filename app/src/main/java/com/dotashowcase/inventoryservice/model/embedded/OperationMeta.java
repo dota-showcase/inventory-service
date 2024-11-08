@@ -1,9 +1,13 @@
 package com.dotashowcase.inventoryservice.model.embedded;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-@Data
+@Getter
+@Setter
+@ToString
 public class OperationMeta {
 
     @Field("iCount")

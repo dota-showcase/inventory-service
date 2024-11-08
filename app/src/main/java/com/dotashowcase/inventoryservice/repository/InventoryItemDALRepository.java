@@ -231,17 +231,6 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         return mongoTemplate.remove(query, InventoryItem.class).getDeletedCount();
     }
 
-    // TODO:
-//    @Override
-//    public long removeAll(Inventory inventory, Set<Long> ids) {
-//        Query query = new Query();
-//        this.setDefaultParams(query, inventory);
-//
-//        query.addCriteria(Criteria.where("_id").in(ids));
-//
-//        return mongoTemplate.remove(query, InventoryItem.class).getDeletedCount();
-//    }
-
     private List<Criteria> getDefaultCriteria(Inventory inventory) {
         List<Criteria> criteriaList = new ArrayList<>();
 

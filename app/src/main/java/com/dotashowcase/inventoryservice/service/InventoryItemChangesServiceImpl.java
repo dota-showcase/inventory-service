@@ -44,20 +44,6 @@ public class InventoryItemChangesServiceImpl implements InventoryItemChangesServ
         return mapChanges(items);
     }
 
-    @Override
-    public Map<Integer, InventoryChangesDTO> get(Inventory inventory) {
-        Map<Integer, InventoryChangesDTO> result = new LinkedHashMap<>();
-        List<Operation> operations = operationService.getAll(inventory);
-
-        for (Operation operation : operations) {
-            List<InventoryItem> items = inventoryItemRepository.findAll(inventory, operation);
-
-            result.put(operation.getVersion(), mapChanges(items));
-        }
-
-        return result;
-    }
-
     private InventoryChangesDTO mapChanges(List<InventoryItem> items) {
         InventoryChangesDTO result = new InventoryChangesDTO();
 

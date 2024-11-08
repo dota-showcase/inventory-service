@@ -32,6 +32,4 @@ public interface InventoryItemDAL {
     long updateAll(Set<ObjectId> ids, List<AbstractMap.SimpleImmutableEntry<String, Object>> updateEntry);
 
     long removeAll(Inventory inventory);
-
-//    long removeAll(Inventory inventory, Set<Long> ids);
 }

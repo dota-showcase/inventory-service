@@ -2,11 +2,17 @@ package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.model.Inventory;
+import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.repository.OperationRepository;
 import com.dotashowcase.inventoryservice.service.exception.OperationNotFoundException;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
+import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
+import com.dotashowcase.inventoryservice.support.SortBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,10 +21,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,39 +40,70 @@ class OperationServiceTest {
     @Mock
     private OperationRepository operationRepository;
 
+    @Mock
+    private SortBuilder sortBuilder;
+
+    @Mock
+    private PageMapper<Operation, OperationDTO> pageMapper;
+
     private OperationService underTest;
 
     @BeforeEach
     void setUp() {
-        underTest = new OperationServiceImpl(operationRepository);
+        underTest = new OperationServiceImpl(operationRepository, sortBuilder, pageMapper);
     }
 
     @Test
-    void itShouldGetAllOperations() {
-        // given
-        Long steamId = 100000000000L;
-        Inventory inventory = new Inventory(steamId);
-
-        // when
-        underTest.getAll(inventory);
-
-        // then
-        ArgumentCaptor<Inventory> inventoryArgumentCaptor = ArgumentCaptor.forClass(Inventory.class);
-        ArgumentCaptor<Integer> limitArgumentCaptor = ArgumentCaptor.forClass(Integer.class);
-
-        verify(operationRepository)
-                .findNLatest(inventoryArgumentCaptor.capture(), limitArgumentCaptor.capture());
-
-        assertThat(inventoryArgumentCaptor.getValue()).isEqualTo(inventory);
-        assertThat(limitArgumentCaptor.getValue()).isEqualTo(-1);
-    }
-
-    @Test
-    void itShouldGetAllOperationsByIds() {
+    void itShouldGetAllLatestOperations() {
         // given
         Long steamId1 = 100000000000L;
         Long steamId2 = 100000000001L;
         List<Long> steamIds = List.of(steamId1, steamId2);
+
+        Operation operation1 = new Operation();
+        operation1.setSteamId(steamId1);
+        operation1.setType(Operation.Type.C);
+        operation1.setVersion(1);
+        operation1.setMeta(new OperationMeta());
+
+        Operation operation2 = new Operation();
+        operation2.setSteamId(steamId1);
+        operation2.setType(Operation.Type.U);
+        operation2.setVersion(2);
+        operation2.setMeta(new OperationMeta());
+
+        Operation operation3 = new Operation();
+        operation3.setSteamId(steamId2);
+        operation3.setType(Operation.Type.C);
+        operation3.setVersion(1);
+        operation3.setMeta(new OperationMeta());
+
+        List<Operation> operations = List.of(operation2, operation3);
+
+        when(operationRepository.findLatestByInventoriesNPlusOne(steamIds)).thenReturn(operations);
+
+        // when
+        Map<Long, Operation> result = underTest.getAllLatest(List.of(steamId1, steamId2));
+
+        // then
+        ArgumentCaptor<List<Long>> steamIdListCaptor = ArgumentCaptor.forClass((Class) List.class);
+
+        verify(operationRepository).findLatestByInventoriesNPlusOne(steamIdListCaptor.capture());
+        assertThat(steamIdListCaptor.getValue()).isEqualTo(steamIds);
+
+        Map<Long, Operation> expectedResult = new HashMap<>();
+        expectedResult.put(steamId1, operation2);
+        expectedResult.put(steamId2, operation3);
+
+        assertThat(result).containsAllEntriesOf(expectedResult);
+    }
+
+    @Test
+    void itShouldGetPageOperationFull() {
+        // given
+        Long steamId1 = 100000000000L;
+
+        Inventory inventory1 = new Inventory(steamId1);
 
         Operation operation1 = new Operation();
         operation1.setSteamId(steamId1);
@@ -84,30 +123,81 @@ class OperationServiceTest {
         operation3.setVersion(3);
         operation3.setMeta(new OperationMeta());
 
-        Operation operation4 = new Operation();
-        operation4.setSteamId(steamId2);
-        operation4.setType(Operation.Type.C);
-        operation4.setVersion(1);
-        operation4.setMeta(new OperationMeta());
+        Pageable firstPageWithAllItems = PageRequest.of(0, 4);
 
-        List<Operation> operations = List.of(operation1, operation2, operation3, operation4);
+        List<Operation> firstPageOperations = List.of(operation3, operation2, operation1);
 
-        when(operationRepository.findByInventories(steamIds)).thenReturn(operations);
+        String sortByStr = "-version";
+        Sort sortBy = Sort.by(Sort.Direction.DESC, "version");
+
+        when(sortBuilder.fromRequestParam(sortByStr)).thenReturn(sortBy);
+
+        Page<Operation> operationFirstPage = new PageImpl<>(
+                firstPageOperations, firstPageWithAllItems, firstPageOperations.size()
+        );
+
+        when(operationRepository.searchAll(inventory1, firstPageWithAllItems, sortBy)).thenReturn(operationFirstPage);
 
         // when
-        Map<Long, List<Operation>> result = underTest.getAll(List.of(steamId1, steamId2));
+        underTest.getPage(inventory1, firstPageWithAllItems, sortByStr);
 
         // then
-        ArgumentCaptor<List<Long>> steamIdListCaptor = ArgumentCaptor.forClass((Class) List.class);
+        ArgumentCaptor<Page<Operation>> pageArgumentCaptor = ArgumentCaptor.forClass((Class)Page.class);
+        ArgumentCaptor<Function<Operation, OperationDTO>> lambdaArgumentCaptor
+                = ArgumentCaptor.forClass((Class)Function.class);
 
-        verify(operationRepository).findByInventories(steamIdListCaptor.capture());
-        assertThat(steamIdListCaptor.getValue()).isEqualTo(steamIds);
+        verify(operationRepository).searchAll(inventory1, firstPageWithAllItems, sortBy);
+        verify(pageMapper).getPageResult(pageArgumentCaptor.capture(), lambdaArgumentCaptor.capture());
 
-        Map<Long, List<Operation>> expectedResult = new HashMap<>();
-        expectedResult.put(steamId1, List.of(operation1, operation2, operation3));
-        expectedResult.put(steamId2, List.of(operation4));
+        assertThat(pageArgumentCaptor.getValue().getTotalElements()).isEqualTo(3);
+    }
 
-        assertThat(result).containsAllEntriesOf(expectedResult);
+    @Test
+    void itShouldGetPageOperationSecond() {
+        // given
+        Long steamId1 = 100000000000L;
+
+        Inventory inventory1 = new Inventory(steamId1);
+
+        Operation operation1 = new Operation();
+        operation1.setSteamId(steamId1);
+        operation1.setType(Operation.Type.C);
+        operation1.setVersion(1);
+        operation1.setMeta(new OperationMeta());
+
+        Operation operation2 = new Operation();
+        operation2.setSteamId(steamId1);
+        operation2.setType(Operation.Type.U);
+        operation2.setVersion(2);
+        operation2.setMeta(new OperationMeta());
+
+        Pageable secondPageWithAllItems = PageRequest.of(1, 1);
+
+        List<Operation> secondPageOperations = List.of(operation1);
+
+        String sortByStr = "-version";
+        Sort sortBy = Sort.by(Sort.Direction.DESC, "version");
+
+        when(sortBuilder.fromRequestParam(sortByStr)).thenReturn(sortBy);
+
+        Page<Operation> operationSecondPage = new PageImpl<>(
+                secondPageOperations, secondPageWithAllItems, secondPageOperations.size()
+        );
+
+        when(operationRepository.searchAll(inventory1, secondPageWithAllItems, sortBy)).thenReturn(operationSecondPage);
+
+        // when
+        underTest.getPage(inventory1, secondPageWithAllItems, sortByStr);
+
+        // then
+        ArgumentCaptor<Page<Operation>> pageArgumentCaptor = ArgumentCaptor.forClass((Class)Page.class);
+        ArgumentCaptor<Function<Operation, OperationDTO>> lambdaArgumentCaptor
+                = ArgumentCaptor.forClass((Class)Function.class);
+
+        verify(operationRepository).searchAll(inventory1, secondPageWithAllItems, sortBy);
+        verify(pageMapper).getPageResult(pageArgumentCaptor.capture(), lambdaArgumentCaptor.capture());
+
+        assertThat(pageArgumentCaptor.getValue().getNumberOfElements()).isEqualTo(1);
     }
 
     @Test
