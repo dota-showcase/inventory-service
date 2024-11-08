@@ -4,6 +4,7 @@ import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResul
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.function.Function;
 
 @Component
@@ -39,14 +40,27 @@ public class PageMapper<T, R> {
         PageResult<R> pageResult = new PageResult<>();
 
         pageResult.setData(page.getContent().stream().map(mapper).toList());
+        pageResult.setPagination(mapPagination(page));
 
+        return pageResult;
+    }
+
+    public PageResult<R> getPageResultWithoutMapping(Page<T> page, List<R> results) {
+        PageResult<R> pageResult = new PageResult<>();
+
+        pageResult.setData(results);
+        pageResult.setPagination(mapPagination(page));
+
+        return pageResult;
+    }
+
+    private PageResult.Pagination mapPagination(Page<T> page) {
         PageResult.Pagination pagination = new PageResult.Pagination();
         pagination.setCurrentPage(page.getNumber() + 1);
         pagination.setTotalPages(page.getTotalPages());
         pagination.setItemsOnPage(page.getNumberOfElements());
         pagination.setTotalItems(page.getTotalElements());
-        pageResult.setPagination(pagination);
 
-        return pageResult;
+        return pagination;
     }
 }

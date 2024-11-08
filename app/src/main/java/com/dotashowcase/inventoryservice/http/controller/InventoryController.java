@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.http.controller;
 
+import com.dotashowcase.inventoryservice.config.AppConstant;
 import com.dotashowcase.inventoryservice.http.exception.response.ErrorResponse;
 import com.dotashowcase.inventoryservice.http.exception.response.SteamErrorResponse;
 import com.dotashowcase.inventoryservice.http.exception.response.ValidationErrorResponse;
@@ -9,6 +10,7 @@ import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.service.InventoryService;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.support.validator.SteamIdConstraint;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -19,6 +21,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +52,20 @@ public class InventoryController {
     @GetMapping("inventories/")
     public List<InventoryWithOperationsDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
         return inventoryService.getAll(sort);
+    }
+
+    @Operation(description = "Get a list of all inventories, including operations")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = InventoryWithOperationsDTO.class)))),
+    })
+    @GetMapping("inventories/search")
+    public PageResult<InventoryWithLatestOperationDTO> search(
+            @PageableDefault(size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable,
+            @RequestParam(defaultValue = "-steamId") String sort
+    ) {
+        return inventoryService.getPage(pageable, sort);
     }
 
     @Operation(description = "Get an inventory, including operations")

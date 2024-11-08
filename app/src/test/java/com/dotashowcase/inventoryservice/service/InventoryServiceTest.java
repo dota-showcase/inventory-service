@@ -9,7 +9,9 @@ import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
+import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
@@ -49,12 +51,15 @@ class InventoryServiceTest {
     @Mock
     private SteamClient steamClient;
 
+    @Mock
+    private PageMapper<Inventory, InventoryWithLatestOperationDTO> pageMapper;
+
     private InventoryService underTest;
 
     @BeforeEach
     void setUp() {
         underTest = new InventoryServiceImpl(
-                inventoryItemService, operationService, inventoryRepository, sortBuilder, steamClient
+                inventoryItemService, operationService, inventoryRepository, sortBuilder, steamClient, pageMapper
         );
     }
 

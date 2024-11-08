@@ -10,6 +10,8 @@ public interface OperationDAL {
 
     List<Operation> findByInventories(List<Long> inventoryIds);
 
+    List<Operation> findLatestByInventories(List<Long> inventoryIds);
+
     Operation findLatest(Inventory inventory);
 
     List<Operation> findNLatest(Inventory inventory, int limit);

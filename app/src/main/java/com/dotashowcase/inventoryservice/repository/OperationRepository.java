@@ -6,6 +6,10 @@ import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -25,6 +29,29 @@ public class OperationRepository implements OperationDAL {
         query.addCriteria(Criteria.where("steamId").in(inventoryIds));
 
         return mongoTemplate.find(query, Operation.class);
+    }
+
+    @Override
+    public List<Operation> findLatestByInventories(List<Long> inventorySteamIds) {
+        AggregationOperation match = Aggregation.match(Criteria.where("steamId").in(inventorySteamIds));
+
+        AggregationOperation sort = Aggregation.sort(Sort.by("version").descending());
+
+        AggregationOperation group = Aggregation.group("steamId")
+                .first("$$ROOT")
+                .as("latestOperation");
+
+        AggregationOperation project = Aggregation.project("latestOperation");
+
+        Aggregation aggregation = Aggregation.newAggregation(match, sort, group, project);
+
+        AggregationResults<Operation> results = mongoTemplate.aggregate(
+                aggregation,
+                Operation.class.getAnnotation(Document.class).value(),
+                Operation.class
+        );
+
+        return results.getMappedResults();
     }
 
     @Override

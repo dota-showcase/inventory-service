@@ -10,16 +10,22 @@ import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundExce
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithOperationsDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryServiceResultMapper;
+import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import com.dotashowcase.inventoryservice.support.SortBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,13 +44,16 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryServiceResultMapper inventoryServiceResultMapper;
 
+    private final PageMapper<Inventory, InventoryWithLatestOperationDTO> pageMapper;
+
     @Autowired
     public InventoryServiceImpl(
             InventoryItemService inventoryItemService,
             OperationService operationService,
             InventoryRepository inventoryRepository,
             SortBuilder sortBuilder,
-            SteamClient steamClient
+            SteamClient steamClient,
+            PageMapper<Inventory, InventoryWithLatestOperationDTO> pageMapper
     ) {
         Assert.notNull(inventoryItemService, "InventoryItemService must not be null!");
         this.inventoryItemService = inventoryItemService;
@@ -60,6 +69,9 @@ public class InventoryServiceImpl implements InventoryService {
 
         Assert.notNull(steamClient, "SteamClient must not be null!");
         this.steamClient = steamClient;
+
+        Assert.notNull(pageMapper, "PageMapper<Inventory, InventoryWithLatestOperationDTO> must not be null!");
+        this.pageMapper = pageMapper;
 
         this.inventoryServiceResultMapper = new InventoryServiceResultMapper();
     }
@@ -77,6 +89,35 @@ public class InventoryServiceImpl implements InventoryService {
         );
 
         return inventoryServiceResultMapper.getInventoriesWithOperationsDTO(inventories, operations);
+    }
+
+    @Override
+    public PageResult<InventoryWithLatestOperationDTO> getPage(Pageable pageable, String sortBy) {
+
+        Sort sort = sortBuilder.fromRequestParam(sortBy);
+
+        Pageable innerPageable = sort != null
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort)
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+
+        Page<Inventory> inventoryPage = inventoryRepository.findAll(innerPageable);
+
+        Map<Long, Operation> operations = operationService.getAllLatest(
+                inventoryPage.getContent().stream().map(Inventory::getSteamId).toList()
+        );
+
+        List<InventoryWithLatestOperationDTO> result = new ArrayList<>();
+
+        for (Inventory inventory : inventoryPage.getContent()) {
+            result.add(
+                    inventoryServiceResultMapper.getInventoryWithLatestOperationDTO(
+                            inventory,
+                            operations.get(inventory.getSteamId())
+                    )
+            );
+        }
+
+        return pageMapper.getPageResultWithoutMapping(inventoryPage, result);
     }
 
     @Override

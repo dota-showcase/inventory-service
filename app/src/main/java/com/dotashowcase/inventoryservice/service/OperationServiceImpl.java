@@ -32,11 +32,11 @@ public class OperationServiceImpl implements OperationService  {
 
     @Override
     public Map<Long, List<Operation>> getAll(List<Long> inventoryIds) {
-        List<Operation> Operations = operationRepository.findByInventories(inventoryIds);
+        List<Operation> operations = operationRepository.findByInventories(inventoryIds);
 
         Map<Long, List<Operation>> result = new HashMap<>();
 
-        for (Operation Operation : Operations) {
+        for (Operation Operation : operations) {
             Long steamId = Operation.getSteamId();
 
             if (result.containsKey(steamId)) {
@@ -44,6 +44,21 @@ public class OperationServiceImpl implements OperationService  {
             } else {
                 result.put(steamId, new ArrayList<>(List.of(Operation)));
             }
+        }
+
+        return result;
+    }
+
+    @Override
+    public Map<Long, Operation> getAllLatest(List<Long> inventorySteamIds) {
+        List<Operation> operations = operationRepository.findLatestByInventories(inventorySteamIds);
+
+        Map<Long, Operation> result = new HashMap<>();
+
+        for (Operation operation : operations) {
+            Long steamId = operation.getSteamId();
+
+            result.put(steamId, operation);
         }
 
         return result;
@@ -83,19 +98,19 @@ public class OperationServiceImpl implements OperationService  {
             Operation.Type type,
             Operation prevOperation
     ) {
-        Operation Operation = new Operation();
+        Operation operation = new Operation();
 
-        Operation.setSteamId(inventory.getSteamId());
+        operation.setSteamId(inventory.getSteamId());
 
         if (type != null) {
-            Operation.setType(type);
+            operation.setType(type);
         }
 
         if (prevOperation != null) {
-            Operation.setVersion(prevOperation.getVersion() + 1);
+            operation.setVersion(prevOperation.getVersion() + 1);
         }
 
-        return operationRepository.insertOne(Operation);
+        return operationRepository.insertOne(operation);
     }
 
     @Override

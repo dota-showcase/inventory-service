@@ -13,6 +13,8 @@ public interface OperationService {
 
     List<Operation> getAll(Inventory inventory);
 
+    Map<Long, Operation> getAllLatest(List<Long> inventorySteamIds);
+
     Operation getLatest(Inventory inventory);
 
     Operation getByVersion(Inventory inventory, Integer version);
