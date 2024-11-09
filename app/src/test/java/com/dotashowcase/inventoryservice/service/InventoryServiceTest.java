@@ -6,11 +6,13 @@ import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
+import com.dotashowcase.inventoryservice.repository.OperationRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
@@ -19,13 +21,17 @@ import com.dotashowcase.inventoryservice.support.SortBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -89,18 +95,90 @@ class InventoryServiceTest {
     }
 
     @Test
+    void itShouldGetPage() {
+        // given
+        Long steamId1 = 100000000000L;
+        Long steamId2 = 100000000001L;
+        Long steamId3 = 100000000002L;
+
+        Inventory inventory1 = new Inventory(steamId1);
+        Inventory inventory2 = new Inventory(steamId2);
+        Inventory inventory3 = new Inventory(steamId3);
+
+        Operation operation1 = new Operation();
+        operation1.setSteamId(steamId1);
+        operation1.setType(Operation.Type.C);
+        operation1.setVersion(1);
+        operation1.setMeta(new OperationMeta());
+
+        Operation operation2 = new Operation();
+        operation2.setSteamId(steamId2);
+        operation2.setType(Operation.Type.C);
+        operation2.setVersion(1);
+        operation2.setMeta(new OperationMeta());
+
+        Operation operation3 = new Operation();
+        operation3.setSteamId(steamId3);
+        operation3.setType(Operation.Type.C);
+        operation3.setVersion(1);
+        operation3.setMeta(new OperationMeta());
+
+        Operation operation4 = new Operation();
+        operation4.setSteamId(steamId3);
+        operation4.setType(Operation.Type.U);
+        operation4.setVersion(2);
+        operation4.setMeta(new OperationMeta());
+
+        String sortByStr = "-steamId";
+        Sort sortBy = Sort.by(Sort.Direction.DESC, "steamId");
+        Pageable firstPageWithAllItems = PageRequest.of(0, 4, sortBy);
+
+        List<Inventory> firstPageInventories = List.of(inventory3, inventory2, inventory1);
+
+        when(sortBuilder.fromRequestParam(sortByStr)).thenReturn(sortBy);
+
+        Page<Inventory> inventoriesFirstPage = new PageImpl<>(
+                firstPageInventories, firstPageWithAllItems, firstPageInventories.size()
+        );
+
+        when(inventoryRepository.findAll(firstPageWithAllItems)).thenReturn(inventoriesFirstPage);
+        when(operationService.getAllLatest(List.of(steamId3, steamId2, steamId1)))
+                .thenReturn(Map.of(steamId3, operation4, steamId2, operation2, steamId1, operation1));
+
+        // when
+        underTest.getPage(firstPageWithAllItems, sortByStr);
+
+        // then
+        ArgumentCaptor<Page<Inventory>> pageArgumentCaptor = ArgumentCaptor.forClass((Class)Page.class);
+        ArgumentCaptor<List<InventoryWithLatestOperationDTO>> lambdaArgumentCaptor
+                = ArgumentCaptor.forClass((Class)List.class);
+
+        verify(inventoryRepository).findAll(firstPageWithAllItems);
+        verify(pageMapper).getPageResultWithoutMapping(pageArgumentCaptor.capture(), lambdaArgumentCaptor.capture());
+
+        assertThat(pageArgumentCaptor.getValue().getTotalElements()).isEqualTo(3);
+    }
+
+    @Test
     void itShouldGetBySteamId() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
 
+        Operation operation1 = new Operation();
+        operation1.setSteamId(steamId);
+        operation1.setType(Operation.Type.C);
+        operation1.setVersion(1);
+        operation1.setMeta(new OperationMeta());
+
         when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
+        when(operationService.getLatest(inventory)).thenReturn(operation1);
 
         // when
-        underTest.get(steamId);
+        InventoryWithLatestOperationDTO result = underTest.get(steamId);
 
         // then
-//        verify(operationService).getAll(List.of(steamId));
+        assertThat(result.getOperation().getVersion()).isEqualTo(1);
     }
 
     @Test

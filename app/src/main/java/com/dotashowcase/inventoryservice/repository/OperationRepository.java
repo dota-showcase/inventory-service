@@ -67,7 +67,7 @@ public class OperationRepository implements OperationDAL {
     }
 
     @Override
-    public Page<Operation> searchAll(Inventory inventory, Pageable pageable, Sort sort) {
+    public Page<Operation> findPage(Inventory inventory, Pageable pageable, Sort sort) {
         Query query = new Query();
         query.with(pageable);
         query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));

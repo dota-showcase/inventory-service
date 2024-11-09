@@ -118,10 +118,12 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public InventoryWithLatestOperationDTO get(Long steamId) {
-        Inventory inventory = findInventory(steamId);
-        Operation operation = operationService.getLatest(inventory);
+        Inventory inventory = findInventoryWithLatestOperation(steamId);
 
-        return inventoryServiceResultMapper.getInventoryWithLatestOperationDTO(inventory, operation);
+        return inventoryServiceResultMapper.getInventoryWithLatestOperationDTO(
+                inventory,
+                inventory.getLatestOperation()
+        );
     }
 
     @Override
@@ -214,6 +216,4 @@ public class InventoryServiceImpl implements InventoryService {
 
         return inventory;
     }
-
-
 }

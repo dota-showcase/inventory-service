@@ -147,7 +147,7 @@ class OperationRepositoryTest {
     }
 
     @Test
-    void itShouldFindLatestOperationsByInventories() {
+    void itShouldFindPage() {
         // given
         Long steamId1 = 100000000000L;
 
@@ -163,8 +163,8 @@ class OperationRepositoryTest {
         Sort sortBy = Sort.by(Sort.Direction.DESC, "version");
 
         // when
-        Page<Operation> firstPage = underTest.searchAll(inventory, firstPageWithAllItems, sortBy);
-        Page<Operation> secondPage = underTest.searchAll(inventory, secondPageWithOneItem, sortBy);
+        Page<Operation> firstPage = underTest.findPage(inventory, firstPageWithAllItems, sortBy);
+        Page<Operation> secondPage = underTest.findPage(inventory, secondPageWithOneItem, sortBy);
 
         // then
         assertThat(firstPage.getContent())

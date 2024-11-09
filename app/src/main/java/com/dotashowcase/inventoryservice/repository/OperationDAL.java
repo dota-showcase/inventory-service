@@ -17,7 +17,7 @@ public interface OperationDAL {
     // TODO: tmp method to replace aggregateLatestByInventories
     List<Operation> findLatestByInventoriesNPlusOne(List<Long> inventorySteamIds);
 
-    Page<Operation> searchAll(Inventory inventory, Pageable pageable, Sort sort);
+    Page<Operation> findPage(Inventory inventory, Pageable pageable, Sort sort);
 
     Operation findLatest(Inventory inventory);
 

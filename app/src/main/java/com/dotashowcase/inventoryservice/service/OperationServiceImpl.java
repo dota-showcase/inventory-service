@@ -74,7 +74,7 @@ public class OperationServiceImpl implements OperationService  {
     public PageResult<OperationDTO> getPage(Inventory inventory, Pageable pageable, String sortBy) {
         Sort sort = sortBuilder.fromRequestParam(sortBy);
 
-        Page<Operation> inventoryPage = operationRepository.searchAll(inventory, pageable, sort);
+        Page<Operation> inventoryPage = operationRepository.findPage(inventory, pageable, sort);
 
         return pageMapper.getPageResult(inventoryPage, operationServiceResultMapper::getOperationDTO);
     }

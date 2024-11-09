@@ -69,7 +69,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
-    public PageResult<InventoryItemDTO> get(
+    public PageResult<InventoryItemDTO> getPage(
             Inventory inventory,
             Pageable pageable,
             InventoryItemFilter filter,
@@ -82,7 +82,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     @Override
-    public PageResult<InventoryItemDTO> getPositioned(Inventory inventory, int page) {
+    public PageResult<InventoryItemDTO> getPagePositioned(Inventory inventory, int page) {
         Page<InventoryItem> inventoryItems = inventoryItemRepository.findPositionedPage(inventory, page);
 
         return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);

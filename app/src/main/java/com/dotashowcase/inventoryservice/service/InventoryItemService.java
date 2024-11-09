@@ -16,9 +16,9 @@ public interface InventoryItemService {
 
     List<InventoryItemDTO> get(Inventory inventory, InventoryItemFilter filter, String sortBy);
 
-    PageResult<InventoryItemDTO> get(Inventory inventory, Pageable pageable, InventoryItemFilter filter, String sortBy);
+    PageResult<InventoryItemDTO> getPage(Inventory inventory, Pageable pageable, InventoryItemFilter filter, String sortBy);
 
-    PageResult<InventoryItemDTO> getPositioned(Inventory inventory, int page);
+    PageResult<InventoryItemDTO> getPagePositioned(Inventory inventory, int page);
 
     List<Integer> getAllDefIndexes(Inventory inventory);
 

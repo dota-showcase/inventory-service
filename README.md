@@ -17,20 +17,24 @@ Swagger OpenAPI 3 is available by path:
 
 ### Inventory Endpoints
 
-* Show Inventories: `GET /api/v1/inventories/`
-* Create an Inventory (load items from steam): `POST /api/v1/inventories/:steamid/`
-* Show an Inventory: `GET /api/v1/inventories/:steamid/`
-* Update an Inventory (reload items from steam): `PUT /api/v1/inventories/:steamid/`
-* Delete an Inventory: `DELETE /api/v1/inventories/:steamid/`
+* Show Inventories: `GET /api/v1/inventories`
+* Show (Search) Inventories: `GET /api/v1/inventories/search`
+* Create an Inventory (load items from steam): `POST /api/v1/inventories/:steamid`
+* Show an Inventory: `GET /api/v1/inventories/:steamid`
+* Update an Inventory (reload items from steam): `PUT /api/v1/inventories/:steamid`
+* Delete an Inventory: `DELETE /api/v1/inventories/:steamid`
 
 ### Inventory Items Endpoints
 
-* Show Inventory Items: `GET /api/v1/inventories/:steamid/items/`
-* Show (Search) Inventory Items (pagination and filter with large payloads): `POST /api/v1/inventories/:steamid/items/search/`
-* Show Inventory Items (positioned pagination): `GET /api/v1/inventories/:steamid/items/page-positioned/`
+* Show Inventory Items: `GET /api/v1/inventories/:steamid/items`
+* Show (Search) Inventory Items (pagination and filter with large payloads): `POST /api/v1/inventories/:steamid/items/search`
+* Show Inventory Items (positioned pagination): `GET /api/v1/inventories/:steamid/items/page-positioned`
 * Show Inventory Items 'defIndex' fields: `GET /api/v1/inventories/:steamId/items/def-indexes`
-* Show Inventory Items changes: `GET /api/v1/inventories/:steamid/changes/`
-* Show Inventory Items changes (for a version): `GET /api/v1/inventories/:steamid/changes/:version/`
+* Show Inventory Items changes: `GET /api/v1/inventories/:steamid/changes/:version`
+
+### Operations Endpoints
+
+* Show (Search) Operations: `GET /api/v1/inventories/:steamid/operations/search`
 
 ## Getting Started
 
@@ -78,9 +82,8 @@ Assumptions:
 Estimate:
 
 * User inventory size: 500 B * 5000 = 2.5 MB
-* User inventory size for a year: 2.5 MB + (365 * 0.05 * 3.5) = ~65 MB
-* **Storage for 100K users: 65MB * 100000 = 65 GB**
-
+* User inventory size for a year: 2.5 MB + (365 * 0.05 * 2.5 MB) = ~50 MB
+* **Storage for 100K users: 50MB * 100000 = ~5 TB**
 ## Resources
 
 - [Steam API - GetPlayerItems](https://wiki.teamfortress.com/wiki/WebAPI/GetPlayerItems)

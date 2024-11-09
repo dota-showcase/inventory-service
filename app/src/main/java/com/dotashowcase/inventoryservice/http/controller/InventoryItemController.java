@@ -122,7 +122,7 @@ public class InventoryItemController {
 
         Inventory inventory = inventoryService.findInventory(steamId);
 
-        return inventoryItemService.get(inventory, pageable, filter, sort.orElse(null));
+        return inventoryItemService.getPage(inventory, pageable, filter, sort.orElse(null));
     }
 
     @Operation(description = "Get a paged position list of user's inventory items")
@@ -145,7 +145,7 @@ public class InventoryItemController {
     ) {
         Inventory inventory = inventoryService.findInventoryWithLatestOperation(steamId);
 
-        return inventoryItemService.getPositioned(inventory, page.filter((val) -> val > 0).orElse(1));
+        return inventoryItemService.getPagePositioned(inventory, page.filter((val) -> val > 0).orElse(1));
     }
 
     @Operation(description = "Get a unique list of all dota ids (defIndex) user's inventory items")

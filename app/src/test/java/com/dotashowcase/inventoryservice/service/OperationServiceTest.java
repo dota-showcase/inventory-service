@@ -136,7 +136,7 @@ class OperationServiceTest {
                 firstPageOperations, firstPageWithAllItems, firstPageOperations.size()
         );
 
-        when(operationRepository.searchAll(inventory1, firstPageWithAllItems, sortBy)).thenReturn(operationFirstPage);
+        when(operationRepository.findPage(inventory1, firstPageWithAllItems, sortBy)).thenReturn(operationFirstPage);
 
         // when
         underTest.getPage(inventory1, firstPageWithAllItems, sortByStr);
@@ -146,7 +146,7 @@ class OperationServiceTest {
         ArgumentCaptor<Function<Operation, OperationDTO>> lambdaArgumentCaptor
                 = ArgumentCaptor.forClass((Class)Function.class);
 
-        verify(operationRepository).searchAll(inventory1, firstPageWithAllItems, sortBy);
+        verify(operationRepository).findPage(inventory1, firstPageWithAllItems, sortBy);
         verify(pageMapper).getPageResult(pageArgumentCaptor.capture(), lambdaArgumentCaptor.capture());
 
         assertThat(pageArgumentCaptor.getValue().getTotalElements()).isEqualTo(3);
@@ -184,7 +184,7 @@ class OperationServiceTest {
                 secondPageOperations, secondPageWithAllItems, secondPageOperations.size()
         );
 
-        when(operationRepository.searchAll(inventory1, secondPageWithAllItems, sortBy)).thenReturn(operationSecondPage);
+        when(operationRepository.findPage(inventory1, secondPageWithAllItems, sortBy)).thenReturn(operationSecondPage);
 
         // when
         underTest.getPage(inventory1, secondPageWithAllItems, sortByStr);
@@ -194,7 +194,7 @@ class OperationServiceTest {
         ArgumentCaptor<Function<Operation, OperationDTO>> lambdaArgumentCaptor
                 = ArgumentCaptor.forClass((Class)Function.class);
 
-        verify(operationRepository).searchAll(inventory1, secondPageWithAllItems, sortBy);
+        verify(operationRepository).findPage(inventory1, secondPageWithAllItems, sortBy);
         verify(pageMapper).getPageResult(pageArgumentCaptor.capture(), lambdaArgumentCaptor.capture());
 
         assertThat(pageArgumentCaptor.getValue().getNumberOfElements()).isEqualTo(1);

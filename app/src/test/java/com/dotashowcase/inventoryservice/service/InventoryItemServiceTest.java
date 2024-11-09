@@ -181,7 +181,7 @@ class InventoryItemServiceTest {
                 .thenReturn(inventoryItemPage);
 
         // when
-       underTest.get(inventory, firstPageWithTwoItems, filter, sortByStr);
+       underTest.getPage(inventory, firstPageWithTwoItems, filter, sortByStr);
 
         // then
         ArgumentCaptor<Page<InventoryItem>> pageArgumentCaptor = ArgumentCaptor.forClass((Class)Page.class);
@@ -255,7 +255,7 @@ class InventoryItemServiceTest {
                 .thenReturn(inventoryItemPage);
 
         // when
-        underTest.getPositioned(inventory, page);
+        underTest.getPagePositioned(inventory, page);
 
         // then
         ArgumentCaptor<Page<InventoryItem>> pageArgumentCaptor = ArgumentCaptor.forClass((Class)Page.class);
