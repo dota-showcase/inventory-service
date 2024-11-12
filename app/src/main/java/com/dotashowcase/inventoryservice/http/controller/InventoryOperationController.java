@@ -48,7 +48,7 @@ public class InventoryOperationController {
                     mediaType = "application/json",
                     schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
-    @GetMapping("inventories/{steamId}/operations/search")
+    @GetMapping("inventories/{steamId}/operations/search-page")
     public PageResult<OperationDTO> search(
             @PathVariable @SteamIdConstraint Long steamId,
             @PageableDefault(size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable,

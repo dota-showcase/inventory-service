@@ -18,7 +18,7 @@ Swagger OpenAPI 3 is available by path:
 ### Inventory Endpoints
 
 * Show Inventories: `GET /api/v1/inventories`
-* Show (Search) Inventories: `GET /api/v1/inventories/search`
+* Search Inventories (paginated): `GET /api/v1/inventories/search-page`
 * Create an Inventory (load items from steam): `POST /api/v1/inventories/:steamid`
 * Show an Inventory: `GET /api/v1/inventories/:steamid`
 * Update an Inventory (reload items from steam): `PUT /api/v1/inventories/:steamid`
@@ -26,15 +26,15 @@ Swagger OpenAPI 3 is available by path:
 
 ### Inventory Items Endpoints
 
-* Show Inventory Items: `GET /api/v1/inventories/:steamid/items`
-* Show (Search) Inventory Items (pagination and filter with large payloads): `POST /api/v1/inventories/:steamid/items/search`
+* Search Inventory Items (filter with large payloads): `POST /api/v1/inventories/:steamid/items/search`
+* Search Inventory Items (paginated; filter with large payloads): `POST /api/v1/inventories/:steamid/items/search-page`
 * Show Inventory Items (positioned pagination): `GET /api/v1/inventories/:steamid/items/page-positioned`
 * Show Inventory Items 'defIndex' fields: `GET /api/v1/inventories/:steamId/items/def-indexes`
 * Show Inventory Items changes: `GET /api/v1/inventories/:steamid/changes/:version`
 
 ### Operations Endpoints
 
-* Show (Search) Operations: `GET /api/v1/inventories/:steamid/operations/search`
+* Search Operations (paginated): `GET /api/v1/inventories/:steamid/operations/search-page`
 
 ## Getting Started
 

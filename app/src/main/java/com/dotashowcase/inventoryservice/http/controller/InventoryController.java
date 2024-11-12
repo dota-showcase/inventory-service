@@ -53,13 +53,13 @@ public class InventoryController {
         return inventoryService.getAll(sort);
     }
 
-    @Operation(description = "Get a list of all inventories, including latest operation")
+    @Operation(description = "Get a paged list of all inventories, including latest operation")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(
                     mediaType = "application/json",
                     array = @ArraySchema(schema = @Schema(implementation = InventoryWithLatestOperationDTO.class)))),
     })
-    @GetMapping("inventories/search")
+    @GetMapping("inventories/search-page")
     public PageResult<InventoryWithLatestOperationDTO> search(
             @PageableDefault(size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable,
             @RequestParam(defaultValue = "-steamId") String sort
