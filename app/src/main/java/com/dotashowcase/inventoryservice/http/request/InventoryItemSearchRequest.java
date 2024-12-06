@@ -11,6 +11,8 @@ import java.util.List;
 @AllArgsConstructor
 public class InventoryItemSearchRequest {
 
+    private List<Long> itemIds;
+
     private List<Integer> defIndexes;
 
     private List<Byte> qualities;

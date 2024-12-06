@@ -68,6 +68,7 @@ public class InventoryItemController {
 
         if (inventoryItemSearchRequest != null) {
             filter = new InventoryItemFilter(
+                    inventoryItemSearchRequest.getItemIds(),
                     inventoryItemSearchRequest.getDefIndexes(),
                     inventoryItemSearchRequest.getQualities(),
                     inventoryItemSearchRequest.getIsTradable(),
@@ -108,6 +109,7 @@ public class InventoryItemController {
 
         if (inventoryItemSearchRequest != null) {
             filter = new InventoryItemFilter(
+                    inventoryItemSearchRequest.getItemIds(),
                     inventoryItemSearchRequest.getDefIndexes(),
                     inventoryItemSearchRequest.getQualities(),
                     inventoryItemSearchRequest.getIsTradable(),

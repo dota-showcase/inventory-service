@@ -13,6 +13,8 @@ import java.util.List;
 @Builder
 public class InventoryItemFilter {
 
+    private List<Long> itemIds;
+
     private List<Integer> defIndexes;
 
     private List<Byte> qualities;
@@ -24,6 +26,10 @@ public class InventoryItemFilter {
     private Boolean isEquipped;
 
     private Boolean hasAttribute;
+
+    public boolean hasItemIds() {
+        return itemIds != null && !itemIds.isEmpty();
+    }
 
     public boolean hasDefIndexes() {
         return defIndexes != null && !defIndexes.isEmpty();

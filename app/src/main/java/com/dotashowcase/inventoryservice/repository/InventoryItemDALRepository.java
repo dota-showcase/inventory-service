@@ -242,6 +242,17 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     private List<Criteria> getFilterCriteria(InventoryItemFilter filter) {
         List<Criteria> criteriaList = new ArrayList<>();
 
+        // filter by itemId
+        if (filter.hasItemIds()) {
+            List<Long> itemIds = filter.getItemIds();
+
+            if (itemIds.size() == 1) {
+                criteriaList.add(Criteria.where("itemId").is(itemIds.getFirst()));
+            } else {
+                criteriaList.add(Criteria.where("itemId").in(itemIds));
+            }
+        }
+
         // filter by defIndex
         if (filter.hasDefIndexes()) {
             List<Integer> defIndexes = filter.getDefIndexes();

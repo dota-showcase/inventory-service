@@ -258,6 +258,10 @@ class InventoryItemRepositoryTest {
         Pageable secondPageWithOneItem = PageRequest.of(1, 1);
         Pageable thirdPageWithZeroItem = PageRequest.of(2, 1);
 
+        InventoryItemFilter filterItemIds = InventoryItemFilter.builder()
+                .itemIds(List.of(100L, 101L, 103L, 300L, 999L))
+                .build();
+
         // 200R, 201U, 203A - inventory #1; 300A - inventory #2; 999 - n/a
         InventoryItemFilter filterDefIndexes = InventoryItemFilter.builder()
                 .defIndexes(List.of(200, 201, 203, 300, 999))
@@ -295,6 +299,11 @@ class InventoryItemRepositoryTest {
 
         Sort byDefIndex = Sort.by(Sort.Direction.ASC, "defIndex");
         Sort byDefIndexDesc = Sort.by(Sort.Direction.DESC, "defIndex");
+
+        // when #0
+        Page<InventoryItem> twoItemsByItemId = underTest
+                .searchAll(inventory, firstPageWithAllItems, filterItemIds, byDefIndex);
+        List<InventoryItem> twoItemsByItemId2 = underTest.searchAll(inventory, filterItemIds, byDefIndex);
 
         // when #1
         Page<InventoryItem> twoItemsByDefIndex = underTest
@@ -341,6 +350,25 @@ class InventoryItemRepositoryTest {
         // when #9
         Page<InventoryItem> twoItemsByAllDefindexDesc = underTest
                 .searchAll(inventory, firstPageWithAllItems, filterAll, byDefIndexDesc);
+
+        // then #0
+        assertThat(twoItemsByItemId.getContent())
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByItemId.getContent())
+                .extracting("itemId")
+                .containsSequence(101L, 103L);
+
+        assertThat(twoItemsByItemId2)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(2);
+
+        assertThat(twoItemsByItemId2)
+                .extracting("itemId")
+                .containsSequence(101L, 103L);
 
         // then #1
         assertThat(twoItemsByDefIndex.getContent())

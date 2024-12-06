@@ -80,7 +80,8 @@ class OperationServiceTest {
 
         List<Operation> operations = List.of(operation2, operation3);
 
-        when(operationRepository.findLatestByInventoriesNPlusOne(steamIds)).thenReturn(operations);
+//        when(operationRepository.findLatestByInventoriesNPlusOne(steamIds)).thenReturn(operations);
+        when(operationRepository.aggregateLatestByInventories(steamIds)).thenReturn(operations);
 
         // when
         Map<Long, Operation> result = underTest.getAllLatest(List.of(steamId1, steamId2));

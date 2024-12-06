@@ -57,7 +57,7 @@ public class OperationServiceImpl implements OperationService  {
 
     @Override
     public Map<Long, Operation> getAllLatest(List<Long> inventorySteamIds) {
-        List<Operation> operations = operationRepository.findLatestByInventoriesNPlusOne(inventorySteamIds);
+        List<Operation> operations = operationRepository.aggregateLatestByInventories(inventorySteamIds);
 
         Map<Long, Operation> result = new HashMap<>();
 
