@@ -1,9 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="dev-build" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <module name="inventory-service" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.dotashowcase.inventoryservice.InventoryServiceApplication" />
     <option name="ACTIVE_PROFILES" value="dev" />
-    <option name="ALTERNATIVE_JRE_PATH" />
     <additionalParameters>
       <param>
         <option name="enabled" value="true" />
@@ -41,6 +38,8 @@
         <option name="value" value="27017" />
       </param>
     </additionalParameters>
+    <module name="inventory-service.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.dotashowcase.inventoryservice.InventoryServiceApplication" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

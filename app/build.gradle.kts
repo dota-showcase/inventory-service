@@ -1,10 +1,13 @@
 plugins {
+    java
     `java-library`
-    `maven-publish`
+    id("org.springframework.boot") version "3.3.5"
+    id("io.spring.dependency-management") version "1.1.4"
 }
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
 }
 
 dependencies {
@@ -17,7 +20,12 @@ dependencies {
     api(libs.org.projectlombok.lombok)
     api(libs.org.springdoc.springdoc.openapi.starter.webmvc.ui)
     api(libs.org.springdoc.springdoc.openapi.starter.webmvc.api)
-    runtimeOnly(libs.org.springframework.boot.spring.boot.devtools)
+
+    compileOnly(libs.org.projectlombok.lombok)
+    annotationProcessor(libs.org.projectlombok.lombok)
+
+    testCompileOnly(libs.org.projectlombok.lombok)
+    testAnnotationProcessor(libs.org.projectlombok.lombok)
     testImplementation(libs.org.springframework.boot.spring.boot.starter.test)
     testImplementation(libs.de.flapdoodle.embed.de.flapdoodle.embed.mongo.spring30x)
     testImplementation(libs.org.junit.jupiter.junit.jupiter.api)
@@ -29,14 +37,9 @@ version = "0.0.1"
 description = "inventory-service"
 java.sourceCompatibility = JavaVersion.VERSION_21
 
-publishing {
-    publications.create<MavenPublication>("maven") {
-        from(components["java"])
-    }
-}
-
 tasks.withType<JavaCompile>() {
     options.encoding = "UTF-8"
+    options.compilerArgs.add("-parameters")
 }
 
 tasks.withType<Javadoc>() {

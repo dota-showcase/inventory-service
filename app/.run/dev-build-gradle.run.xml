@@ -1,0 +1,29 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="dev-build-gradle" type="GradleRunConfiguration" factoryName="Gradle">
+    <ExternalSystemSettings>
+      <option name="executionName" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/app" />
+      <option name="externalSystemIdString" value="GRADLE" />
+      <option name="scriptParameters" value="" />
+      <option name="taskDescriptions">
+        <list />
+      </option>
+      <option name="taskNames">
+        <list>
+          <option value="bootRun" />
+          <option value="--args='--spring.profiles.active=dev --spring.application.name=&quot;ds-inventory-service&quot; --spring.data.mongodb.authentication-database=&quot;admin&quot; --spring.data.mongodb.username=&quot;root&quot; --spring.data.mongodb.password=&quot;root&quot; --spring.data.mongodb.database=&quot;main&quot; --spring.data.mongodb.host=&quot;localhost&quot; --spring.data.mongodb.port=27017'" />
+        </list>
+      </option>
+      <option name="vmOptions" value="" />
+    </ExternalSystemSettings>
+    <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTest>false</RunAsTest>
+    <RunnerSettings RunnerId="Debug">
+      <option name="DEBUG_PORT" value="" />
+    </RunnerSettings>
+    <ConfigurationWrapper RunnerId="Debug" />
+    <method v="2" />
+  </configuration>
+</component>
