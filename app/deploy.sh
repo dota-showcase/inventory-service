@@ -7,7 +7,7 @@ GRADLE_CMD="./gradlew"
 
 # ===== STEP 1: BUILD THE JAR =====
 echo "🚀 Building application..."
-$GRADLE_CMD build -x test
+$GRADLE_CMD build -Dspring.profiles.active=prod -x test -x javadoc
 
 # ===== STEP 2: RESTART THE SYSTEMD SERVICE =====
 echo "🔄 Restarting service: $SERVICE_NAME"

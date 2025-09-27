@@ -1,13 +1,13 @@
 plugins {
-    java
-    `java-library`
+    id("java")
+    id("java-library")
     id("org.springframework.boot") version "3.3.5"
-    id("io.spring.dependency-management") version "1.1.4"
+    id("io.spring.dependency-management") version "1.1.6"
 }
 
 repositories {
-    mavenCentral()
     gradlePluginPortal()
+    mavenCentral()
 }
 
 dependencies {
