@@ -1,1 +1,1 @@
-FROM maven:3.9.0-amazoncorretto-17
+FROM gradle:25-corretto

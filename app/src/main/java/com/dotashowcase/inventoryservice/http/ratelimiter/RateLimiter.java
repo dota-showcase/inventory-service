@@ -20,8 +20,12 @@ public class RateLimiter {
     }
 
     private Bucket newBucket(Long steamId) {
+//        return Bucket.builder()
+//                .addLimit(Bandwidth.simple(LIMIT, Duration.ofMinutes(1)))
+//                .build();
+
         return Bucket.builder()
-                .addLimit(Bandwidth.simple(LIMIT, Duration.ofMinutes(1)))
+                .addLimit(limit -> limit.capacity(LIMIT).refillGreedy(1, Duration.ofMinutes(1)))
                 .build();
     }
 }

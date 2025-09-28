@@ -1,7 +1,7 @@
 services:
   inventory-service-mongodb:
     container_name: inventory-service-mongodb
-    image: mongo:8.0.1
+    image: mongo:latest
     restart: always
     env_file: ./.env
     environment:

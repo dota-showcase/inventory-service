@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ValidationErrorResponse extends ErrorResponse {
 
-    private List<String> validationErrors;
+    private final List<String> validationErrors;
 
     public ValidationErrorResponse(
             Instant timestamp,

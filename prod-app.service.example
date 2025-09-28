@@ -9,7 +9,7 @@ Type=simple
 
 [Service]
 # Path to JAR file built by Gradle
-ExecStart=/usr/bin/java -jar /usr/local/inventory-service/app/build/libs/app-0.0.1-SNAPSHOT.jar
+ExecStart=/usr/bin/java -jar /usr/local/inventory-service/app/build/libs/inventory-service-0.0.1.jar -Dspring.profiles.active=prod
 
 SuccessExitStatus=143
 Restart=always

@@ -40,9 +40,9 @@ Swagger OpenAPI 3 is available by path:
 
 ### Prerequisites
 
-* Java 21
-* Gradle
-* MongoDB 8.0
+* Java 25
+* Gradle 9
+* MongoDB 8.2
 
 ### Installation
 
