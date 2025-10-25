@@ -3,6 +3,9 @@ package com.dotashowcase.inventoryservice.repository;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +21,6 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -41,29 +43,22 @@ public class OperationRepository implements OperationDAL {
 
         Aggregation aggregation = Aggregation.newAggregation(match, sort, group, project);
 
-        AggregationResults<Operation> results = mongoTemplate.aggregate(
+        AggregationResults<OperationAggregationResult> results = mongoTemplate.aggregate(
                 aggregation,
                 Operation.class.getAnnotation(Document.class).value(),
-                Operation.class
+                OperationAggregationResult.class
         );
 
-        return results.getMappedResults();
+        return results.getMappedResults().stream().map(OperationAggregationResult::getLatestOperation).toList();
     }
 
-    @Override
-    public List<Operation> findLatestByInventoriesNPlusOne(List<Long> inventorySteamIds) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    private static class OperationAggregationResult {
+        private Long id;
 
-        List<Operation> result = new ArrayList<>();
-
-        for (Long steamId: inventorySteamIds) {
-            Query query = new Query();
-            query.addCriteria(Criteria.where("steamId").is(steamId));
-            query.with(Sort.by(Sort.Direction.DESC, "version"));
-
-            result.add(mongoTemplate.findOne(query, Operation.class));
-        }
-
-        return result;
+        private Operation latestOperation;
     }
 
     @Override

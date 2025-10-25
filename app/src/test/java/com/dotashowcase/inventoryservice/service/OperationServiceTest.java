@@ -80,7 +80,6 @@ class OperationServiceTest {
 
         List<Operation> operations = List.of(operation2, operation3);
 
-//        when(operationRepository.findLatestByInventoriesNPlusOne(steamIds)).thenReturn(operations);
         when(operationRepository.aggregateLatestByInventories(steamIds)).thenReturn(operations);
 
         // when
@@ -89,7 +88,7 @@ class OperationServiceTest {
         // then
         ArgumentCaptor<List<Long>> steamIdListCaptor = ArgumentCaptor.forClass((Class) List.class);
 
-        verify(operationRepository).findLatestByInventoriesNPlusOne(steamIdListCaptor.capture());
+        verify(operationRepository).aggregateLatestByInventories(steamIdListCaptor.capture());
         assertThat(steamIdListCaptor.getValue()).isEqualTo(steamIds);
 
         Map<Long, Operation> expectedResult = new HashMap<>();

@@ -11,11 +11,7 @@ import java.util.List;
 
 public interface OperationDAL {
 
-    // TODO: tmp not used, because of bug in vendor
     List<Operation> aggregateLatestByInventories(List<Long> inventoryIds);
-
-    // TODO: tmp method to replace aggregateLatestByInventories
-    List<Operation> findLatestByInventoriesNPlusOne(List<Long> inventorySteamIds);
 
     Page<Operation> findPage(Inventory inventory, Pageable pageable, Sort sort);
 

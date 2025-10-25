@@ -129,7 +129,7 @@ class OperationRepositoryTest {
         Integer steamId2Version1 = 1;
 
         // when
-        List<Operation> expected = underTest.findLatestByInventoriesNPlusOne(new ArrayList<>() {{
+        List<Operation> expected = underTest.aggregateLatestByInventories(new ArrayList<>() {{
             add(steamId1);
             add(steamId2);
         }});
