@@ -107,7 +107,7 @@ class PageMapperTest {
         PageResult.Pagination pagination = expected.getPagination();
 
         assertThat(data.size()).isEqualTo(3);
-        assertThat(data.get(0).getDefIndex()).isEqualTo(defIndex1);
+        assertThat(data.getFirst().getDefIndex()).isEqualTo(defIndex1);
         assertThat(data.get(1).getDefIndex()).isEqualTo(defIndex2);
         assertThat(data.get(2).getDefIndex()).isEqualTo(defIndex3);
 

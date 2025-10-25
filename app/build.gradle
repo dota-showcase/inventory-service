@@ -38,8 +38,8 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x:4.21.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:6.0.0-RC3'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:6.0.0-RC3'
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation "org.junit.jupiter:junit-jupiter"
 }
 
 tasks.named('test') {

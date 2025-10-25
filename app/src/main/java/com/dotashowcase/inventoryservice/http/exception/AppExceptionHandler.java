@@ -46,7 +46,6 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
             MethodArgumentTypeMismatchException ex,
             WebRequest request
     ) {
-
         Throwable cause = ex;
         while (cause.getCause() != null && cause.getCause() != cause) {
             cause = cause.getCause();
@@ -64,8 +63,8 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     @ResponseBody
     ResponseEntity<Object> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
-
         List<String> errors = new ArrayList<>();
+
         for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
             // get param name from path
             String paramName = String.valueOf(StreamSupport
@@ -87,7 +86,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(SteamException.class)
     @ResponseBody
-    public SteamErrorResponse handleSteamException(final SteamException ex, HttpServletRequest request) {
+    public ResponseEntity<SteamErrorResponse> handleSteamException(final SteamException ex, HttpServletRequest request) {
         SteamErrorResponse.SteamErrorDetail steamErrorDetail = new SteamErrorResponse.SteamErrorDetail();
 
         HttpStatus steamHttpStatus = HttpStatus.BAD_REQUEST;
@@ -100,7 +99,6 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
             steamErrorDetail.setError(steamHttpStatus.getReasonPhrase());
             steamErrorDetail.setMessage(((BadRequestException) ex).getSteamHttpMessage());
         } else if (ex instanceof InventoryStatusException) {
-
             steamErrorDetail.setType("Inventory Error");
             steamErrorDetail.setHttpStatus(((InventoryStatusException) ex).getSteamHttpStatusCode());
             steamErrorDetail.setInventoryStatus(((InventoryStatusException) ex).getSteamInventoryStatusCode());
@@ -117,7 +115,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 
         log.error(LOG_MESSAGE_TEMPLATE, steamErrorResponse);
 
-        return steamErrorResponse;
+        return new ResponseEntity<>(steamErrorResponse, steamHttpStatus);
     }
 
     @ExceptionHandler({RateLimiterException.class})

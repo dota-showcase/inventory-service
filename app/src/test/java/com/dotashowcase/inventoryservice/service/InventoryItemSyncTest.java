@@ -125,8 +125,8 @@ class InventoryItemSyncTest {
         ArgumentCaptor<List<InventoryItem>> inventoryItemsArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
         verify(inventoryItemRepository).insertAll(inventoryItemsArgumentCaptor.capture());
 
-        assertThat(inventoryItemsArgumentCaptor.getValue().get(0).getItemId()).isEqualTo(item1.getId());
-        assertThat(inventoryItemsArgumentCaptor.getValue().get(0).getSteamId()).isEqualTo(steamId);
+        assertThat(inventoryItemsArgumentCaptor.getValue().getFirst().getItemId()).isEqualTo(item1.getId());
+        assertThat(inventoryItemsArgumentCaptor.getValue().getFirst().getSteamId()).isEqualTo(steamId);
 
         assertThat(inventoryItemsArgumentCaptor.getValue().get(1).getItemId()).isEqualTo(item2.getId());
         assertThat(inventoryItemsArgumentCaptor.getValue().get(1).getSteamId()).isEqualTo(steamId);
@@ -347,9 +347,9 @@ class InventoryItemSyncTest {
                 ArgumentMatchers.anyList()
         );
 
-        assertThat(updateArgumentCaptor.getAllValues().get(0).size()).isEqualTo(1);
+        assertThat(updateArgumentCaptor.getAllValues().getFirst().size()).isEqualTo(1);
         // check ids is the same
-        assertThat(updateArgumentCaptor.getAllValues().get(0).iterator().next().compareTo(objectId2)).isEqualTo(0);
+        assertThat(updateArgumentCaptor.getAllValues().getFirst().iterator().next().compareTo(objectId2)).isEqualTo(0);
 
         ArgumentCaptor<List<InventoryItem>> insertArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
         verify(inventoryItemRepository).insertAll(insertArgumentCaptor.capture());
@@ -481,9 +481,9 @@ class InventoryItemSyncTest {
         ArgumentCaptor<List<InventoryItem>> insertArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
         verify(inventoryItemRepository).insertAll(insertArgumentCaptor.capture());
         assertThat(insertArgumentCaptor.getValue().size()).isEqualTo(1);
-        assertThat(insertArgumentCaptor.getValue().get(0).getItemId()).isEqualTo(itemId2);
-        assertThat(insertArgumentCaptor.getValue().get(0).getCustomName()).isEqualTo("Sample #2 - updated");
-        assertThat(insertArgumentCaptor.getValue().get(0).getIsActive()).isEqualTo(true);
+        assertThat(insertArgumentCaptor.getValue().getFirst().getItemId()).isEqualTo(itemId2);
+        assertThat(insertArgumentCaptor.getValue().getFirst().getCustomName()).isEqualTo("Sample #2 - updated");
+        assertThat(insertArgumentCaptor.getValue().getFirst().getIsActive()).isEqualTo(true);
     }
 
     @Test
@@ -680,8 +680,8 @@ class InventoryItemSyncTest {
         );
 
         // hide
-        assertThat(updateArgumentCaptor.getAllValues().get(0).size()).isEqualTo(1);
-        assertThat(updateArgumentCaptor.getAllValues().get(0).iterator().next().compareTo(objectId2)).isEqualTo(0);
+        assertThat(updateArgumentCaptor.getAllValues().getFirst().size()).isEqualTo(1);
+        assertThat(updateArgumentCaptor.getAllValues().getFirst().iterator().next().compareTo(objectId2)).isEqualTo(0);
 
         // update
         assertThat(updateArgumentCaptor.getAllValues().get(1).size()).isEqualTo(1);
@@ -692,9 +692,9 @@ class InventoryItemSyncTest {
         assertThat(insertArgumentCaptor.getValue().size()).isEqualTo(2);
 
         // create copy
-        assertThat(insertArgumentCaptor.getValue().get(0).getItemId()).isEqualTo(itemId1);
-        assertThat(insertArgumentCaptor.getValue().get(0).getCustomName()).isEqualTo("Sample #1 - updated");
-        assertThat(insertArgumentCaptor.getValue().get(0).getIsActive()).isEqualTo(true);
+        assertThat(insertArgumentCaptor.getValue().getFirst().getItemId()).isEqualTo(itemId1);
+        assertThat(insertArgumentCaptor.getValue().getFirst().getCustomName()).isEqualTo("Sample #1 - updated");
+        assertThat(insertArgumentCaptor.getValue().getFirst().getIsActive()).isEqualTo(true);
 
         // create new
         assertThat(insertArgumentCaptor.getValue().get(1).getItemId()).isEqualTo(itemId4);

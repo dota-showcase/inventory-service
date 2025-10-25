@@ -112,7 +112,7 @@ class InventoryItemServiceTest {
 
         // then
         assertThat(expected.size()).isEqualTo(inventoryItems.size());
-        assertThat(expected.get(0).getDefIndex()).isEqualTo(defIndex1);
+        assertThat(expected.getFirst().getDefIndex()).isEqualTo(defIndex1);
         assertThat(expected.get(1).getDefIndex()).isEqualTo(defIndex2);
     }
 
@@ -335,8 +335,8 @@ class InventoryItemServiceTest {
         ArgumentCaptor<List<InventoryItem>> inventoryItemsArgumentCaptor = ArgumentCaptor.forClass((Class)List.class);
         verify(inventoryItemRepository).insertAll(inventoryItemsArgumentCaptor.capture());
 
-        assertThat(inventoryItemsArgumentCaptor.getValue().get(0).getOperationId()).isEqualTo(operation.getId());
-        assertThat(inventoryItemsArgumentCaptor.getValue().get(0).getSteamId()).isEqualTo(steamId);
+        assertThat(inventoryItemsArgumentCaptor.getValue().getFirst().getOperationId()).isEqualTo(operation.getId());
+        assertThat(inventoryItemsArgumentCaptor.getValue().getFirst().getSteamId()).isEqualTo(steamId);
 
         assertThat(inventoryItemsArgumentCaptor.getValue().get(1).getOperationId()).isEqualTo(operation.getId());
         assertThat(inventoryItemsArgumentCaptor.getValue().get(1).getSteamId()).isEqualTo(steamId);

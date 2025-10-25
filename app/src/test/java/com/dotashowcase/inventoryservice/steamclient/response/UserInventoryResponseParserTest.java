@@ -115,27 +115,27 @@ class UserInventoryResponseParserTest {
         assertThat(expected.getNumberBackpackSlots()).isEqualTo(10120);
 
         assertThat(expected.getItems().size()).isEqualTo(3);
-        assertThat(expected.getItems().get(0).getId()).isEqualTo(3120140571L);
-        assertThat(expected.getItems().get(0).getOriginal_id()).isEqualTo(3053978672L);
-        assertThat(expected.getItems().get(0).getDefindex()).isEqualTo(6671);
-        assertThat(expected.getItems().get(0).getLevel()).isEqualTo((byte) 1);
-        assertThat(expected.getItems().get(0).getQuality()).isEqualTo((byte) 9);
-        assertThat(expected.getItems().get(0).getInventory()).isEqualTo(1133);
-        assertThat(expected.getItems().get(0).getQuantity()).isEqualTo(1);
+        assertThat(expected.getItems().getFirst().getId()).isEqualTo(3120140571L);
+        assertThat(expected.getItems().getFirst().getOriginal_id()).isEqualTo(3053978672L);
+        assertThat(expected.getItems().getFirst().getDefindex()).isEqualTo(6671);
+        assertThat(expected.getItems().getFirst().getLevel()).isEqualTo((byte) 1);
+        assertThat(expected.getItems().getFirst().getQuality()).isEqualTo((byte) 9);
+        assertThat(expected.getItems().getFirst().getInventory()).isEqualTo(1133);
+        assertThat(expected.getItems().getFirst().getQuantity()).isEqualTo(1);
 
-        assertThat(expected.getItems().get(0).getEquipped().size()).isEqualTo(2);
-        assertThat(expected.getItems().get(0).getEquipped().get(0).getEquip_class()).isEqualTo(13);
-        assertThat(expected.getItems().get(0).getEquipped().get(0).getSlot()).isEqualTo(1);
-        assertThat(expected.getItems().get(0).getEquipped().get(1).getEquip_class()).isEqualTo(13);
-        assertThat(expected.getItems().get(0).getEquipped().get(1).getSlot()).isEqualTo(5);
+        assertThat(expected.getItems().getFirst().getEquipped().size()).isEqualTo(2);
+        assertThat(expected.getItems().getFirst().getEquipped().getFirst().getEquip_class()).isEqualTo(13);
+        assertThat(expected.getItems().getFirst().getEquipped().getFirst().getSlot()).isEqualTo(1);
+        assertThat(expected.getItems().getFirst().getEquipped().get(1).getEquip_class()).isEqualTo(13);
+        assertThat(expected.getItems().getFirst().getEquipped().get(1).getSlot()).isEqualTo(5);
 
-        assertThat(expected.getItems().get(0).getAttributes().size()).isEqualTo(2);
-        assertThat(expected.getItems().get(0).getAttributes().get(0).getDefindex()).isEqualTo(321);
-        assertThat(expected.getItems().get(0).getAttributes().get(0).getValue()).isEqualTo("1157349376");
-        assertThat(expected.getItems().get(0).getAttributes().get(0).getFloat_value()).isEqualTo(2014.0);
-        assertThat(expected.getItems().get(0).getAttributes().get(1).getDefindex()).isEqualTo(2010);
-        assertThat(expected.getItems().get(0).getAttributes().get(1).getValue()).isEqualTo("1");
-        assertThat(expected.getItems().get(0).getAttributes().get(1).getFloat_value()).isEqualTo(1.401298464324817e-45);
+        assertThat(expected.getItems().getFirst().getAttributes().size()).isEqualTo(2);
+        assertThat(expected.getItems().getFirst().getAttributes().getFirst().getDefindex()).isEqualTo(321);
+        assertThat(expected.getItems().getFirst().getAttributes().getFirst().getValue()).isEqualTo("1157349376");
+        assertThat(expected.getItems().getFirst().getAttributes().getFirst().getFloat_value()).isEqualTo(2014.0);
+        assertThat(expected.getItems().getFirst().getAttributes().get(1).getDefindex()).isEqualTo(2010);
+        assertThat(expected.getItems().getFirst().getAttributes().get(1).getValue()).isEqualTo("1");
+        assertThat(expected.getItems().getFirst().getAttributes().get(1).getFloat_value()).isEqualTo(1.401298464324817e-45);
 
         assertThat(expected.getItems().get(1).getId()).isEqualTo(8178590185L);
         assertThat(expected.getItems().get(1).getOriginal_id()).isEqualTo(2764010163L);
@@ -149,9 +149,9 @@ class UserInventoryResponseParserTest {
         assertThat(expected.getItems().get(1).getEquipped()).isNull();
 
         assertThat(expected.getItems().get(1).getAttributes().size()).isEqualTo(1);
-        assertThat(expected.getItems().get(1).getAttributes().get(0).getDefindex()).isEqualTo(402);
-        assertThat(expected.getItems().get(1).getAttributes().get(0).getValue()).isEqualTo("Evil Magma");
-        assertThat(expected.getItems().get(1).getAttributes().get(0).getFloat_value()).isNull();
+        assertThat(expected.getItems().get(1).getAttributes().getFirst().getDefindex()).isEqualTo(402);
+        assertThat(expected.getItems().get(1).getAttributes().getFirst().getValue()).isEqualTo("Evil Magma");
+        assertThat(expected.getItems().get(1).getAttributes().getFirst().getFloat_value()).isNull();
 
         assertThat(expected.getItems().get(2).getId()).isEqualTo(8348787622L);
         assertThat(expected.getItems().get(2).getOriginal_id()).isEqualTo(7697029422L);
@@ -165,17 +165,17 @@ class UserInventoryResponseParserTest {
         assertThat(expected.getItems().get(2).getCustom_desc()).isEqualTo("Test 123");
 
         assertThat(expected.getItems().get(2).getEquipped().size()).isEqualTo(1);
-        assertThat(expected.getItems().get(2).getEquipped().get(0).getEquip_class()).isEqualTo(10);
-        assertThat(expected.getItems().get(2).getEquipped().get(0).getSlot()).isEqualTo(2);
+        assertThat(expected.getItems().get(2).getEquipped().getFirst().getEquip_class()).isEqualTo(10);
+        assertThat(expected.getItems().get(2).getEquipped().getFirst().getSlot()).isEqualTo(2);
 
         assertThat(expected.getItems().get(2).getAttributes().size()).isEqualTo(1);
-        assertThat(expected.getItems().get(2).getAttributes().get(0).getDefindex()).isEqualTo(186);
-        assertThat(expected.getItems().get(2).getAttributes().get(0).getValue()).isEqualTo("174287302");
-        assertThat(expected.getItems().get(2).getAttributes().get(0).getFloat_value())
+        assertThat(expected.getItems().get(2).getAttributes().getFirst().getDefindex()).isEqualTo(186);
+        assertThat(expected.getItems().get(2).getAttributes().getFirst().getValue()).isEqualTo("174287302");
+        assertThat(expected.getItems().get(2).getAttributes().getFirst().getFloat_value())
                 .isEqualTo(1.0949546206917292e-32);
-        assertThat(expected.getItems().get(2).getAttributes().get(0).getAccount_info().getSteamid())
+        assertThat(expected.getItems().get(2).getAttributes().getFirst().getAccount_info().getSteamid())
                 .isEqualTo(76561198134553030L);
-        assertThat(expected.getItems().get(2).getAttributes().get(0).getAccount_info().getPersonaname())
+        assertThat(expected.getItems().get(2).getAttributes().getFirst().getAccount_info().getPersonaname())
                 .isEqualTo("Joe");
     }
 

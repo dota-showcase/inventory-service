@@ -37,16 +37,16 @@ class SortBuilderTest {
         assertThat(expected1).isNull();
         assertThat(expected2).isNull();
 
-        assertThat(expected3.stream().toList().get(0).getProperty()).isEqualTo(paramName3);
-        assertThat(expected3.stream().toList().get(0).getDirection()).isEqualTo(Sort.Direction.ASC);
+        assertThat(expected3.stream().toList().getFirst().getProperty()).isEqualTo(paramName3);
+        assertThat(expected3.stream().toList().getFirst().getDirection()).isEqualTo(Sort.Direction.ASC);
 
-        assertThat(expected4.stream().toList().get(0).getProperty()).isEqualTo(paramName4);
-        assertThat(expected4.stream().toList().get(0).getDirection()).isEqualTo(Sort.Direction.ASC);
+        assertThat(expected4.stream().toList().getFirst().getProperty()).isEqualTo(paramName4);
+        assertThat(expected4.stream().toList().getFirst().getDirection()).isEqualTo(Sort.Direction.ASC);
 
-        assertThat(expected5.stream().toList().get(0).getProperty()).isEqualTo(paramName5.substring(1));
-        assertThat(expected5.stream().toList().get(0).getDirection()).isEqualTo(Sort.Direction.DESC);
+        assertThat(expected5.stream().toList().getFirst().getProperty()).isEqualTo(paramName5.substring(1));
+        assertThat(expected5.stream().toList().getFirst().getDirection()).isEqualTo(Sort.Direction.DESC);
 
-        assertThat(expected6.stream().toList().get(0).getProperty()).isEqualTo(paramName6.substring(1));
-        assertThat(expected6.stream().toList().get(0).getDirection()).isEqualTo(Sort.Direction.DESC);
+        assertThat(expected6.stream().toList().getFirst().getProperty()).isEqualTo(paramName6.substring(1));
+        assertThat(expected6.stream().toList().getFirst().getDirection()).isEqualTo(Sort.Direction.DESC);
     }
 }
