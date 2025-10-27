@@ -196,11 +196,11 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 
     @Override
     public long updateAll(Set<ObjectId> ids, List<AbstractMap.SimpleImmutableEntry<String, Object>> updateEntry) {
-        Update update = new Update();
-
         if (ids.isEmpty()) {
             return 0L;
         }
+
+        Update update = new Update();
 
         int count = 0;
         for (AbstractMap.SimpleImmutableEntry<String, Object> entry : updateEntry) {

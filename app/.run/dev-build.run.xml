@@ -38,7 +38,7 @@
         <option name="value" value="27017" />
       </param>
     </additionalParameters>
-    <module name="com.dotashowcase.inventory-service.main" />
+    <module name="inventory-service" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.dotashowcase.inventoryservice.InventoryServiceApplication" />
     <method v="2">
       <option name="Make" enabled="true" />

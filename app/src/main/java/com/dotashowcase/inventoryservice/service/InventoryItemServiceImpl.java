@@ -133,15 +133,14 @@ public class InventoryItemServiceImpl implements InventoryItemService {
                     itemIdsToUpdate.add(storedInventoryItem.getId());
 
                     // insert new
-                    prepareItemToCreate(steamInventoryItem, currentOperation, Operation.Type.U);
+                    prepareItemToCreate(steamInventoryItem, steamId, currentOperation, Operation.Type.U);
                     itemsToCreate.add(steamInventoryItem);
                 }
 
                 continue;
             }
 
-            prepareItemToCreate(steamInventoryItem, currentOperation, Operation.Type.C);
-            steamInventoryItem.setSteamId(steamId);
+            prepareItemToCreate(steamInventoryItem, steamId, currentOperation, Operation.Type.C);
             itemsToCreate.add(steamInventoryItem);
         }
 
@@ -180,8 +179,10 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     private void prepareItemToCreate(InventoryItem inventoryItem,
+                                     Long steamId,
                                      Operation currentOperation,
                                      Operation.Type operationType) {
+        inventoryItem.setSteamId(steamId);
         inventoryItem.setOperationId(currentOperation.getId());
         inventoryItem.setOperationType(operationType);
     }

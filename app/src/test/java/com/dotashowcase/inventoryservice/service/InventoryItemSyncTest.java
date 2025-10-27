@@ -483,6 +483,7 @@ class InventoryItemSyncTest {
         assertThat(insertArgumentCaptor.getValue().size()).isEqualTo(1);
         assertThat(insertArgumentCaptor.getValue().getFirst().getItemId()).isEqualTo(itemId2);
         assertThat(insertArgumentCaptor.getValue().getFirst().getCustomName()).isEqualTo("Sample #2 - updated");
+        assertThat(insertArgumentCaptor.getValue().getFirst().getSteamId()).isEqualTo(steamId);
         assertThat(insertArgumentCaptor.getValue().getFirst().getIsActive()).isEqualTo(true);
     }
 
