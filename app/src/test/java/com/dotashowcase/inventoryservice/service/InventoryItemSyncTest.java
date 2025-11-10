@@ -4,11 +4,13 @@ import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
+import com.dotashowcase.inventoryservice.model.embedded.AccountInfo;
 import com.dotashowcase.inventoryservice.model.embedded.ItemAttribute;
 import com.dotashowcase.inventoryservice.model.embedded.ItemEquipment;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
+import com.dotashowcase.inventoryservice.steamclient.response.dto.AccountInfoDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemAttributeDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemEquipDTO;
@@ -52,7 +54,7 @@ class InventoryItemSyncTest {
     }
 
     @Test
-    void itShoudSyncWhenNoInventoryItems() {
+    void itShouldSyncWhenNoInventoryItems() {
         // given
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
@@ -387,7 +389,10 @@ class InventoryItemSyncTest {
         inventoryItem1.setIsCraftable(true);
         inventoryItem1.setCustomName("Sample #1");
         inventoryItem1.setItemEquipment(List.of(new ItemEquipment(1, 1)));
-        inventoryItem1.setAttributes(List.of(new ItemAttribute(7, "1", 1.0, null)));
+        AccountInfo accountInfo1 = new AccountInfo();
+        accountInfo1.setSteamId(steamId);
+        accountInfo1.setPersonalName("Sample personal name #1");
+        inventoryItem1.setAttributes(List.of(new ItemAttribute(7, "1", 1.0, accountInfo1)));
 
         Long itemId2 = 101L;
         Integer defIndex2 = 201;
@@ -409,7 +414,10 @@ class InventoryItemSyncTest {
         inventoryItem2.setIsCraftable(true);
         inventoryItem2.setCustomName("Sample #2");
         inventoryItem2.setItemEquipment(List.of(new ItemEquipment(1, 2)));
-        inventoryItem2.setAttributes(List.of(new ItemAttribute(8, "2", 1.0, null)));
+        AccountInfo accountInfo2 = new AccountInfo();
+        accountInfo2.setSteamId(steamId);
+        accountInfo2.setPersonalName("Sample personal name #2");
+        inventoryItem2.setAttributes(List.of(new ItemAttribute(8, "2", 1.0, accountInfo2)));
 
         when(inventoryItemRepository.findAll(inventory)).thenReturn(List.of(inventoryItem1, inventoryItem2));
 
@@ -439,6 +447,10 @@ class InventoryItemSyncTest {
         itemAttribute11.setDefindex(7);
         itemAttribute11.setValue("1");
         itemAttribute11.setFloat_value(1.0);
+        AccountInfoDTO accountInfoDTO1 = new AccountInfoDTO();
+        accountInfoDTO1.setSteamid(steamId);
+        accountInfoDTO1.setPersonaname("Any name"); // skip - it changes with username in steam
+        itemAttribute11.setAccount_info(accountInfoDTO1);
         item1.setAttributes(List.of(itemAttribute11));
 
         ItemDTO item2 = new ItemDTO();

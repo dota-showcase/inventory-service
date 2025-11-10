@@ -171,7 +171,12 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
         createCount += inventoryItemRepository.insertAll(itemsToCreate).size();
 
-        return new OperationCountDTO(createCount, updateCount, deleteCount, inventoryItemsById.size());
+        return new OperationCountDTO(
+                createCount - updateCount,
+                updateCount,
+                deleteCount,
+                inventoryItemsById.size()
+        );
     }
 
     public long delete(Inventory inventory) {

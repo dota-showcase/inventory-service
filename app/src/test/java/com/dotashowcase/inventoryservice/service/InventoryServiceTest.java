@@ -6,13 +6,11 @@ import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
-import com.dotashowcase.inventoryservice.repository.OperationRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
-import com.dotashowcase.inventoryservice.service.result.dto.OperationDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
 import com.dotashowcase.inventoryservice.steamclient.SteamClient;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
@@ -29,7 +27,6 @@ import org.springframework.data.domain.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -302,17 +299,6 @@ class InventoryServiceTest {
         itemDTO1.setInventory(1000L);
 
         inventoryResponseDTO.setItems(List.of(itemDTO1));
-
-        InventoryItem inventoryItem1 = new InventoryItem();
-        inventoryItem1.setItemId(100L);
-        inventoryItem1.setSteamId(steamId);
-        inventoryItem1.setOriginalId(100L);
-        inventoryItem1.setDefIndex(300);
-        inventoryItem1.setLevel((byte)1);
-        inventoryItem1.setQuantity(1);
-        inventoryItem1.setQuality((byte)1);
-        inventoryItem1.setInventoryToken(1000L);
-        inventoryItem1.setInventoryPosition(1000);
 
         OperationCountDTO operationCountDTO = new OperationCountDTO(1, 0, 0, 1);
 
