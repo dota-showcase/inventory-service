@@ -9,9 +9,9 @@ import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.service.InventoryItemChangesService;
 import com.dotashowcase.inventoryservice.service.InventoryItemService;
 import com.dotashowcase.inventoryservice.service.InventoryService;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryChangesDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
+import com.dotashowcase.inventoryservice.service.type.ChangeType;
 import com.dotashowcase.inventoryservice.support.validator.SteamIdConstraint;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -169,31 +169,11 @@ public class InventoryItemController {
         return inventoryItemService.getAllDefIndexes(inventory);
     }
 
-//    @Operation(description = "Get list of user's inventory items grouped by operations")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", content = @Content(
-//                    mediaType = "application/json",
-//                    array = @ArraySchema(schema = @Schema(implementation = InventoryChangesDTO.class)))),
-//            @ApiResponse(responseCode = "404", description = "Inventory not exists", content = @Content(
-//                    mediaType = "application/json",
-//                    schema = @Schema(implementation = ErrorResponse.class))
-//            ),
-//            @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
-//                    mediaType = "application/json",
-//                    schema = @Schema(implementation = ValidationErrorResponse.class)))
-//    })
-//    @GetMapping("inventories/{steamId}/changes")
-//    public Map<Integer, InventoryChangesDTO> getChanges(@PathVariable @SteamIdConstraint Long steamId) {
-//        Inventory inventory = inventoryService.findInventory(steamId);
-//
-//        return inventoryItemChangesService.get(inventory);
-//    }
-
     @Operation(description = "Get a list of user's inventory items by an operation")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(
                     mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = InventoryChangesDTO.class)))),
+                    array = @ArraySchema(schema = @Schema(implementation = InventoryItemDTO.class)))),
             @ApiResponse(responseCode = "404", description = "Inventory not exists", content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = ErrorResponse.class))
@@ -202,13 +182,14 @@ public class InventoryItemController {
                     mediaType = "application/json",
                     schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
-    @GetMapping("inventories/{steamId}/changes/{version}")
-    public InventoryChangesDTO getChanges(
+    @GetMapping("inventories/{steamId}/changes/{version}/{type}")
+    public List<InventoryItemDTO> getChanges(
             @PathVariable @SteamIdConstraint Long steamId,
-            @PathVariable Integer version
+            @PathVariable Integer version,
+            @PathVariable ChangeType type
     ) {
         Inventory inventory = inventoryService.findInventory(steamId);
 
-        return inventoryItemChangesService.get(inventory, version == -1 ? null : version);
+        return inventoryItemChangesService.get(inventory, version == -1 ? null : version, type);
     }
 }

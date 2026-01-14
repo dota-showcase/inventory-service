@@ -9,6 +9,7 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.ItemAttribute;
 import com.dotashowcase.inventoryservice.model.embedded.ItemEquipment;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
+import com.dotashowcase.inventoryservice.service.type.ChangeType;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -554,8 +555,8 @@ class InventoryItemRepositoryTest {
         List<InventoryItem> itemsAll = underTest.findAll(inventory);
         List<InventoryItem> itemsAllEmpty = underTest.findAll(new Inventory(100000000003L));
 
-        List<InventoryItem> itemsOperation = underTest.findAll(inventory, operation);
-        List<InventoryItem> itemsOperationEmpty = underTest.findAll(inventory, operationNotItems);
+        List<InventoryItem> itemsOperation = underTest.findAll(inventory, operation, ChangeType.create);
+        List<InventoryItem> itemsOperationEmpty = underTest.findAll(inventory, operationNotItems, ChangeType.create);
 
         // then
         assertThat(itemsAll)
@@ -569,7 +570,7 @@ class InventoryItemRepositoryTest {
         assertThat(itemsOperation)
                 .extracting("steamId")
                 .contains(steamId1)
-                .hasSize(3);
+                .hasSize(2);
 
         assertThat(itemsOperationEmpty)
                 .hasSize(0);

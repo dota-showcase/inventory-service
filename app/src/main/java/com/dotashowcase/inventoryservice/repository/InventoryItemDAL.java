@@ -4,6 +4,7 @@ import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
+import com.dotashowcase.inventoryservice.service.type.ChangeType;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +26,7 @@ public interface InventoryItemDAL {
 
     List<InventoryItem> findAll(Inventory inventory);
 
-    List<InventoryItem> findAll(Inventory inventory, Operation operation);
+    List<InventoryItem> findAll(Inventory inventory, Operation operation, ChangeType type);
 
     List<InventoryItem> insertAll(List<InventoryItem> inventoryItems);
 

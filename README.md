@@ -30,7 +30,7 @@ Swagger OpenAPI 3 is available by path:
 * Search Inventory Items (paginated; filter with large payloads): `POST /api/v1/inventories/:steamid/items/search-page`
 * Show Inventory Items (positioned pagination): `GET /api/v1/inventories/:steamid/items/page-positioned`
 * Show Inventory Items 'defIndex' fields: `GET /api/v1/inventories/:steamId/items/def-indexes`
-* Show Inventory Items changes: `GET /api/v1/inventories/:steamid/changes/:version`
+* Show Inventory Items changes: `GET /api/v1/inventories/:steamid/changes/:version/:type`
 
 ### Operations Endpoints
 

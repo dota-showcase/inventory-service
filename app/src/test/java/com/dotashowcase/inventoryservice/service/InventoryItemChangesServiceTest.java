@@ -7,7 +7,8 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.ItemAttribute;
 import com.dotashowcase.inventoryservice.model.embedded.ItemEquipment;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
-import com.dotashowcase.inventoryservice.service.result.dto.InventoryChangesDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
+import com.dotashowcase.inventoryservice.service.type.ChangeType;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -113,20 +114,16 @@ class InventoryItemChangesServiceTest {
         inventoryItem3.setAttributes(List.of(new ItemAttribute(9, "2", 1.0, null)));
 
         when(operationService.getByVersion(inventory, version)).thenReturn(operation1);
-        when(inventoryItemRepository.findAll(inventory, operation1))
-                .thenReturn(List.of(inventoryItem1, inventoryItem2, inventoryItem3));
+        when(inventoryItemRepository.findAll(inventory, operation1, ChangeType.create))
+                .thenReturn(List.of(inventoryItem1, inventoryItem2));
 
         // when
-        InventoryChangesDTO expected = underTest.get(inventory, version);
-        InventoryChangesDTO expected2 = underTest.get(inventory, 0);
+        List<InventoryItemDTO> expected = underTest.get(inventory, version, ChangeType.create);
+        List<InventoryItemDTO> expected2 = underTest.get(inventory, 0, ChangeType.create);
 
         // then
-        assertThat(expected.getCreate().size()).isEqualTo(2);
-        assertThat(expected.getUpdate().size()).isEqualTo(0);
-        assertThat(expected.getDelete().size()).isEqualTo(1);
+        assertThat(expected.size()).isEqualTo(2);
 
-        assertThat(expected2.getCreate().size()).isEqualTo(0);
-        assertThat(expected2.getUpdate().size()).isEqualTo(0);
-        assertThat(expected2.getDelete().size()).isEqualTo(0);
+        assertThat(expected2.size()).isEqualTo(0);
     }
 }

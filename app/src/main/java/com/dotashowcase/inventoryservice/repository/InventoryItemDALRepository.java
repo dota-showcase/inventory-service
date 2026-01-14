@@ -5,6 +5,7 @@ import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
+import com.dotashowcase.inventoryservice.service.type.ChangeType;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -137,13 +138,27 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
-    public List<InventoryItem> findAll(Inventory inventory, Operation operation) {
+    public List<InventoryItem> findAll(Inventory inventory, Operation operation, ChangeType type) {
         Query query = new Query();
 
         List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
         defaultCriteria.forEach(query::addCriteria);
 
-        query.addCriteria(Criteria.where("_oId").is(operation.getId()));
+        switch (type) {
+            case update -> {
+                query.addCriteria(Criteria.where("_oId").is(operation.getId()));
+                query.addCriteria(Criteria.where("_oT").is(Operation.Type.U));
+                query.addCriteria(Criteria.where("_odId").is(null));
+            }
+            case delete -> {
+                query.addCriteria(Criteria.where("_odId").is(operation.getId()));
+            }
+            case null, default -> {
+                query.addCriteria(Criteria.where("_oId").is(operation.getId()));
+                query.addCriteria(Criteria.where("_oT").is(Operation.Type.C));
+                query.addCriteria(Criteria.where("_odId").is(null));
+            }
+        }
 
         return mongoTemplate.find(query, InventoryItem.class);
     }
