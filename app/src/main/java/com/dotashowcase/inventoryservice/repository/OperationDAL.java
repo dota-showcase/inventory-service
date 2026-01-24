@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
@@ -13,7 +14,7 @@ public interface OperationDAL {
 
     List<Operation> aggregateLatestByInventories(List<Long> inventoryIds);
 
-    Page<Operation> findPage(Inventory inventory, Pageable pageable, Sort sort);
+    Page<Operation> findPage(Inventory inventory, Pageable pageable, InventoryOperationFilter filter, Sort sort);
 
     Operation findLatest(Inventory inventory);
 

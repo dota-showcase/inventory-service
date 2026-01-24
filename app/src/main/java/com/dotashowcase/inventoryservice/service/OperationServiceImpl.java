@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
@@ -71,10 +72,15 @@ public class OperationServiceImpl implements OperationService  {
     }
 
     @Override
-    public PageResult<OperationDTO> getPage(Inventory inventory, Pageable pageable, String sortBy) {
+    public PageResult<OperationDTO> getPage(
+            Inventory inventory,
+            Pageable pageable,
+            InventoryOperationFilter filter,
+            String sortBy
+    ) {
         Sort sort = sortBuilder.fromRequestParam(sortBy);
 
-        Page<Operation> inventoryPage = operationRepository.findPage(inventory, pageable, sort);
+        Page<Operation> inventoryPage = operationRepository.findPage(inventory, pageable, filter, sort);
 
         return pageMapper.getPageResult(inventoryPage, operationServiceResultMapper::getOperationDTO);
     }

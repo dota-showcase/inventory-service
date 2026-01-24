@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
@@ -62,10 +63,36 @@ public class OperationRepository implements OperationDAL {
     }
 
     @Override
-    public Page<Operation> findPage(Inventory inventory, Pageable pageable, Sort sort) {
+    public Page<Operation> findPage(
+            Inventory inventory,
+            Pageable pageable,
+            InventoryOperationFilter filter,
+            Sort sort
+    ) {
         Query query = new Query();
         query.with(pageable);
         query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
+
+        // filter by changes
+        if (filter.getHasChanges() != null) {
+            if (filter.getHasChanges()) {
+                query.addCriteria(
+                        new Criteria().orOperator(
+                                Criteria.where("meta.createOperationCount").gt(0),
+                                Criteria.where("meta.updateOperationCount").gt(0),
+                                Criteria.where("meta.deleteOperationCount").gt(0)
+                        )
+                );
+            } else {
+                query.addCriteria(
+                        new Criteria().andOperator(
+                                Criteria.where("meta.createOperationCount").is(0),
+                                Criteria.where("meta.updateOperationCount").is(0),
+                                Criteria.where("meta.deleteOperationCount").is(0)
+                        )
+                );
+            }
+        }
 
         if (sort != null) {
             query.with(sort);

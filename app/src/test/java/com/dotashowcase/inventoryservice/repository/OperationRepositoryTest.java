@@ -1,6 +1,7 @@
 package com.dotashowcase.inventoryservice.repository;
 
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
+import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
@@ -160,17 +161,33 @@ class OperationRepositoryTest {
         Pageable firstPageWithAllItems = PageRequest.of(0, 10);
         Pageable secondPageWithOneItem = PageRequest.of(1, 2);
 
+        InventoryOperationFilter filter = InventoryOperationFilter.builder().build();
+        InventoryOperationFilter filterOnlyChanges = InventoryOperationFilter.builder()
+                .hasChanges(true)
+                .build();
+
         Sort sortBy = Sort.by(Sort.Direction.DESC, "version");
 
         // when
-        Page<Operation> firstPage = underTest.findPage(inventory, firstPageWithAllItems, sortBy);
-        Page<Operation> secondPage = underTest.findPage(inventory, secondPageWithOneItem, sortBy);
+        Page<Operation> firstPage = underTest.findPage(inventory, firstPageWithAllItems, filter, sortBy);
+        Page<Operation> firstFilteredPage = underTest.findPage(
+                inventory,
+                firstPageWithAllItems,
+                filterOnlyChanges,
+                sortBy
+        );
+        Page<Operation> secondPage = underTest.findPage(inventory, secondPageWithOneItem, filter, sortBy);
 
         // then
         assertThat(firstPage.getContent())
                 .extracting("version")
                 .contains(steamId1Version3, steamId1Version2, steamId1Version1)
                 .hasSize(3);
+
+        assertThat(firstFilteredPage.getContent())
+                .extracting("version")
+                .contains(steamId1Version3, steamId1Version1)
+                .hasSize(2);
 
         assertThat(secondPage.getContent())
                 .extracting("version")

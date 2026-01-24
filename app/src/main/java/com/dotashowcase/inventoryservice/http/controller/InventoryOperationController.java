@@ -3,6 +3,7 @@ package com.dotashowcase.inventoryservice.http.controller;
 import com.dotashowcase.inventoryservice.config.AppConstant;
 import com.dotashowcase.inventoryservice.http.exception.response.ErrorResponse;
 import com.dotashowcase.inventoryservice.http.exception.response.ValidationErrorResponse;
+import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.service.InventoryService;
 import com.dotashowcase.inventoryservice.service.OperationService;
@@ -22,6 +23,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
 
 @Tag(name = "InventoryOperation", description = "The inventory operation API")
 @Validated
@@ -52,10 +54,13 @@ public class InventoryOperationController {
     public PageResult<OperationDTO> search(
             @PathVariable @SteamIdConstraint Long steamId,
             @PageableDefault(size = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) Pageable pageable,
-            @RequestParam(defaultValue = "-version") String sort
+            @RequestParam(defaultValue = "-version") String sort,
+            @RequestParam Optional<Boolean> hasChanges
     ) {
         Inventory inventory = inventoryService.findInventory(steamId);
 
-        return operationService.getPage(inventory, pageable, sort);
+        InventoryOperationFilter filter = new InventoryOperationFilter(hasChanges.orElse(null));
+
+        return operationService.getPage(inventory, pageable, filter, sort);
     }
 }

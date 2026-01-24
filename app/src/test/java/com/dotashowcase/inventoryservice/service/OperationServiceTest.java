@@ -1,6 +1,8 @@
 package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
+import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
@@ -120,6 +122,8 @@ class OperationServiceTest {
         operation3.setVersion(3);
         operation3.setMeta(new OperationMeta());
 
+        InventoryOperationFilter filter = InventoryOperationFilter.builder().build();
+
         Pageable firstPageWithAllItems = PageRequest.of(0, 4);
 
         List<Operation> firstPageOperations = List.of(operation3, operation2, operation1);
@@ -133,17 +137,17 @@ class OperationServiceTest {
                 firstPageOperations, firstPageWithAllItems, firstPageOperations.size()
         );
 
-        when(operationRepository.findPage(inventory1, firstPageWithAllItems, sortBy)).thenReturn(operationFirstPage);
+        when(operationRepository.findPage(inventory1, firstPageWithAllItems, filter, sortBy)).thenReturn(operationFirstPage);
 
         // when
-        underTest.getPage(inventory1, firstPageWithAllItems, sortByStr);
+        underTest.getPage(inventory1, firstPageWithAllItems, filter, sortByStr);
 
         // then
         ArgumentCaptor<Page<Operation>> pageArgumentCaptor = ArgumentCaptor.forClass((Class)Page.class);
         ArgumentCaptor<Function<Operation, OperationDTO>> lambdaArgumentCaptor
                 = ArgumentCaptor.forClass((Class)Function.class);
 
-        verify(operationRepository).findPage(inventory1, firstPageWithAllItems, sortBy);
+        verify(operationRepository).findPage(inventory1, firstPageWithAllItems, filter, sortBy);
         verify(pageMapper).getPageResult(pageArgumentCaptor.capture(), lambdaArgumentCaptor.capture());
 
         assertThat(pageArgumentCaptor.getValue().getTotalElements()).isEqualTo(3);
@@ -168,6 +172,8 @@ class OperationServiceTest {
         operation2.setVersion(2);
         operation2.setMeta(new OperationMeta());
 
+        InventoryOperationFilter filter = InventoryOperationFilter.builder().build();
+
         Pageable secondPageWithAllItems = PageRequest.of(1, 1);
 
         List<Operation> secondPageOperations = List.of(operation1);
@@ -181,17 +187,18 @@ class OperationServiceTest {
                 secondPageOperations, secondPageWithAllItems, secondPageOperations.size()
         );
 
-        when(operationRepository.findPage(inventory1, secondPageWithAllItems, sortBy)).thenReturn(operationSecondPage);
+        when(operationRepository.findPage(inventory1, secondPageWithAllItems, filter, sortBy))
+                .thenReturn(operationSecondPage);
 
         // when
-        underTest.getPage(inventory1, secondPageWithAllItems, sortByStr);
+        underTest.getPage(inventory1, secondPageWithAllItems, filter, sortByStr);
 
         // then
         ArgumentCaptor<Page<Operation>> pageArgumentCaptor = ArgumentCaptor.forClass((Class)Page.class);
         ArgumentCaptor<Function<Operation, OperationDTO>> lambdaArgumentCaptor
                 = ArgumentCaptor.forClass((Class)Function.class);
 
-        verify(operationRepository).findPage(inventory1, secondPageWithAllItems, sortBy);
+        verify(operationRepository).findPage(inventory1, secondPageWithAllItems, filter, sortBy);
         verify(pageMapper).getPageResult(pageArgumentCaptor.capture(), lambdaArgumentCaptor.capture());
 
         assertThat(pageArgumentCaptor.getValue().getNumberOfElements()).isEqualTo(1);

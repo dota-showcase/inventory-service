@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
@@ -14,7 +15,12 @@ public interface OperationService {
 
     Map<Long, Operation> getAllLatest(List<Long> inventorySteamIds);
 
-    PageResult<OperationDTO> getPage(Inventory inventory, Pageable pageable, String sortBy);
+    PageResult<OperationDTO> getPage(
+            Inventory inventory,
+            Pageable pageable,
+            InventoryOperationFilter filter,
+            String sortBy
+    );
 
     Operation getLatest(Inventory inventory);
 
