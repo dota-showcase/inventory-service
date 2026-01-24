@@ -11,9 +11,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -49,23 +47,33 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         operations.add(Aggregation.match(Criteria.where("_isA").is(true)));
         filterCriteria.forEach(criteria -> operations.add(Aggregation.match(criteria)));
 
-        // main query pagination
-        operations.add(Aggregation.skip((long) pageable.getPageNumber() * pageable.getPageSize()));
-        operations.add(Aggregation.limit(pageable.getPageSize()));
-
         // main query sort
         if (sort == null) {
             if (filter.hasDefIndexes()) {
-                operations.add(addFields()
-                        .addField("defIndexSort").withValue(arrayOf(filter.getDefIndexes()).indexOf("$dIdx"))
-                        .build()
+                operations.add(
+                        addFields()
+                                .addField("defIndexSort")
+                                .withValue(
+                                        ConditionalOperators.ifNull(
+                                                ArrayOperators.IndexOfArray
+                                                        .arrayOf(filter.getDefIndexes())
+                                                        .indexOf("$dIdx")
+                                        ).then(Integer.MAX_VALUE)
+                                )
+                                .build()
                 );
 
-                operations.add(Aggregation.sort(Sort.by(Sort.Direction.ASC, "defIndexSort")));
+                operations.add(
+                        Aggregation.sort(Sort.by(Sort.Direction.ASC, "defIndexSort"))
+                );
             }
         } else {
             operations.add(Aggregation.sort(sort));
         }
+
+        // main query pagination
+        operations.add(Aggregation.skip((long) pageable.getPageNumber() * pageable.getPageSize()));
+        operations.add(Aggregation.limit(pageable.getPageSize()));
 
         Aggregation aggregation = Aggregation.newAggregation(operations);
 
