@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.service;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemChangeFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
@@ -36,10 +37,15 @@ public class InventoryItemChangesServiceImpl implements InventoryItemChangesServ
     }
 
     @Override
-    public List<InventoryItemDTO> get(Inventory inventory, Integer version, ChangeType type) {
+    public List<InventoryItemDTO> get(
+            Inventory inventory,
+            Integer version,
+            ChangeType type,
+            InventoryItemChangeFilter filter
+    ) {
         Operation operation = operationService.getByVersion(inventory, version);
 
-        return inventoryItemRepository.findAll(inventory, operation, type).stream()
+        return inventoryItemRepository.findAll(inventory, operation, type, filter).stream()
                 .map(inventoryItemServiceResultMapper::getInventoryItemDTO)
                 .toList();
     }

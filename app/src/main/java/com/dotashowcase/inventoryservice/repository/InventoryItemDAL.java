@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.repository;
 
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemChangeFilter;
 import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
@@ -26,7 +27,12 @@ public interface InventoryItemDAL {
 
     List<InventoryItem> findAll(Inventory inventory);
 
-    List<InventoryItem> findAll(Inventory inventory, Operation operation, ChangeType type);
+    List<InventoryItem> findAll(
+            Inventory inventory,
+            Operation operation,
+            ChangeType type,
+            InventoryItemChangeFilter filter
+    );
 
     List<InventoryItem> insertAll(List<InventoryItem> inventoryItems);
 

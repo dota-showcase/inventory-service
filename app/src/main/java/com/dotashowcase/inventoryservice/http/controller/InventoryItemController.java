@@ -3,6 +3,7 @@ package com.dotashowcase.inventoryservice.http.controller;
 import com.dotashowcase.inventoryservice.config.AppConstant;
 import com.dotashowcase.inventoryservice.http.exception.response.ErrorResponse;
 import com.dotashowcase.inventoryservice.http.exception.response.ValidationErrorResponse;
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemChangeFilter;
 import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.http.request.InventoryItemSearchRequest;
 import com.dotashowcase.inventoryservice.model.Inventory;
@@ -186,10 +187,13 @@ public class InventoryItemController {
     public List<InventoryItemDTO> getChanges(
             @PathVariable @SteamIdConstraint Long steamId,
             @PathVariable Integer version,
-            @PathVariable ChangeType type
+            @PathVariable ChangeType type,
+            @RequestParam Optional<Integer> lim
     ) {
         Inventory inventory = inventoryService.findInventory(steamId);
 
-        return inventoryItemChangesService.get(inventory, version == -1 ? null : version, type);
+        InventoryItemChangeFilter filter = new InventoryItemChangeFilter(lim.orElse(null));
+
+        return inventoryItemChangesService.get(inventory, version == -1 ? null : version, type, filter);
     }
 }

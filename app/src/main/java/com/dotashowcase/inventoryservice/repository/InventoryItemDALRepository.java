@@ -1,6 +1,7 @@
 package com.dotashowcase.inventoryservice.repository;
 
 import com.dotashowcase.inventoryservice.config.AppConstant;
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemChangeFilter;
 import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
@@ -138,7 +139,12 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
-    public List<InventoryItem> findAll(Inventory inventory, Operation operation, ChangeType type) {
+    public List<InventoryItem> findAll(
+            Inventory inventory,
+            Operation operation,
+            ChangeType type,
+            InventoryItemChangeFilter filter
+    ) {
         Query query = new Query();
 
         List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
@@ -158,6 +164,11 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
                 query.addCriteria(Criteria.where("_oT").is(Operation.Type.C));
                 query.addCriteria(Criteria.where("_odId").is(null));
             }
+        }
+
+        Integer lim = filter.getLim();
+        if (lim != null && lim > 0) {
+            query.limit(lim);
         }
 
         return mongoTemplate.find(query, InventoryItem.class);

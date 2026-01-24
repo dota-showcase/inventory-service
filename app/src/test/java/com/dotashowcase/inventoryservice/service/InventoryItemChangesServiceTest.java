@@ -1,6 +1,7 @@
 package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemChangeFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
@@ -113,13 +114,15 @@ class InventoryItemChangesServiceTest {
         inventoryItem3.setItemEquipment(List.of(new ItemEquipment(1, 3)));
         inventoryItem3.setAttributes(List.of(new ItemAttribute(9, "2", 1.0, null)));
 
+        InventoryItemChangeFilter filter = InventoryItemChangeFilter.builder().build();
+
         when(operationService.getByVersion(inventory, version)).thenReturn(operation1);
-        when(inventoryItemRepository.findAll(inventory, operation1, ChangeType.create))
+        when(inventoryItemRepository.findAll(inventory, operation1, ChangeType.create, filter))
                 .thenReturn(List.of(inventoryItem1, inventoryItem2));
 
         // when
-        List<InventoryItemDTO> expected = underTest.get(inventory, version, ChangeType.create);
-        List<InventoryItemDTO> expected2 = underTest.get(inventory, 0, ChangeType.create);
+        List<InventoryItemDTO> expected = underTest.get(inventory, version, ChangeType.create, filter);
+        List<InventoryItemDTO> expected2 = underTest.get(inventory, 0, ChangeType.create, filter);
 
         // then
         assertThat(expected.size()).isEqualTo(2);

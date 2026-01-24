@@ -2,6 +2,7 @@ package com.dotashowcase.inventoryservice.repository;
 
 import com.dotashowcase.inventoryservice.config.AppConstant;
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
+import com.dotashowcase.inventoryservice.http.filter.InventoryItemChangeFilter;
 import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
@@ -551,12 +552,31 @@ class InventoryItemRepositoryTest {
         operationNotItems.setMeta(new OperationMeta());
         mongoTemplate.insert(operationNotItems);
 
+        InventoryItemChangeFilter filter = InventoryItemChangeFilter.builder().build();
+        InventoryItemChangeFilter filterWithLim = InventoryItemChangeFilter.builder().lim(1).build();
+
         // when
         List<InventoryItem> itemsAll = underTest.findAll(inventory);
         List<InventoryItem> itemsAllEmpty = underTest.findAll(new Inventory(100000000003L));
 
-        List<InventoryItem> itemsOperation = underTest.findAll(inventory, operation, ChangeType.create);
-        List<InventoryItem> itemsOperationEmpty = underTest.findAll(inventory, operationNotItems, ChangeType.create);
+        List<InventoryItem> itemsOperation = underTest.findAll(
+                inventory,
+                operation,
+                ChangeType.create,
+                filter
+        );
+        List<InventoryItem> itemsOperationWithLim = underTest.findAll(
+                inventory,
+                operation,
+                ChangeType.create,
+                filterWithLim
+        );
+        List<InventoryItem> itemsOperationEmpty = underTest.findAll(
+                inventory,
+                operationNotItems,
+                ChangeType.create,
+                filter
+        );
 
         // then
         assertThat(itemsAll)
@@ -571,6 +591,11 @@ class InventoryItemRepositoryTest {
                 .extracting("steamId")
                 .contains(steamId1)
                 .hasSize(2);
+
+        assertThat(itemsOperationWithLim)
+                .extracting("steamId")
+                .contains(steamId1)
+                .hasSize(1);
 
         assertThat(itemsOperationEmpty)
                 .hasSize(0);
