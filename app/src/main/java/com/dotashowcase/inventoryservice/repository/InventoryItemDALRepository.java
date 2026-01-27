@@ -184,29 +184,56 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 
     @Override
     public Page<InventoryItem> findPositionedPage(Inventory inventory, int page) {
-        Query query = new Query();
+        int pageSize = AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE;
+        long totalSlots = inventory.getLatestOperation().getMeta().getNumSlots();
 
-        List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
-        defaultCriteria.forEach(query::addCriteria);
+        int maxPage = (int) Math.ceil((double) totalSlots / pageSize);
+        int currentPage = page;
 
-        query.addCriteria(Criteria.where("_isA").is(true));
+        List<Criteria> criteria = getDefaultCriteria(inventory);
+        criteria.add(Criteria.where("_isA").is(true));
 
-        // page #1 - [1, 13)
-        // page #2 - [13, 25)
-        // page #3 - [25, 37)
-        int fromPosition = ((page - 1) * AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE) + 1;
-        int toPosition = fromPosition + AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE;
+        while (currentPage <= maxPage) {
+            // page #1 - [1, 13)
+            // page #2 - [13, 25)
+            // page #3 - [25, 37)
+            int fromPosition = ((currentPage - 1) * pageSize) + 1;
+            int toPosition = fromPosition + pageSize;
 
-        query.addCriteria(Criteria.where("pos").gte(fromPosition).lt(toPosition));
-        query.with(Sort.by(Sort.Direction.ASC, "pos"));
+            // check page has at least one item
+            Query existsQuery = new Query();
+            criteria.forEach(existsQuery::addCriteria);
+            existsQuery.addCriteria(Criteria.where("pos").gte(fromPosition).lt(toPosition));
+            existsQuery.limit(1);
 
-        // (page - 1) - to make compatible with PageMapper and config 'one-indexed-parameters'
-        Pageable pageable = PageRequest.of(page - 1, AppConstant.DEFAULT_INVENTORY_ITEMS_PER_PAGE);
+            // found next page
+            if (mongoTemplate.exists(existsQuery, InventoryItem.class)) {
+                Query pageQuery = new Query();
+                criteria.forEach(pageQuery::addCriteria);
+                pageQuery.addCriteria(Criteria.where("pos").gte(fromPosition).lt(toPosition));
+                pageQuery.with(Sort.by(Sort.Direction.ASC, "pos"));
+
+                List<InventoryItem> items = mongoTemplate.find(pageQuery, InventoryItem.class);
+
+                Pageable pageable = PageRequest.of(currentPage - 1, pageSize);
+
+                return new PageImpl<>(
+                        items,
+                        pageable,
+                        totalSlots
+                );
+            }
+
+            currentPage++;
+        }
+
+        // no items found until last page
+        Pageable lastPageable = PageRequest.of(Math.max(0, maxPage - 1), pageSize);
 
         return new PageImpl<>(
-                mongoTemplate.find(query, InventoryItem.class),
-                pageable,
-                inventory.getLatestOperation().getMeta().getNumSlots()
+                List.of(),
+                lastPageable,
+                totalSlots
         );
     }
 

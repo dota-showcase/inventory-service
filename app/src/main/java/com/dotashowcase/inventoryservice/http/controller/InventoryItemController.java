@@ -127,7 +127,7 @@ public class InventoryItemController {
         return inventoryItemService.getPage(inventory, pageable, filter, sort.orElse(null));
     }
 
-    @Operation(description = "Get a paged position list of user's inventory items")
+    @Operation(description = "Get the next paginated list of a user’s inventory items consider position")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(
                     mediaType = "application/json",
