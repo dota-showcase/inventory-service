@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.steamclient.response.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.List;
  */
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ItemDTO {
 
     private Long id;
@@ -68,4 +70,7 @@ public class ItemDTO {
     private List<ItemAttributeDTO> attributes;  // optional
 
     private List<ItemEquipDTO> equipped;        // optional
+
+    // ignored
+    // 'contained_item'
 }
