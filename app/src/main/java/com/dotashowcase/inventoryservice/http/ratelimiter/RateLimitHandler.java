@@ -18,9 +18,9 @@ public class RateLimitHandler {
         this.rateLimiter = rateLimiter;
     }
 
-    public HttpHeaders run(Long steamId) throws RateLimiterException {
+    public HttpHeaders run(Long steamId, int consumeCount) throws RateLimiterException {
         Bucket tokenBucket = rateLimiter.resolveBucket(steamId);
-        ConsumptionProbe probe = tokenBucket.tryConsumeAndReturnRemaining(1);
+        ConsumptionProbe probe = tokenBucket.tryConsumeAndReturnRemaining(consumeCount);
 
         HttpHeaders responseHeaders = new HttpHeaders();
 

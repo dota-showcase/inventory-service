@@ -103,12 +103,22 @@ public class InventoryController {
             @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = ValidationErrorResponse.class))
+            ),
+            @ApiResponse(responseCode = "429", description = "Too many requests on double request", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class))
             )
     })
     @PostMapping("inventories/")
     @ResponseBody
-    public ResponseEntity<InventoryWithLatestOperationDTO> create(@RequestBody @Valid InventoryCreateRequest inventoryCreateRequest) {
+    public ResponseEntity<InventoryWithLatestOperationDTO> create(
+            @RequestBody @Valid InventoryCreateRequest inventoryCreateRequest
+    ) {
+        // consume 2 out 3 initial, to prevent double creation
+        HttpHeaders responseHeaders = rateLimitHandler.run(inventoryCreateRequest.getSteamId(), 2);
+
         return ResponseEntity.status(HttpStatus.CREATED)
+                .headers(responseHeaders)
                 .body(inventoryService.create(inventoryCreateRequest.getSteamId()));
     }
 
@@ -141,7 +151,7 @@ public class InventoryController {
     @PutMapping("inventories/{steamId}")
     @ResponseBody
     public ResponseEntity<InventoryWithLatestOperationDTO> update(@PathVariable @SteamIdConstraint Long steamId) {
-        HttpHeaders responseHeaders = rateLimitHandler.run(steamId);
+        HttpHeaders responseHeaders = rateLimitHandler.run(steamId, 1);
 
         return ResponseEntity.ok()
                 .headers(responseHeaders)
