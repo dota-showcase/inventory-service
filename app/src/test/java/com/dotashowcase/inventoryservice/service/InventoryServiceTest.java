@@ -23,6 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -233,7 +235,7 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(null);
         when(steamClient.fetchUserInventory(steamId)).thenReturn(inventoryResponseDTO);
-        when(inventoryRepository.save(inventory)).thenReturn(savedInventory);
+        when(inventoryRepository.insert(inventory)).thenReturn(savedInventory);
         when(operationService.create(inventory, null, null)).thenReturn(operation1);
         when(inventoryItemService.create(savedInventory, operation1, inventoryResponseDTO.getItems()))
                 .thenReturn(List.of(inventoryItem1));
@@ -243,7 +245,7 @@ class InventoryServiceTest {
 
         // then
         verify(steamClient).fetchUserInventory(steamId);
-        verify(inventoryRepository).save(inventory);
+        verify(inventoryRepository).insert(inventory);
         verify(operationService).create(savedInventory, null, null);
         verify(inventoryItemService).create(savedInventory, operation1, inventoryResponseDTO.getItems());
         verify(operationService).createAndSaveMeta(
@@ -266,6 +268,29 @@ class InventoryServiceTest {
         // then
         assertThatThrownBy(() -> underTest.create(steamId))
                 .isInstanceOf(InventoryAlreadyExistsException.class);
+    }
+
+    @Test
+    void willThrowWhenCreateExistingInventoryConcurrently() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        UserInventoryResponseDTO inventoryResponseDTO = new UserInventoryResponseDTO();
+        inventoryResponseDTO.setStatus(1);
+        inventoryResponseDTO.setItems(List.of(new ItemDTO()));
+
+        // created by another request after existence check
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(null);
+        when(steamClient.fetchUserInventory(steamId)).thenReturn(inventoryResponseDTO);
+        when(inventoryRepository.insert(inventory)).thenThrow(new DuplicateKeyException("E11000"));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.create(steamId))
+                .isInstanceOf(InventoryAlreadyExistsException.class);
+
+        verifyNoInteractions(operationService, inventoryItemService);
     }
 
     @Test

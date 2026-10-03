@@ -8,8 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DuplicateKeyException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @DataMongoTest
 @Import(MongoTestConfig.class)
@@ -38,5 +40,18 @@ class InventoryRepositoryTest {
         // then
         assertThat(expected.getSteamId()).isEqualTo(steamId);
         assertThat(notExisting).isNull();
+    }
+
+    @Test
+    void willThrowWhenInsertExistingInventory() {
+        // given
+        Long steamId = 100000000000L;
+
+        underTest.insert(new Inventory(steamId));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.insert(new Inventory(steamId)))
+                .isInstanceOf(DuplicateKeyException.class);
     }
 }

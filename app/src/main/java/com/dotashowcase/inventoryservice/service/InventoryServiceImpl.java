@@ -16,6 +16,7 @@ import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import com.dotashowcase.inventoryservice.support.SortBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -138,8 +139,13 @@ public class InventoryServiceImpl implements InventoryService {
 
         List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
 
-        // store Inventory to get _id
-        Inventory savedInventory = inventoryRepository.save(new Inventory(steamId));
+        // insert (not upsert) - fails on concurrent create
+        Inventory savedInventory;
+        try {
+            savedInventory = inventoryRepository.insert(new Inventory(steamId));
+        } catch (DuplicateKeyException duplicateKeyException) {
+            throw new InventoryAlreadyExistsException();
+        }
 
         // store items
         Operation operation = operationService.create(savedInventory, null, null);
