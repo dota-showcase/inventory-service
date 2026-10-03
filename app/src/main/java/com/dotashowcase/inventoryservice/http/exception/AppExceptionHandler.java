@@ -7,6 +7,7 @@ import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
 import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimiterException;
 import com.dotashowcase.inventoryservice.steamclient.exception.BadRequestException;
 import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
+import com.dotashowcase.inventoryservice.steamclient.exception.SteamClientException;
 import com.dotashowcase.inventoryservice.steamclient.exception.SteamException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -25,8 +26,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +37,8 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(AppExceptionHandler.class);
 
     private static final String LOG_MESSAGE_TEMPLATE = "Body '{}'";
+
+    private static final String INTERNAL_ERROR_MESSAGE = "Internal server error";
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
@@ -132,6 +133,22 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, headers, HttpStatus.TOO_MANY_REQUESTS);
     }
 
+    @ExceptionHandler({SteamClientException.class})
+    public ResponseEntity<ErrorResponse> handleSteamClientException(
+            SteamClientException ex,
+            HttpServletRequest request
+    ) {
+        final ErrorResponse errorResponse = getErrorResponse(
+                request.getRequestURI(),
+                HttpStatus.BAD_GATEWAY,
+                ex.getMessage()
+        );
+
+        log.error(LOG_MESSAGE_TEMPLATE, errorResponse, ex);
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_GATEWAY);
+    }
+
     @ExceptionHandler({Exception.class})
     public ResponseEntity<Object> handleAllExceptions(Exception ex, HttpServletRequest request) {
         ResponseStatus responseStatus = ex.getClass().getAnnotation(ResponseStatus.class);
@@ -139,21 +156,20 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 ? responseStatus.value()
                 : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        String message = (responseStatus != null)
-                ? responseStatus.reason().length() > 0 ? responseStatus.reason() : ex.getMessage()
-                : ex.getMessage();
+        if (status.is5xxServerError()) {
+            // hide internal details
+            ErrorResponse errorResponse = getErrorResponse(request.getRequestURI(), status, INTERNAL_ERROR_MESSAGE);
+
+            log.error(LOG_MESSAGE_TEMPLATE, errorResponse, ex);
+
+            return new ResponseEntity<>(errorResponse, status);
+        }
+
+        String message = !responseStatus.reason().isEmpty() ? responseStatus.reason() : ex.getMessage();
 
         ErrorResponse errorResponse = getErrorResponse(request.getRequestURI(), status, message);
 
         log.error(LOG_MESSAGE_TEMPLATE, errorResponse);
-
-        if (status.value() >= HttpStatus.INTERNAL_SERVER_ERROR.value()) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            ex.printStackTrace(pw);
-
-            log.error(sw.toString());
-        }
 
         return new ResponseEntity<>(errorResponse, status);
     }

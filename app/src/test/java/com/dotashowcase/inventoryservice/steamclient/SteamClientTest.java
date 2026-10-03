@@ -1,6 +1,7 @@
 package com.dotashowcase.inventoryservice.steamclient;
 
 import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
+import com.dotashowcase.inventoryservice.steamclient.exception.SteamClientException;
 import com.dotashowcase.inventoryservice.steamclient.response.UserInventoryResponseParser;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
@@ -193,5 +196,31 @@ class SteamClientTest {
         assertThatThrownBy(() -> underTest.fetchUserInventory(steamId))
                 .isInstanceOf(InventoryStatusException.class)
                 .hasMessageContaining("Inventory status - Items not present");
+    }
+
+    @Test
+    void willNotExposeApiKeyOnIOError() {
+        // given
+        String apiKey = "SECRET_KEY";
+        ReflectionTestUtils.setField(underTest, "steamApiKey", apiKey);
+
+        Long steamId = 100000000000L;
+
+        when(restTemplate.exchange(
+                        ArgumentMatchers.any(URI.class),
+                        ArgumentMatchers.any(HttpMethod.class),
+                        ArgumentMatchers.any(),
+                        ArgumentMatchers.<Class<String>>any()
+                )
+        )
+                .thenThrow(new ResourceAccessException(
+                        "I/O error on GET request for \"https://api.steampowered.com/?key=" + apiKey + "\": timeout"
+                ));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.fetchUserInventory(steamId))
+                .isInstanceOf(SteamClientException.class)
+                .hasMessageNotContaining(apiKey);
     }
 }

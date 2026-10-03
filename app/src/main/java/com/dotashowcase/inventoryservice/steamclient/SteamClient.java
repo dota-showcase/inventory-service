@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
@@ -62,6 +63,11 @@ public class SteamClient {
                     restClientResponseException.getStatusCode().value(),
                     restClientResponseException.getMessage()
             );
+        } catch (RestClientException restClientException) {
+            // hide uri with api key
+            throw new SteamClientException(
+                    "Failed to reach steam api - " + restClientException.getClass().getSimpleName()
+            );
         }
 
         // parse response data
@@ -105,7 +111,8 @@ public class SteamClient {
        try {
            return builder.build();
        } catch (URISyntaxException uriSyntaxException) {
-           throw new SteamClientException("Failed to build steam inventory uri - " + uriSyntaxException.getMessage());
+           // hide uri with api key
+           throw new SteamClientException("Failed to build steam inventory uri");
        }
     }
 }
