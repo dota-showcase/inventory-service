@@ -19,7 +19,14 @@ public class RateLimitHandler {
     }
 
     public HttpHeaders run(Long steamId, int consumeCount) throws RateLimiterException {
-        Bucket tokenBucket = rateLimiter.resolveBucket(steamId);
+        return consume(rateLimiter.resolveBucket(steamId), consumeCount, RateLimiter.LIMIT);
+    }
+
+    public HttpHeaders runUpdate(Long steamId) throws RateLimiterException {
+        return consume(rateLimiter.resolveUpdateBucket(steamId), 1, RateLimiter.UPDATE_LIMIT);
+    }
+
+    private HttpHeaders consume(Bucket tokenBucket, int consumeCount, int limit) throws RateLimiterException {
         ConsumptionProbe probe = tokenBucket.tryConsumeAndReturnRemaining(consumeCount);
 
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -27,7 +34,7 @@ public class RateLimitHandler {
         if (!probe.isConsumed()) {
             long waitForRefill = probe.getNanosToWaitForRefill() / 1_000_000_000;
 
-            throw new RateLimiterException("Allowed " + RateLimiter.LIMIT + " request(s) per minute", waitForRefill);
+            throw new RateLimiterException("Allowed " + limit + " request(s) per minute", waitForRefill);
         }
 
         responseHeaders.set(HEADER_LIMIT_REMAINING, String.valueOf(probe.getRemainingTokens()));

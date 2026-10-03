@@ -13,7 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.IndexOperations;
+import org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -245,6 +248,30 @@ class OperationRepositoryTest {
 
         // then
         assertThat(expected.getVersion()).isEqualTo(5);
+    }
+
+    @Test
+    void willThrowWhenInsertDuplicateVersion() {
+        // given
+        IndexOperations indexOps = mongoTemplate.indexOps(Operation.class);
+        new MongoPersistentEntityIndexResolver(mongoTemplate.getConverter().getMappingContext())
+                .resolveIndexFor(Operation.class)
+                .forEach(indexOps::createIndex);
+
+        // version #1 exists in setup
+        Operation operation = new Operation();
+        operation.setSteamId(100000000000L);
+        operation.setType(Operation.Type.U);
+        operation.setVersion(1);
+
+        // when
+        // then
+        try {
+            assertThatThrownBy(() -> underTest.insertOne(operation))
+                    .isInstanceOf(DuplicateKeyException.class);
+        } finally {
+            indexOps.dropIndex("operations__steam_id_version");
+        }
     }
 
     @Test

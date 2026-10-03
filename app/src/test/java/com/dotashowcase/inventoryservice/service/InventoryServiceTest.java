@@ -9,6 +9,8 @@ import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
+import com.dotashowcase.inventoryservice.service.exception.InventoryUpdateConflictException;
+import com.dotashowcase.inventoryservice.service.lock.InventorySyncLock;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
@@ -28,10 +30,16 @@ import org.springframework.data.domain.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -58,12 +66,22 @@ class InventoryServiceTest {
     @Mock
     private PageMapper<Inventory, InventoryWithLatestOperationDTO> pageMapper;
 
+    private InventorySyncLock inventorySyncLock;
+
     private InventoryService underTest;
 
     @BeforeEach
     void setUp() {
+        inventorySyncLock = new InventorySyncLock();
+
         underTest = new InventoryServiceImpl(
-                inventoryItemService, operationService, inventoryRepository, sortBuilder, steamClient, pageMapper
+                inventoryItemService,
+                operationService,
+                inventoryRepository,
+                sortBuilder,
+                steamClient,
+                pageMapper,
+                inventorySyncLock
         );
     }
 
@@ -254,6 +272,9 @@ class InventoryServiceTest {
                 1,
                 1000
                 );
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
     }
 
     @Test
@@ -268,6 +289,9 @@ class InventoryServiceTest {
         // then
         assertThatThrownBy(() -> underTest.create(steamId))
                 .isInstanceOf(InventoryAlreadyExistsException.class);
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
     }
 
     @Test
@@ -347,6 +371,38 @@ class InventoryServiceTest {
                 1,
                 inventoryResponseDTO.getNumberBackpackSlots()
         );
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
+    }
+
+    @Test
+    void willThrowWhenUpdateInventoryConcurrently() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        Operation prevOperation = new Operation();
+        prevOperation.setSteamId(steamId);
+        prevOperation.setVersion(1);
+
+        UserInventoryResponseDTO inventoryResponseDTO = new UserInventoryResponseDTO();
+        inventoryResponseDTO.setStatus(1);
+        inventoryResponseDTO.setItems(List.of(new ItemDTO()));
+
+        // same version created by another request
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
+        when(operationService.getLatest(inventory)).thenReturn(prevOperation);
+        when(steamClient.fetchUserInventory(steamId)).thenReturn(inventoryResponseDTO);
+        when(operationService.create(inventory, Operation.Type.U, prevOperation))
+                .thenThrow(new DuplicateKeyException("E11000"));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.update(steamId))
+                .isInstanceOf(InventoryUpdateConflictException.class);
+
+        verifyNoInteractions(inventoryItemService);
     }
 
     @Test
@@ -360,6 +416,9 @@ class InventoryServiceTest {
         // then
         assertThatThrownBy(() -> underTest.update(steamId))
                 .isInstanceOf(InventoryNotFoundException.class);
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
     }
 
     @Test
@@ -376,6 +435,143 @@ class InventoryServiceTest {
         assertThatThrownBy(() -> underTest.update(steamId))
                 .isInstanceOf(InventoryException.class)
                 .hasMessageContaining("Cannot find Inventory Operation resource");
+    }
+
+    @Test
+    void willThrowWhenCreateInventoryInProgress() {
+        // given
+        Long steamId = 100000000000L;
+
+        // sync of the same inventory in progress
+        inventorySyncLock.tryLock(steamId);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.create(steamId))
+                .isInstanceOf(InventoryAlreadyExistsException.class);
+
+        verifyNoInteractions(inventoryRepository, steamClient, operationService, inventoryItemService);
+    }
+
+    @Test
+    void willThrowWhenUpdateInventoryInProgress() {
+        // given
+        Long steamId = 100000000000L;
+
+        // sync of the same inventory in progress
+        inventorySyncLock.tryLock(steamId);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.update(steamId))
+                .isInstanceOf(InventoryUpdateConflictException.class);
+
+        verifyNoInteractions(inventoryRepository, steamClient, operationService, inventoryItemService);
+    }
+
+    @Test
+    void itShouldBlockParallelUpdate() throws Exception {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        Operation prevOperation = new Operation();
+        prevOperation.setSteamId(steamId);
+        prevOperation.setVersion(1);
+
+        Operation currentOperation = new Operation();
+        currentOperation.setSteamId(steamId);
+        currentOperation.setType(Operation.Type.U);
+        currentOperation.setVersion(2);
+        currentOperation.setMeta(new OperationMeta());
+
+        UserInventoryResponseDTO inventoryResponseDTO = new UserInventoryResponseDTO();
+        inventoryResponseDTO.setStatus(1);
+        inventoryResponseDTO.setItems(List.of(new ItemDTO()));
+
+        CountDownLatch steamCallStarted = new CountDownLatch(1);
+        CountDownLatch steamCallRelease = new CountDownLatch(1);
+
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
+        when(operationService.getLatest(inventory)).thenReturn(prevOperation);
+        // first update waits for steam response
+        when(steamClient.fetchUserInventory(steamId)).thenAnswer(invocation -> {
+            steamCallStarted.countDown();
+            steamCallRelease.await(5, TimeUnit.SECONDS);
+
+            return inventoryResponseDTO;
+        });
+        when(operationService.create(inventory, Operation.Type.U, prevOperation)).thenReturn(currentOperation);
+        when(inventoryItemService.sync(inventory, currentOperation, inventoryResponseDTO.getItems()))
+                .thenReturn(new OperationCountDTO());
+
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            Future<InventoryWithLatestOperationDTO> firstUpdate = executor.submit(() -> underTest.update(steamId));
+            assertThat(steamCallStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // when
+            // then
+            assertThatThrownBy(() -> underTest.update(steamId))
+                    .isInstanceOf(InventoryUpdateConflictException.class);
+
+            steamCallRelease.countDown();
+            assertThat(firstUpdate.get(5, TimeUnit.SECONDS)).isNotNull();
+        }
+
+        verify(steamClient, times(1)).fetchUserInventory(steamId);
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
+    }
+
+    @Test
+    void itShouldBlockUpdateWhileCreateInProgress() throws Exception {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        Operation operation = new Operation();
+        operation.setSteamId(steamId);
+        operation.setVersion(1);
+        operation.setMeta(new OperationMeta());
+
+        UserInventoryResponseDTO inventoryResponseDTO = new UserInventoryResponseDTO();
+        inventoryResponseDTO.setStatus(1);
+        inventoryResponseDTO.setItems(List.of(new ItemDTO()));
+
+        CountDownLatch steamCallStarted = new CountDownLatch(1);
+        CountDownLatch steamCallRelease = new CountDownLatch(1);
+
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(null);
+        // create waits for steam response
+        when(steamClient.fetchUserInventory(steamId)).thenAnswer(invocation -> {
+            steamCallStarted.countDown();
+            steamCallRelease.await(5, TimeUnit.SECONDS);
+
+            return inventoryResponseDTO;
+        });
+        when(inventoryRepository.insert(inventory)).thenReturn(inventory);
+        when(operationService.create(inventory, null, null)).thenReturn(operation);
+        when(inventoryItemService.create(inventory, operation, inventoryResponseDTO.getItems()))
+                .thenReturn(List.of());
+
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            Future<InventoryWithLatestOperationDTO> create = executor.submit(() -> underTest.create(steamId));
+            assertThat(steamCallStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // when
+            // then
+            assertThatThrownBy(() -> underTest.update(steamId))
+                    .isInstanceOf(InventoryUpdateConflictException.class);
+
+            steamCallRelease.countDown();
+            assertThat(create.get(5, TimeUnit.SECONDS)).isNotNull();
+        }
+
+        verify(inventoryRepository, times(1)).findItemBySteamId(steamId);
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
     }
 
     @Test

@@ -7,6 +7,8 @@ import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
+import com.dotashowcase.inventoryservice.service.exception.InventoryUpdateConflictException;
+import com.dotashowcase.inventoryservice.service.lock.InventorySyncLock;
 import com.dotashowcase.inventoryservice.service.result.dto.*;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryServiceResultMapper;
@@ -43,6 +45,8 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final PageMapper<Inventory, InventoryWithLatestOperationDTO> pageMapper;
 
+    private final InventorySyncLock inventorySyncLock;
+
     private final InventoryServiceResultMapper inventoryServiceResultMapper;
 
     @Autowired
@@ -52,7 +56,8 @@ public class InventoryServiceImpl implements InventoryService {
             InventoryRepository inventoryRepository,
             SortBuilder sortBuilder,
             SteamClient steamClient,
-            PageMapper<Inventory, InventoryWithLatestOperationDTO> pageMapper
+            PageMapper<Inventory, InventoryWithLatestOperationDTO> pageMapper,
+            InventorySyncLock inventorySyncLock
     ) {
         Assert.notNull(inventoryItemService, "InventoryItemService must not be null!");
         this.inventoryItemService = inventoryItemService;
@@ -71,6 +76,9 @@ public class InventoryServiceImpl implements InventoryService {
 
         Assert.notNull(pageMapper, "PageMapper<Inventory, InventoryWithLatestOperationDTO> must not be null!");
         this.pageMapper = pageMapper;
+
+        Assert.notNull(inventorySyncLock, "InventorySyncLock must not be null!");
+        this.inventorySyncLock = inventorySyncLock;
 
         this.inventoryServiceResultMapper = new InventoryServiceResultMapper();
     }
@@ -129,6 +137,19 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public InventoryWithLatestOperationDTO create(Long steamId) {
+        // block parallel sync of the same inventory
+        if (!inventorySyncLock.tryLock(steamId)) {
+            throw new InventoryAlreadyExistsException();
+        }
+
+        try {
+            return doCreate(steamId);
+        } finally {
+            inventorySyncLock.unlock(steamId);
+        }
+    }
+
+    private InventoryWithLatestOperationDTO doCreate(Long steamId) {
         Inventory existingInventory = inventoryRepository.findItemBySteamId(steamId);
 
         if (existingInventory != null) {
@@ -165,6 +186,19 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public InventoryWithLatestOperationDTO update(Long steamId) {
+        // block parallel sync of the same inventory
+        if (!inventorySyncLock.tryLock(steamId)) {
+            throw new InventoryUpdateConflictException();
+        }
+
+        try {
+            return doUpdate(steamId);
+        } finally {
+            inventorySyncLock.unlock(steamId);
+        }
+    }
+
+    private InventoryWithLatestOperationDTO doUpdate(Long steamId) {
         Inventory inventory = findInventory(steamId);
         Operation prevOperation = operationService.getLatest(inventory);
 
@@ -175,7 +209,13 @@ public class InventoryServiceImpl implements InventoryService {
         UserInventoryResponseDTO inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
         List<ItemDTO> responseItems = inventoryResponseDTO.getItems();
 
-        Operation currentOperation = operationService.create(inventory, Operation.Type.U, prevOperation);
+        // unique version - fails on concurrent update
+        Operation currentOperation;
+        try {
+            currentOperation = operationService.create(inventory, Operation.Type.U, prevOperation);
+        } catch (DuplicateKeyException duplicateKeyException) {
+            throw new InventoryUpdateConflictException();
+        }
 
         OperationCountDTO operationCountDTO = inventoryItemService.sync(inventory, currentOperation, responseItems);
 

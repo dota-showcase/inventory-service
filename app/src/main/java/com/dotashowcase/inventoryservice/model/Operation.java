@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -15,6 +15,8 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+// unique - prevents duplicate versions on concurrent updates
+@CompoundIndex(def = "{'steamId': 1, 'version': -1}", name = "operations__steam_id_version", unique = true)
 @Document("operations")
 public class Operation {
 
@@ -22,11 +24,9 @@ public class Operation {
     private ObjectId id;
 
     @Field
-    @Indexed(name = "operations__steam_id")
     private Long steamId;
 
     @Field
-    @Indexed(name = "operations__version")
     private Integer version = 1;
 
     @Field

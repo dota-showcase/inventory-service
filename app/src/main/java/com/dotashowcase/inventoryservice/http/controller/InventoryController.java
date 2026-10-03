@@ -139,6 +139,10 @@ public class InventoryController {
                     mediaType = "application/json",
                     schema = @Schema(implementation = ErrorResponse.class))
             ),
+            @ApiResponse(responseCode = "409", description = "Inventory is already being updated", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class))
+            ),
             @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = ValidationErrorResponse.class))
@@ -151,7 +155,7 @@ public class InventoryController {
     @PutMapping("inventories/{steamId}")
     @ResponseBody
     public ResponseEntity<InventoryWithLatestOperationDTO> update(@PathVariable @SteamIdConstraint Long steamId) {
-        HttpHeaders responseHeaders = rateLimitHandler.run(steamId, 1);
+        HttpHeaders responseHeaders = rateLimitHandler.runUpdate(steamId);
 
         return ResponseEntity.ok()
                 .headers(responseHeaders)
