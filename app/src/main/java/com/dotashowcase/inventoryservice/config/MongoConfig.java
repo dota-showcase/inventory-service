@@ -19,7 +19,7 @@ import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import java.text.MessageFormat;
 
 @Configuration
-@Profile("default,dev,prod")
+@Profile({"default","dev","prod"})
 public class MongoConfig extends AbstractMongoClientConfiguration {
 
     @Value("${spring.data.mongodb.host}")
