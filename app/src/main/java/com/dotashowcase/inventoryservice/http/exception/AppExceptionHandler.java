@@ -16,7 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -74,6 +77,29 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                     .orElse(null));
 
             errors.add(paramName + ": " + violation.getMessage());
+        }
+
+        final ErrorResponse errorResponse = getValidationErrorResponse(
+                ((ServletWebRequest) request).getRequest().getRequestURI(),
+                "Validation failed",
+                errors
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    // @Valid request body errors
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        List<String> errors = new ArrayList<>();
+
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            errors.add(fieldError.getField() + ": " + fieldError.getDefaultMessage());
         }
 
         final ErrorResponse errorResponse = getValidationErrorResponse(

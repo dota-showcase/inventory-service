@@ -773,4 +773,108 @@ class InventoryItemRepositoryTest {
                 .contains(steamId2)
                 .hasSize(1);
     }
+
+    @Test
+    void itShouldSortPageByPositionByDefault() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+
+        // position ties inserted in reverse _id order
+        insertItem(inventory, 505L, 1, 1, (byte) 4);
+        insertItem(inventory, 504L, 1, 3, (byte) 4);
+        insertItem(inventory, 503L, 1, 1, (byte) 4);
+        insertItem(inventory, 502L, 1, 2, (byte) 4);
+        insertItem(inventory, 501L, 1, 0, (byte) 4);
+
+        // when
+        List<Long> itemIds = searchItemIdsByPages(inventory, new InventoryItemFilter(), null);
+
+        // then
+        assertThat(itemIds).containsExactly(501L, 503L, 505L, 502L, 504L);
+    }
+
+    @Test
+    void itShouldSortPageByDefIndexesOrderThenPosition() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+
+        insertItem(inventory, 504L, 100, 1, (byte) 4);
+        insertItem(inventory, 503L, 300, 2, (byte) 4);
+        insertItem(inventory, 502L, 100, 1, (byte) 4);
+        insertItem(inventory, 501L, 300, 1, (byte) 4);
+
+        InventoryItemFilter filter = InventoryItemFilter.builder()
+                .defIndexes(List.of(300, 100))
+                .build();
+
+        // when
+        List<Long> itemIds = searchItemIdsByPages(inventory, filter, null);
+
+        // then
+        assertThat(itemIds).containsExactly(501L, 503L, 502L, 504L);
+    }
+
+    @Test
+    void itShouldBreakSortTiesById() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+
+        // quality ties inserted in reverse _id order
+        insertItem(inventory, 505L, 1, 1, (byte) 4);
+        insertItem(inventory, 504L, 1, 2, (byte) 1);
+        insertItem(inventory, 503L, 1, 3, (byte) 4);
+        insertItem(inventory, 502L, 1, 4, (byte) 1);
+        insertItem(inventory, 501L, 1, 5, (byte) 4);
+
+        // when
+        List<Long> itemIds = searchItemIdsByPages(
+                inventory, new InventoryItemFilter(), Sort.by(Sort.Direction.ASC, "qlt")
+        );
+
+        // then
+        assertThat(itemIds).containsExactly(502L, 504L, 501L, 503L, 505L);
+    }
+
+    @Test
+    void itShouldNotOverrideSortById() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+
+        insertItem(inventory, 501L, 1, 1, (byte) 4);
+        insertItem(inventory, 503L, 1, 2, (byte) 4);
+        insertItem(inventory, 502L, 1, 3, (byte) 4);
+
+        // when
+        List<Long> itemIds = searchItemIdsByPages(
+                inventory, new InventoryItemFilter(), Sort.by(Sort.Direction.DESC, "_id")
+        );
+
+        // then
+        assertThat(itemIds).containsExactly(503L, 502L, 501L);
+    }
+
+    // _id follows itemId
+    private void insertItem(Inventory inventory, Long itemId, Integer defIndex, Integer position, Byte quality) {
+        InventoryItem inventoryItem = new InventoryItem();
+        inventoryItem.setId(new ObjectId(String.format("%024x", itemId)));
+        inventoryItem.setItemId(itemId);
+        inventoryItem.setSteamId(inventory.getSteamId());
+        inventoryItem.setDefIndex(defIndex);
+        inventoryItem.setInventoryPosition(position);
+        inventoryItem.setQuality(quality);
+        mongoTemplate.insert(inventoryItem);
+    }
+
+    private List<Long> searchItemIdsByPages(Inventory inventory, InventoryItemFilter filter, Sort sort) {
+        List<Long> itemIds = new ArrayList<>();
+        Page<InventoryItem> page;
+        int pageNumber = 0;
+
+        do {
+            page = underTest.searchAll(inventory, PageRequest.of(pageNumber++, 2), filter, sort);
+            page.getContent().forEach(inventoryItem -> itemIds.add(inventoryItem.getItemId()));
+        } while (page.hasNext());
+
+        return itemIds;
+    }
 }

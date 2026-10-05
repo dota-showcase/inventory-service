@@ -169,6 +169,10 @@ public class InventoryController {
                     mediaType = "application/json",
                     schema = @Schema(implementation = ErrorResponse.class))
             ),
+            @ApiResponse(responseCode = "409", description = "Inventory is already being updated", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class))
+            ),
             @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = ValidationErrorResponse.class))

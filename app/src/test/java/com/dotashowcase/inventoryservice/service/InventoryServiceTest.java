@@ -588,5 +588,77 @@ class InventoryServiceTest {
         verify(inventoryRepository).delete(inventory);
         verify(operationService).delete(inventory);
         verify(inventoryItemService).delete(inventory);
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
+    }
+
+    @Test
+    void willThrowWhenDeleteNotExistingInventory() {
+        // given
+        Long steamId = 100000000000L;
+
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(null);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.delete(steamId))
+                .isInstanceOf(InventoryNotFoundException.class);
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
+    }
+
+    @Test
+    void willThrowWhenDeleteInventoryInProgress() {
+        // given
+        Long steamId = 100000000000L;
+
+        // sync of the same inventory in progress
+        inventorySyncLock.tryLock(steamId);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.delete(steamId))
+                .isInstanceOf(InventoryUpdateConflictException.class);
+
+        verifyNoInteractions(inventoryRepository, operationService, inventoryItemService);
+    }
+
+    @Test
+    void itShouldBlockUpdateWhileDeleteInProgress() throws Exception {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        CountDownLatch deleteStarted = new CountDownLatch(1);
+        CountDownLatch deleteRelease = new CountDownLatch(1);
+
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
+        // delete waits on operations removal
+        when(operationService.delete(inventory)).thenAnswer(invocation -> {
+            deleteStarted.countDown();
+            deleteRelease.await(5, TimeUnit.SECONDS);
+
+            return 0L;
+        });
+
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            Future<?> delete = executor.submit(() -> underTest.delete(steamId));
+            assertThat(deleteStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // when
+            // then
+            assertThatThrownBy(() -> underTest.update(steamId))
+                    .isInstanceOf(InventoryUpdateConflictException.class);
+
+            deleteRelease.countDown();
+            delete.get(5, TimeUnit.SECONDS);
+        }
+
+        verify(inventoryItemService).delete(inventory);
+
+        // lock released
+        assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
     }
 }

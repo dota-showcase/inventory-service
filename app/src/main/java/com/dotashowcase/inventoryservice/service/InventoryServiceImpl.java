@@ -231,6 +231,19 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public void delete(Long steamId) {
+        // block delete during sync of the same inventory
+        if (!inventorySyncLock.tryLock(steamId)) {
+            throw new InventoryUpdateConflictException();
+        }
+
+        try {
+            doDelete(steamId);
+        } finally {
+            inventorySyncLock.unlock(steamId);
+        }
+    }
+
+    private void doDelete(Long steamId) {
         Inventory existingInventory = findInventory(steamId);
 
         inventoryRepository.delete(existingInventory);

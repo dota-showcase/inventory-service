@@ -49,6 +49,9 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 
         // main query sort
         if (sort == null) {
+            // default - inventory position
+            sort = Sort.by(Sort.Direction.ASC, "pos");
+
             if (filter.hasDefIndexes()) {
                 operations.add(
                         addFields()
@@ -63,13 +66,16 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
                                 .build()
                 );
 
-                operations.add(
-                        Aggregation.sort(Sort.by(Sort.Direction.ASC, "defIndexSort"))
-                );
+                sort = Sort.by(Sort.Direction.ASC, "defIndexSort").and(sort);
             }
-        } else {
-            operations.add(Aggregation.sort(sort));
         }
+
+        // _id tie-breaker - stable pages
+        if (sort.getOrderFor("_id") == null) {
+            sort = sort.and(Sort.by(Sort.Direction.ASC, "_id"));
+        }
+
+        operations.add(Aggregation.sort(sort));
 
         // main query pagination
         operations.add(Aggregation.skip((long) pageable.getPageNumber() * pageable.getPageSize()));
