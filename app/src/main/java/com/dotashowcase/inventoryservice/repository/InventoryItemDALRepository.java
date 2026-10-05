@@ -13,6 +13,8 @@ import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.MongoPersistentEntity;
+import org.springframework.data.mongodb.core.mapping.MongoPersistentProperty;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -68,6 +70,8 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 
                 sort = Sort.by(Sort.Direction.ASC, "defIndexSort").and(sort);
             }
+        } else {
+            sort = getMappedSort(sort);
         }
 
         // _id tie-breaker - stable pages
@@ -126,7 +130,7 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
                 operations.add(Aggregation.sort(Sort.by(Sort.Direction.ASC, "defIndexSort")));
             }
         } else {
-            operations.add(Aggregation.sort(sort));
+            operations.add(Aggregation.sort(getMappedSort(sort)));
         }
 
         Aggregation aggregation = Aggregation.newAggregation(operations);
@@ -296,6 +300,21 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         defaultCriteria.forEach(query::addCriteria);
 
         return mongoTemplate.remove(query, InventoryItem.class).getDeletedCount();
+    }
+
+    // api names -> stored names, e.g. defIndex -> dIdx
+    private Sort getMappedSort(Sort sort) {
+        MongoPersistentEntity<?> entity = mongoTemplate.getConverter()
+                .getMappingContext()
+                .getRequiredPersistentEntity(InventoryItem.class);
+
+        return Sort.by(sort.stream()
+                .map(order -> {
+                    MongoPersistentProperty property = entity.getPersistentProperty(order.getProperty());
+
+                    return property != null ? order.withProperty(property.getFieldName()) : order;
+                })
+                .toList());
     }
 
     private List<Criteria> getDefaultCriteria(Inventory inventory) {

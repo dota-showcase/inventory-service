@@ -530,7 +530,7 @@ class InventoryItemRepositoryTest {
 
         assertThat(twoItemsByAllDefindexDesc.getContent())
                 .extracting("defIndex")
-                .containsSequence(201, 203);
+                .containsSequence(203, 201);
     }
 
     @Test
@@ -845,12 +845,55 @@ class InventoryItemRepositoryTest {
         insertItem(inventory, 502L, 1, 3, (byte) 4);
 
         // when
-        List<Long> itemIds = searchItemIdsByPages(
+        List<Long> itemIdsByStoredName = searchItemIdsByPages(
                 inventory, new InventoryItemFilter(), Sort.by(Sort.Direction.DESC, "_id")
+        );
+        List<Long> itemIdsByApiName = searchItemIdsByPages(
+                inventory, new InventoryItemFilter(), Sort.by(Sort.Direction.DESC, "id")
         );
 
         // then
-        assertThat(itemIds).containsExactly(503L, 502L, 501L);
+        assertThat(itemIdsByStoredName).containsExactly(503L, 502L, 501L);
+        assertThat(itemIdsByApiName).containsExactly(503L, 502L, 501L);
+    }
+
+    @Test
+    void itShouldSortPageByApiFieldName() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+
+        insertItem(inventory, 501L, 300, 1, (byte) 4);
+        insertItem(inventory, 502L, 100, 2, (byte) 4);
+        insertItem(inventory, 503L, 500, 3, (byte) 4);
+        insertItem(inventory, 504L, 200, 4, (byte) 4);
+
+        // when
+        // defIndex - stored as dIdx
+        List<Long> itemIds = searchItemIdsByPages(
+                inventory, new InventoryItemFilter(), Sort.by(Sort.Direction.DESC, "defIndex")
+        );
+
+        // then
+        assertThat(itemIds).containsExactly(503L, 501L, 504L, 502L);
+    }
+
+    @Test
+    void itShouldSortAllByApiFieldName() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+
+        insertItem(inventory, 501L, 300, 1, (byte) 4);
+        insertItem(inventory, 502L, 100, 2, (byte) 4);
+        insertItem(inventory, 503L, 500, 3, (byte) 4);
+
+        // when
+        // defIndex - stored as dIdx
+        List<InventoryItem> items = underTest.searchAll(
+                inventory, new InventoryItemFilter(), Sort.by(Sort.Direction.DESC, "defIndex")
+        );
+
+        // then
+        assertThat(items).extracting("itemId").containsExactly(503L, 501L, 502L);
     }
 
     // _id follows itemId
