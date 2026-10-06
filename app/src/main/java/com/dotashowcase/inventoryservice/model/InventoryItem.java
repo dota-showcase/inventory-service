@@ -18,7 +18,15 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+// search by defIndex, sync, defIndex list
 @CompoundIndex(def = "{'steamId':1, 'isActive':1, 'defIndex':1}", name = "items__search_index")
+// positioned page, default page sort - active items only
+@CompoundIndex(def = "{'steamId':1, 'inventoryPosition':1, 'id':1}", name = "items__position_index",
+        partialFilter = "{'isActive': true}")
+// changes - created/updated by operation
+@CompoundIndex(def = "{'operationId':1}", name = "items__operation_index")
+// changes - deleted by operation, only deleted items have the field
+@CompoundIndex(def = "{'deleteOperationId':1}", name = "items__delete_operation_index", sparse = true)
 @Document("items")
 public class InventoryItem {
 

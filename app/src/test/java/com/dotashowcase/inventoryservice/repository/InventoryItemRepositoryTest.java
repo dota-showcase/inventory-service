@@ -23,12 +23,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.IndexField;
+import org.springframework.data.mongodb.core.index.IndexInfo;
+import org.springframework.data.mongodb.core.index.IndexOperations;
+import org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -896,6 +901,36 @@ class InventoryItemRepositoryTest {
         assertThat(items).extracting("itemId").containsExactly(503L, 501L, 502L);
     }
 
+    @Test
+    void itShouldCreateIndexesOnStoredFieldNames() {
+        // given
+        IndexOperations indexOps = mongoTemplate.indexOps(InventoryItem.class);
+
+        try {
+            // when
+            // as on app startup
+            new MongoPersistentEntityIndexResolver(mongoTemplate.getConverter().getMappingContext())
+                    .resolveIndexFor(InventoryItem.class)
+                    .forEach(indexOps::createIndex);
+
+            Map<String, IndexInfo> indexes = indexOps.getIndexInfo().stream()
+                    .collect(Collectors.toMap(IndexInfo::getName, Function.identity()));
+
+            // then
+            assertThat(indexes).containsKeys(
+                    "items__search_index", "items__position_index", "items__operation_index", "items__delete_operation_index"
+            );
+            assertThat(getIndexKeys(indexes.get("items__search_index"))).containsExactly("steamId", "_isA", "dIdx");
+            assertThat(getIndexKeys(indexes.get("items__position_index"))).containsExactly("steamId", "pos", "_id");
+            assertThat(indexes.get("items__position_index").getPartialFilterExpression()).isEqualTo("{\"_isA\": true}");
+            assertThat(getIndexKeys(indexes.get("items__operation_index"))).containsExactly("_oId");
+            assertThat(getIndexKeys(indexes.get("items__delete_operation_index"))).containsExactly("_odId");
+            assertThat(indexes.get("items__delete_operation_index").isSparse()).isTrue();
+        } finally {
+            indexOps.dropAllIndexes();
+        }
+    }
+
     // _id follows itemId
     private void insertItem(Inventory inventory, Long itemId, Integer defIndex, Integer position, Byte quality) {
         InventoryItem inventoryItem = new InventoryItem();
@@ -919,5 +954,9 @@ class InventoryItemRepositoryTest {
         } while (page.hasNext());
 
         return itemIds;
+    }
+
+    private List<String> getIndexKeys(IndexInfo index) {
+        return index.getIndexFields().stream().map(IndexField::getKey).toList();
     }
 }
