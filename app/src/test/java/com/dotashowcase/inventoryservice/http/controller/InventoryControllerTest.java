@@ -1,19 +1,25 @@
 package com.dotashowcase.inventoryservice.http.controller;
 
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
+import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
 import com.dotashowcase.inventoryservice.service.InventoryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -67,5 +73,23 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.validationErrors[0]").value(STEAM_ID_ERROR));
 
         verifyNoInteractions(inventoryService);
+    }
+
+    @Test
+    void willReturnRetryAfterWhenUpdateRateLimited() throws Exception {
+        // given
+        Long steamId = 76561198000000001L;
+
+        mockMvc.perform(put("/api/v1/inventories/" + steamId))
+                .andExpect(status().isOk());
+
+        // when
+        // then
+        mockMvc.perform(put("/api/v1/inventories/" + steamId))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string(HttpHeaders.RETRY_AFTER, "60"))
+                .andExpect(header().string(RateLimitHandler.HEADER_RETRY_AFTER, "60"));
+
+        verify(inventoryService, times(1)).update(steamId);
     }
 }

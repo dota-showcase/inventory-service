@@ -28,7 +28,8 @@ public class SteamClient {
 
     private final InventoryStatusHandler inventoryStatusHandler;
 
-    @Value("${env.steam.api.key: api_key}")
+    // no default - fails on startup if missing
+    @Value("${env.steam.api.key}")
     private String steamApiKey;
 
     public SteamClient(

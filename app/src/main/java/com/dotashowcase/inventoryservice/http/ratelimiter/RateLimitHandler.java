@@ -32,7 +32,8 @@ public class RateLimitHandler {
         HttpHeaders responseHeaders = new HttpHeaders();
 
         if (!probe.isConsumed()) {
-            long waitForRefill = probe.getNanosToWaitForRefill() / 1_000_000_000;
+            // round up - under 1s left must not become 0
+            long waitForRefill = Math.ceilDiv(probe.getNanosToWaitForRefill(), 1_000_000_000L);
 
             throw new RateLimiterException("Allowed " + limit + " request(s) per minute", waitForRefill);
         }

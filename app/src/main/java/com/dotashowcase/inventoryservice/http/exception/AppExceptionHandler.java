@@ -155,6 +155,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(RateLimitHandler.HEADER_RETRY_AFTER, String.valueOf(ex.getWaitForRefill()));
+        headers.add(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getWaitForRefill()));
 
         return new ResponseEntity<>(errorResponse, headers, HttpStatus.TOO_MANY_REQUESTS);
     }
