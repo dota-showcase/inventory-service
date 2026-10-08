@@ -131,7 +131,7 @@ class OperationServiceTest {
         String sortByStr = "-version";
         Sort sortBy = Sort.by(Sort.Direction.DESC, "version");
 
-        when(sortBuilder.fromRequestParam(sortByStr)).thenReturn(sortBy);
+        when(sortBuilder.fromRequestParam(eq(sortByStr), any())).thenReturn(sortBy);
 
         Page<Operation> operationFirstPage = new PageImpl<>(
                 firstPageOperations, firstPageWithAllItems, firstPageOperations.size()
@@ -181,7 +181,7 @@ class OperationServiceTest {
         String sortByStr = "-version";
         Sort sortBy = Sort.by(Sort.Direction.DESC, "version");
 
-        when(sortBuilder.fromRequestParam(sortByStr)).thenReturn(sortBy);
+        when(sortBuilder.fromRequestParam(eq(sortByStr), any())).thenReturn(sortBy);
 
         Page<Operation> operationSecondPage = new PageImpl<>(
                 secondPageOperations, secondPageWithAllItems, secondPageOperations.size()

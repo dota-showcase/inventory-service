@@ -8,6 +8,8 @@ Group=ubuntu
 Type=simple
 
 [Service]
+# App dir - relative paths resolve from it, e.g. logs in storage/logs
+WorkingDirectory=/usr/local/inventory-service/app
 # Path to JAR file built by Gradle
 ExecStart=/usr/bin/java -Dspring.profiles.active=prod -jar /usr/local/inventory-service/app/build/libs/inventory-service-0.0.1.jar
 
@@ -15,8 +17,8 @@ SuccessExitStatus=143
 Restart=always
 RestartSec=10
 
-StandardOutput=syslog
-StandardError=syslog
+StandardOutput=journal
+StandardError=journal
 
 SyslogIdentifier=ds-inventory
 

@@ -20,17 +20,22 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.Assert;
 
 import java.util.*;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.addFields;
-import static org.springframework.data.mongodb.core.aggregation.ArrayOperators.IndexOfArray.arrayOf;
 
 @Repository
 public class InventoryItemDALRepository implements InventoryItemDAL {
 
+    private final MongoTemplate mongoTemplate;
+
     @Autowired
-    private MongoTemplate mongoTemplate;
+    public InventoryItemDALRepository(MongoTemplate mongoTemplate) {
+        Assert.notNull(mongoTemplate, "MongoTemplate must not be null!");
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @Override
     public Page<InventoryItem> searchAll(
@@ -55,18 +60,7 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
             sort = Sort.by(Sort.Direction.ASC, "pos");
 
             if (filter.hasDefIndexes()) {
-                operations.add(
-                        addFields()
-                                .addField("defIndexSort")
-                                .withValue(
-                                        ConditionalOperators.ifNull(
-                                                ArrayOperators.IndexOfArray
-                                                        .arrayOf(filter.getDefIndexes())
-                                                        .indexOf("$dIdx")
-                                        ).then(Integer.MAX_VALUE)
-                                )
-                                .build()
-                );
+                operations.add(getDefIndexSortField(filter));
 
                 sort = Sort.by(Sort.Direction.ASC, "defIndexSort").and(sort);
             }
@@ -122,10 +116,7 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         // sort
         if (sort == null) {
             if (filter.hasDefIndexes()) {
-                operations.add(addFields()
-                        .addField("defIndexSort").withValue(arrayOf(filter.getDefIndexes()).indexOf("$dIdx"))
-                        .build()
-                );
+                operations.add(getDefIndexSortField(filter));
 
                 operations.add(Aggregation.sort(Sort.by(Sort.Direction.ASC, "defIndexSort")));
             }
@@ -271,7 +262,7 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         int count = 0;
         for (AbstractMap.SimpleImmutableEntry<String, Object> entry : updateEntry) {
             String key = entry.getKey();
-            if (InventoryItem.fillable.contains(key)) {
+            if (InventoryItem.FILLABLE.contains(key)) {
                 update.set(key, entry.getValue());
                 ++count;
             }
@@ -310,6 +301,20 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
                     return property != null ? order.withProperty(property.getFieldName()) : order;
                 })
                 .toList());
+    }
+
+    // position in requested defIndexes - keeps their order
+    private AggregationOperation getDefIndexSortField(InventoryItemFilter filter) {
+        return addFields()
+                .addField("defIndexSort")
+                .withValue(
+                        ConditionalOperators.ifNull(
+                                ArrayOperators.IndexOfArray
+                                        .arrayOf(filter.getDefIndexes())
+                                        .indexOf("$dIdx")
+                        ).then(Integer.MAX_VALUE)
+                )
+                .build();
     }
 
     private List<Criteria> getDefaultCriteria(Inventory inventory) {

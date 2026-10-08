@@ -25,6 +25,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,14 +38,27 @@ import java.util.Optional;
 @RequestMapping("api/v1/")
 public class InventoryItemController {
 
-    @Autowired
-    private InventoryService inventoryService;
+    private final InventoryService inventoryService;
+
+    private final InventoryItemService inventoryItemService;
+
+    private final InventoryItemChangesService inventoryItemChangesService;
 
     @Autowired
-    private InventoryItemService inventoryItemService;
+    public InventoryItemController(
+            InventoryService inventoryService,
+            InventoryItemService inventoryItemService,
+            InventoryItemChangesService inventoryItemChangesService
+    ) {
+        Assert.notNull(inventoryService, "InventoryService must not be null!");
+        this.inventoryService = inventoryService;
 
-    @Autowired
-    private InventoryItemChangesService inventoryItemChangesService;
+        Assert.notNull(inventoryItemService, "InventoryItemService must not be null!");
+        this.inventoryItemService = inventoryItemService;
+
+        Assert.notNull(inventoryItemChangesService, "InventoryItemChangesService must not be null!");
+        this.inventoryItemChangesService = inventoryItemChangesService;
+    }
 
     @Operation(description = "Get a list of user's inventory items, may be filtered")
     @ApiResponses(value = {
@@ -65,21 +79,9 @@ public class InventoryItemController {
             @RequestBody(required=false) @Valid InventoryItemSearchRequest inventoryItemSearchRequest,
             @RequestParam Optional<String> sort
     ) {
-        InventoryItemFilter filter;
-
-        if (inventoryItemSearchRequest != null) {
-            filter = new InventoryItemFilter(
-                    inventoryItemSearchRequest.getItemIds(),
-                    inventoryItemSearchRequest.getDefIndexes(),
-                    inventoryItemSearchRequest.getQualities(),
-                    inventoryItemSearchRequest.getIsTradable(),
-                    inventoryItemSearchRequest.getIsCraftable(),
-                    inventoryItemSearchRequest.getIsEquipped(),
-                    inventoryItemSearchRequest.getHasAttribute()
-            );
-        } else {
-            filter = new InventoryItemFilter();
-        }
+        InventoryItemFilter filter = inventoryItemSearchRequest != null
+                ? inventoryItemSearchRequest.toFilter()
+                : new InventoryItemFilter();
 
         Inventory inventory = inventoryService.findInventory(steamId);
 
@@ -106,21 +108,9 @@ public class InventoryItemController {
             @RequestBody(required=false) @Valid InventoryItemSearchRequest inventoryItemSearchRequest,
             @RequestParam Optional<String> sort
     ) {
-        InventoryItemFilter filter;
-
-        if (inventoryItemSearchRequest != null) {
-            filter = new InventoryItemFilter(
-                    inventoryItemSearchRequest.getItemIds(),
-                    inventoryItemSearchRequest.getDefIndexes(),
-                    inventoryItemSearchRequest.getQualities(),
-                    inventoryItemSearchRequest.getIsTradable(),
-                    inventoryItemSearchRequest.getIsCraftable(),
-                    inventoryItemSearchRequest.getIsEquipped(),
-                    inventoryItemSearchRequest.getHasAttribute()
-            );
-        } else {
-            filter = new InventoryItemFilter();
-        }
+        InventoryItemFilter filter = inventoryItemSearchRequest != null
+                ? inventoryItemSearchRequest.toFilter()
+                : new InventoryItemFilter();
 
         Inventory inventory = inventoryService.findInventory(steamId);
 

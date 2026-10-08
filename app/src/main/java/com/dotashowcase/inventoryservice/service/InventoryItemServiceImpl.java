@@ -36,6 +36,22 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     private final SortBuilder sortBuilder;
 
+    // api and stored names
+    private static final Set<String> SORT_FIELDS = Set.of(
+            "id", "_id",
+            "itemId",
+            "originalId", "orgId",
+            "defIndex", "dIdx",
+            "level", "lvl",
+            "quality", "qlt",
+            "inventoryPosition", "pos",
+            "quantity", "qnt",
+            "isTradable", "isTr",
+            "isCraftable", "isCr",
+            "style",
+            "customName", "cName"
+    );
+
     private final PageMapper<InventoryItem, InventoryItemDTO> pageMapper;
 
     @Autowired
@@ -60,7 +76,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Override
     public List<InventoryItemDTO> get(Inventory inventory, InventoryItemFilter filter, String sortBy) {
-        Sort sort = sortBuilder.fromRequestParam(sortBy);
+        Sort sort = sortBuilder.fromRequestParam(sortBy, SORT_FIELDS);
 
         return inventoryItemRepository.searchAll(inventory, filter, sort)
                 .stream()
@@ -75,7 +91,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
             InventoryItemFilter filter,
             String sortBy
     ) {
-        Sort sort = sortBuilder.fromRequestParam(sortBy);
+        Sort sort = sortBuilder.fromRequestParam(sortBy, SORT_FIELDS);
         Page<InventoryItem> inventoryItems = inventoryItemRepository.searchAll(inventory, pageable, filter, sort);
 
         return pageMapper.getPageResult(inventoryItems, inventoryItemServiceResultMapper::getInventoryItemDTO);

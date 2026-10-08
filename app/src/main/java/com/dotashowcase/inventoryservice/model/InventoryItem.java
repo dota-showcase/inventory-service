@@ -11,9 +11,9 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -91,15 +91,8 @@ public class InventoryItem {
     @Field("attrs")
     private List<ItemAttribute> attributes;
 
-    public static List<String> fillable = new ArrayList<>();
-
-    static {
-        fillable.add("_isA");
-        fillable.add("_odId");
-        fillable.add("isTr");
-        fillable.add("isCr");
-        fillable.add("qnt");
-    }
+    // fields allowed in bulk updates
+    public static final Set<String> FILLABLE = Set.of("_isA", "_odId", "isTr", "isCr", "qnt");
 
     @Override
     public boolean equals(Object o) {

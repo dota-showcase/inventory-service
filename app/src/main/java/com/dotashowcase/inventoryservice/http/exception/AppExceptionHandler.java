@@ -9,6 +9,7 @@ import com.dotashowcase.inventoryservice.steamclient.exception.BadRequestExcepti
 import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
 import com.dotashowcase.inventoryservice.steamclient.exception.SteamClientException;
 import com.dotashowcase.inventoryservice.steamclient.exception.SteamException;
+import com.dotashowcase.inventoryservice.support.exception.SortFieldNotAllowedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -106,6 +107,17 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 ((ServletWebRequest) request).getRequest().getRequestURI(),
                 "Validation failed",
                 errors
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @ExceptionHandler(SortFieldNotAllowedException.class)
+    public ResponseEntity<Object> handleSortFieldNotAllowed(SortFieldNotAllowedException ex, WebRequest request) {
+        final ErrorResponse errorResponse = getValidationErrorResponse(
+                ((ServletWebRequest) request).getRequest().getRequestURI(),
+                "Validation failed",
+                List.of("sort: " + ex.getMessage())
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);

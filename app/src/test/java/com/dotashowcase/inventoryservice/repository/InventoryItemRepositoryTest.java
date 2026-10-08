@@ -855,6 +855,26 @@ class InventoryItemRepositoryTest {
     }
 
     @Test
+    void itShouldSortAllByDefIndexesOrder() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+
+        insertItem(inventory, 501L, 100, 1, (byte) 4);
+        insertItem(inventory, 502L, 300, 2, (byte) 4);
+        insertItem(inventory, 503L, 200, 3, (byte) 4);
+
+        InventoryItemFilter filter = InventoryItemFilter.builder()
+                .defIndexes(List.of(300, 100, 200))
+                .build();
+
+        // when
+        List<InventoryItem> items = underTest.searchAll(inventory, filter, null);
+
+        // then
+        assertThat(items).extracting("itemId").containsExactly(502L, 501L, 503L);
+    }
+
+    @Test
     void itShouldBreakSortTiesById() {
         // given
         Inventory inventory = new Inventory(100000000002L);

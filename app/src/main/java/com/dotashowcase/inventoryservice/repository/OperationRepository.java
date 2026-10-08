@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -21,14 +22,20 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.Assert;
 
 import java.util.List;
 
 @Repository
 public class OperationRepository implements OperationDAL {
 
+    private final MongoTemplate mongoTemplate;
+
     @Autowired
-    private MongoTemplate mongoTemplate;
+    public OperationRepository(MongoTemplate mongoTemplate) {
+        Assert.notNull(mongoTemplate, "MongoTemplate must not be null!");
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @Override
     public List<Operation> aggregateLatestByInventories(List<Long> inventorySteamIds) {
@@ -70,7 +77,8 @@ public class OperationRepository implements OperationDAL {
             Sort sort
     ) {
         Query query = new Query();
-        query.with(pageable);
+        // without pageable sort - parsed from the same 'sort' param, applied below
+        query.with(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         query.addCriteria(Criteria.where("steamId").is(inventory.getSteamId()));
 
         // filter by changes

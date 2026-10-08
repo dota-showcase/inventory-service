@@ -39,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -90,13 +92,13 @@ class InventoryServiceTest {
         // given
         String sortBy = "-steamId";
 
-        when(sortBuilder.fromRequestParam(sortBy)).thenReturn(Sort.by(Sort.Direction.DESC, "steamId"));
+        when(sortBuilder.fromRequestParam(eq(sortBy), any())).thenReturn(Sort.by(Sort.Direction.DESC, "steamId"));
 
         // when
         underTest.getAll(sortBy);
 
         // then
-        verify(sortBuilder).fromRequestParam(sortBy);
+        verify(sortBuilder).fromRequestParam(eq(sortBy), any());
         verify(inventoryRepository).findAll(any(Sort.class));
     }
 
@@ -107,7 +109,7 @@ class InventoryServiceTest {
         underTest.getAll(null);
 
         // then
-        verify(sortBuilder).fromRequestParam(null);
+        verify(sortBuilder).fromRequestParam(isNull(), any());
         verify(inventoryRepository).findAll();
     }
 
@@ -152,7 +154,7 @@ class InventoryServiceTest {
 
         List<Inventory> firstPageInventories = List.of(inventory3, inventory2, inventory1);
 
-        when(sortBuilder.fromRequestParam(sortByStr)).thenReturn(sortBy);
+        when(sortBuilder.fromRequestParam(eq(sortByStr), any())).thenReturn(sortBy);
 
         Page<Inventory> inventoriesFirstPage = new PageImpl<>(
                 firstPageInventories, firstPageWithAllItems, firstPageInventories.size()

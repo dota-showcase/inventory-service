@@ -25,6 +25,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,17 +37,30 @@ import java.util.List;
 @RequestMapping("api/v1/")
 public class InventoryController {
 
-    @Autowired
-    private InventoryService inventoryService;
+    private final InventoryService inventoryService;
+
+    private final RateLimitHandler rateLimitHandler;
 
     @Autowired
-    private RateLimitHandler rateLimitHandler;
+    public InventoryController(
+            InventoryService inventoryService,
+            RateLimitHandler rateLimitHandler
+    ) {
+        Assert.notNull(inventoryService, "InventoryService must not be null!");
+        this.inventoryService = inventoryService;
+
+        Assert.notNull(rateLimitHandler, "RateLimitHandler must not be null!");
+        this.rateLimitHandler = rateLimitHandler;
+    }
 
     @Operation(description = "Get a list of all inventories")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", content = @Content(
                     mediaType = "application/json",
                     array = @ArraySchema(schema = @Schema(implementation = InventoryDTO.class)))),
+            @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
     @GetMapping("inventories/")
     public List<InventoryDTO> index(@RequestParam(defaultValue = "-steamId") String sort) {
@@ -58,6 +72,9 @@ public class InventoryController {
             @ApiResponse(responseCode = "200", content = @Content(
                     mediaType = "application/json",
                     array = @ArraySchema(schema = @Schema(implementation = InventoryWithLatestOperationDTO.class)))),
+            @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
     @GetMapping("inventories/search-page")
     public PageResult<InventoryWithLatestOperationDTO> search(

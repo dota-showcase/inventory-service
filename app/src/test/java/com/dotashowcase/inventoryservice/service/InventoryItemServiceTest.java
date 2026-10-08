@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -104,7 +106,7 @@ class InventoryItemServiceTest {
 
         List<InventoryItem> inventoryItems = List.of(inventoryItem1, inventoryItem2);
 
-        when(sortBuilder.fromRequestParam(sortByStr)).thenReturn(sortBy);
+        when(sortBuilder.fromRequestParam(eq(sortByStr), any())).thenReturn(sortBy);
         when(inventoryItemRepository.searchAll(inventory, filter, sortBy)).thenReturn(inventoryItems);
 
         // when
@@ -176,7 +178,7 @@ class InventoryItemServiceTest {
                 inventoryItems, firstPageWithTwoItems, inventoryItems.size()
         );
 
-        when(sortBuilder.fromRequestParam(sortByStr)).thenReturn(sortBy);
+        when(sortBuilder.fromRequestParam(eq(sortByStr), any())).thenReturn(sortBy);
         when(inventoryItemRepository.searchAll(inventory, firstPageWithTwoItems, filter, sortBy))
                 .thenReturn(inventoryItemPage);
 

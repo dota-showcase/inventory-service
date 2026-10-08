@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class OperationServiceImpl implements OperationService  {
@@ -31,6 +32,8 @@ public class OperationServiceImpl implements OperationService  {
     private final OperationRepository operationRepository;
 
     private final SortBuilder sortBuilder;
+
+    private static final Set<String> SORT_FIELDS = Set.of("version", "createdAt");
 
     private final PageMapper<Operation, OperationDTO> pageMapper;
 
@@ -78,7 +81,7 @@ public class OperationServiceImpl implements OperationService  {
             InventoryOperationFilter filter,
             String sortBy
     ) {
-        Sort sort = sortBuilder.fromRequestParam(sortBy);
+        Sort sort = sortBuilder.fromRequestParam(sortBy, SORT_FIELDS);
 
         Page<Operation> inventoryPage = operationRepository.findPage(inventory, pageable, filter, sort);
 

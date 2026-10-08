@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,11 +32,21 @@ import java.util.Optional;
 @RequestMapping("api/v1/")
 public class InventoryOperationController {
 
-    @Autowired
-    private InventoryService inventoryService;
+    private final InventoryService inventoryService;
+
+    private final OperationService operationService;
 
     @Autowired
-    private OperationService operationService;
+    public InventoryOperationController(
+            InventoryService inventoryService,
+            OperationService operationService
+    ) {
+        Assert.notNull(inventoryService, "InventoryService must not be null!");
+        this.inventoryService = inventoryService;
+
+        Assert.notNull(operationService, "OperationService must not be null!");
+        this.operationService = operationService;
+    }
 
     @Operation(description = "Get a paged list of inventory operations")
     @ApiResponses(value = {

@@ -29,6 +29,7 @@ import org.springframework.util.Assert;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
@@ -40,6 +41,8 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
 
     private final SortBuilder sortBuilder;
+
+    private static final Set<String> SORT_FIELDS = Set.of("steamId");
 
     private final SteamClient steamClient;
 
@@ -85,7 +88,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public List<InventoryDTO> getAll(String sortBy) {
-        Sort sort = sortBuilder.fromRequestParam(sortBy);
+        Sort sort = sortBuilder.fromRequestParam(sortBy, SORT_FIELDS);
 
         List<Inventory> inventories = sort != null
                 ? inventoryRepository.findAll(sort)
@@ -99,7 +102,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public PageResult<InventoryWithLatestOperationDTO> getPage(Pageable pageable, String sortBy) {
-        Sort sort = sortBuilder.fromRequestParam(sortBy);
+        Sort sort = sortBuilder.fromRequestParam(sortBy, SORT_FIELDS);
 
         Pageable innerPageable = sort != null
                 ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort)

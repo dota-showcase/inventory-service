@@ -199,6 +199,22 @@ class OperationRepositoryTest {
     }
 
     @Test
+    void itShouldIgnorePageableSort() {
+        // given
+        Inventory inventory = new Inventory(100000000000L);
+
+        // pageable sort comes from the same 'sort' param
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
+        Sort sort = Sort.by(Sort.Direction.DESC, "version");
+
+        // when
+        Page<Operation> page = underTest.findPage(inventory, pageable, new InventoryOperationFilter(), sort);
+
+        // then
+        assertThat(page.getContent()).extracting("version").containsExactly(3, 2, 1);
+    }
+
+    @Test
     void itShouldFindLatestOperation() {
         // given
         Long steamId1 = 100000000000L;
