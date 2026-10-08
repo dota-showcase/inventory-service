@@ -1,1 +1,0 @@
-FROM gradle:25-corretto

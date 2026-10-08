@@ -5,6 +5,3 @@
 *.ipr
 
 .env
-
-### Docker volumes ###
-.m2

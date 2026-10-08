@@ -57,9 +57,10 @@ Swagger OpenAPI 3 is available by path:
     ```bash
     docker-compose up
     ```
-5. To run in production environment
+5. To run in production environment - as a systemd service, see `prod-app.service.example`.
+   Build the jar and restart the service:
     ```bash
-    docker compose -f docker-compose.prod.yml up -d
+    cd app && ./deploy.sh
     ```
 
 ## Data Model
