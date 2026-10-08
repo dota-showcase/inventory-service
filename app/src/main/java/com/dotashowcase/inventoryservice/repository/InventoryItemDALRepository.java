@@ -198,51 +198,46 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         long totalSlots = inventory.getLatestOperation().getMeta().getNumSlots();
 
         int maxPage = (int) Math.ceil((double) totalSlots / pageSize);
-        int currentPage = page;
 
         List<Criteria> criteria = getDefaultCriteria(inventory);
         criteria.add(Criteria.where("_isA").is(true));
 
-        while (currentPage <= maxPage) {
-            // page #1 - [1, 13)
-            // page #2 - [13, 25)
-            // page #3 - [25, 37)
-            int fromPosition = ((currentPage - 1) * pageSize) + 1;
-            int toPosition = fromPosition + pageSize;
+        // page #1 - [1, 49), page #2 - [49, 97), ...
+        // first item from requested page - skips empty pages in one query
+        Query firstItemQuery = new Query();
+        criteria.forEach(firstItemQuery::addCriteria);
+        firstItemQuery.addCriteria(Criteria.where("pos").gte((page - 1) * pageSize + 1));
+        firstItemQuery.with(Sort.by(Sort.Direction.ASC, "pos"));
 
-            // check page has at least one item
-            Query existsQuery = new Query();
-            criteria.forEach(existsQuery::addCriteria);
-            existsQuery.addCriteria(Criteria.where("pos").gte(fromPosition).lt(toPosition));
-            existsQuery.limit(1);
-
-            // found next page
-            if (mongoTemplate.exists(existsQuery, InventoryItem.class)) {
-                Query pageQuery = new Query();
-                criteria.forEach(pageQuery::addCriteria);
-                pageQuery.addCriteria(Criteria.where("pos").gte(fromPosition).lt(toPosition));
-                pageQuery.with(Sort.by(Sort.Direction.ASC, "pos"));
-
-                List<InventoryItem> items = mongoTemplate.find(pageQuery, InventoryItem.class);
-
-                Pageable pageable = PageRequest.of(currentPage - 1, pageSize);
-
-                return new PageImpl<>(
-                        items,
-                        pageable,
-                        totalSlots
-                );
-            }
-
-            currentPage++;
-        }
+        InventoryItem firstItem = mongoTemplate.findOne(firstItemQuery, InventoryItem.class);
 
         // no items found until last page
-        Pageable lastPageable = PageRequest.of(Math.max(0, maxPage - 1), pageSize);
+        if (firstItem == null || firstItem.getInventoryPosition() > maxPage * pageSize) {
+            Pageable lastPageable = PageRequest.of(Math.max(0, maxPage - 1), pageSize);
+
+            return new PageImpl<>(
+                    List.of(),
+                    lastPageable,
+                    totalSlots
+            );
+        }
+
+        int currentPage = (firstItem.getInventoryPosition() - 1) / pageSize + 1;
+        int fromPosition = (currentPage - 1) * pageSize + 1;
+        int toPosition = fromPosition + pageSize;
+
+        Query pageQuery = new Query();
+        criteria.forEach(pageQuery::addCriteria);
+        pageQuery.addCriteria(Criteria.where("pos").gte(fromPosition).lt(toPosition));
+        pageQuery.with(Sort.by(Sort.Direction.ASC, "pos"));
+
+        List<InventoryItem> items = mongoTemplate.find(pageQuery, InventoryItem.class);
+
+        Pageable pageable = PageRequest.of(currentPage - 1, pageSize);
 
         return new PageImpl<>(
-                List.of(),
-                lastPageable,
+                items,
+                pageable,
                 totalSlots
         );
     }

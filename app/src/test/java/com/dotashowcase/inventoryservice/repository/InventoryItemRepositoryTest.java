@@ -649,6 +649,41 @@ class InventoryItemRepositoryTest {
     }
 
     @Test
+    void itShouldSkipEmptyPositionedPages() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+        inventory.setLatestOperation(getOperationWithSlots(480));
+
+        // pages #1, #2 empty, page #3 - [97, 145)
+        insertItem(inventory, 502L, 1, 120, (byte) 4);
+        insertItem(inventory, 501L, 1, 100, (byte) 4);
+
+        // when
+        Page<InventoryItem> page = underTest.findPositionedPage(inventory, 1);
+
+        // then
+        assertThat(page.getNumber()).isEqualTo(2);
+        assertThat(page.getContent()).extracting("itemId").containsExactly(501L, 502L);
+    }
+
+    @Test
+    void itShouldReturnEmptyLastPositionedPageWhenNoItemsLeft() {
+        // given
+        Inventory inventory = new Inventory(100000000002L);
+        inventory.setLatestOperation(getOperationWithSlots(480));
+
+        insertItem(inventory, 501L, 1, 100, (byte) 4);
+
+        // when
+        Page<InventoryItem> page = underTest.findPositionedPage(inventory, 4);
+
+        // then
+        // 480 slots - 10 pages
+        assertThat(page.getNumber()).isEqualTo(9);
+        assertThat(page.getContent()).isEmpty();
+    }
+
+    @Test
     void itShouldFindPluckedField() {
         // given
         Long steamId1 = 100000000000L;
@@ -958,5 +993,15 @@ class InventoryItemRepositoryTest {
 
     private List<String> getIndexKeys(IndexInfo index) {
         return index.getIndexFields().stream().map(IndexField::getKey).toList();
+    }
+
+    private Operation getOperationWithSlots(int numSlots) {
+        OperationMeta meta = new OperationMeta();
+        meta.setNumSlots(numSlots);
+
+        Operation operation = new Operation();
+        operation.setMeta(meta);
+
+        return operation;
     }
 }
