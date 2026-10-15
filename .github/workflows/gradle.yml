@@ -28,12 +28,9 @@ jobs:
         java-version: '25'
         distribution: 'corretto'
 
-    - uses: actions/checkout@master
-    - name: copy file
-      uses: canastro/copy-file-action@master
-      with:
-        source: "app/src/main/resources/environment.properties.example"
-        target: "app/src/main/resources/environment.properties"
+    - name: Create environment.properties from the example
+      run: cp environment.properties.example environment.properties
+      working-directory: app/src/main/resources
 
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
