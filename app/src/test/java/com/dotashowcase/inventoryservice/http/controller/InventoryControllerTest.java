@@ -32,7 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(MongoTestConfig.class)
 class InventoryControllerTest {
 
-    private static final String STEAM_ID_ERROR = "steamId: Steam Id must be in '7656119XXXXXXXXXX' format";
+    private static final String STEAM_ID_ERROR =
+            "steamId: Steam Id must be a SteamID64 between 76561197960265729 and 76561202255233023";
 
     @Autowired
     private MockMvc mockMvc;

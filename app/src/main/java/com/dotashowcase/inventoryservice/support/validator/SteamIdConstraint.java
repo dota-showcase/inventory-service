@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SteamIdConstraint {
 
-    String message() default "Steam Id must be in '7656119XXXXXXXXXX' format";
+    String message() default "Steam Id must be a SteamID64 between 76561197960265729 and 76561202255233023";
 
     Class<?>[] groups() default {};
 
