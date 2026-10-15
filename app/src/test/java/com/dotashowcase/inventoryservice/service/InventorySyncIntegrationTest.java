@@ -114,6 +114,46 @@ class InventorySyncIntegrationTest {
                 .containsExactlyInAnyOrder("#1", "#2 - renamed", "#4");
     }
 
+    @Test
+    void itShouldKeepChangesOfEveryVersionAfterLaterSyncs() {
+        // given
+        // v2 - #2 renamed, #3 gone, #4 new; v3 - #1 renamed, #2 and #4 gone, #5 new
+        when(steamClient.fetchUserInventory(STEAM_ID))
+                .thenReturn(getResponse(getItemDTO(1L, "#1"), getItemDTO(2L, "#2"), getItemDTO(3L, "#3")))
+                .thenReturn(getResponse(getItemDTO(1L, "#1"), getItemDTO(2L, "#2 - renamed"), getItemDTO(4L, "#4")))
+                .thenReturn(getResponse(getItemDTO(1L, "#1 - renamed"), getItemDTO(5L, "#5")));
+
+        inventoryService.create(STEAM_ID);
+        inventoryService.update(STEAM_ID);
+
+        // when
+        inventoryService.update(STEAM_ID);
+
+        // then
+        Inventory inventory = inventoryService.findInventory(STEAM_ID);
+
+        // changed again later - still in their version
+        assertThat(getChangedItemIds(inventory, 1, ChangeType.create)).containsExactlyInAnyOrder(1L, 2L, 3L);
+        assertThat(getChangedItemIds(inventory, 2, ChangeType.create)).containsExactly(4L);
+        assertThat(getChangedItemIds(inventory, 2, ChangeType.update)).containsExactly(2L);
+        assertThat(getChangedItemIds(inventory, 3, ChangeType.delete)).containsExactlyInAnyOrder(2L, 4L);
+
+        // every version - changes match stored counts
+        for (int version = 1; version <= 3; version++) {
+            OperationMeta meta = operationService.getByVersion(inventory, version).getMeta();
+
+            assertThat(getChangedItemIds(inventory, version, ChangeType.create))
+                    .as("v%d created", version)
+                    .hasSize(meta.getCreateOperationCount());
+            assertThat(getChangedItemIds(inventory, version, ChangeType.update))
+                    .as("v%d updated", version)
+                    .hasSize(meta.getUpdateOperationCount());
+            assertThat(getChangedItemIds(inventory, version, ChangeType.delete))
+                    .as("v%d deleted", version)
+                    .hasSize(meta.getDeleteOperationCount());
+        }
+    }
+
     private List<Long> getChangedItemIds(Inventory inventory, int version, ChangeType type) {
         return inventoryItemChangesService.get(inventory, version, type, new InventoryItemChangeFilter())
                 .stream()

@@ -159,11 +159,11 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         List<Criteria> defaultCriteria = getDefaultCriteria(inventory);
         defaultCriteria.forEach(query::addCriteria);
 
+        // fixed per version - items deleted later stay in the version that created or updated them
         switch (type) {
             case update -> {
                 query.addCriteria(Criteria.where("_oId").is(operation.getId()));
                 query.addCriteria(Criteria.where("_oT").is(Operation.Type.U));
-                query.addCriteria(Criteria.where("_odId").is(null));
             }
             case delete -> {
                 query.addCriteria(Criteria.where("_odId").is(operation.getId()));
@@ -171,7 +171,6 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
             case null, default -> {
                 query.addCriteria(Criteria.where("_oId").is(operation.getId()));
                 query.addCriteria(Criteria.where("_oT").is(Operation.Type.C));
-                query.addCriteria(Criteria.where("_odId").is(null));
             }
         }
 

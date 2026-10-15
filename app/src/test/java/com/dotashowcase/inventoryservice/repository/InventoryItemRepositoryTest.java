@@ -592,10 +592,11 @@ class InventoryItemRepositoryTest {
         assertThat(itemsAllEmpty)
                 .hasSize(0);
 
+        // #100 removed later - still created by #1
         assertThat(itemsOperation)
                 .extracting("steamId")
                 .contains(steamId1)
-                .hasSize(2);
+                .hasSize(3);
 
         assertThat(itemsOperationWithLim)
                 .extracting("steamId")
@@ -620,19 +621,10 @@ class InventoryItemRepositoryTest {
         InventoryItem inventoryItem502 = insertItemByOperation(inventory, 502L, operation1, Operation.Type.C);
 
         // update - old copy hidden, new copy by v2
-        mongoTemplate.updateFirst(
-                Query.query(Criteria.where("_id").is(inventoryItem501.getId())),
-                Update.update("_isA", false),
-                InventoryItem.class
-        );
+        hideItem(inventoryItem501);
         insertItemByOperation(inventory, 501L, operation2, Operation.Type.U);
 
-        // delete - hidden, marked by v2
-        mongoTemplate.updateFirst(
-                Query.query(Criteria.where("_id").is(inventoryItem502.getId())),
-                Update.update("_isA", false).set("_odId", operation2.getId()),
-                InventoryItem.class
-        );
+        deleteItem(inventoryItem502, operation2);
 
         insertItemByOperation(inventory, 503L, operation2, Operation.Type.C);
 
@@ -651,6 +643,41 @@ class InventoryItemRepositoryTest {
         assertThat(deleted).extracting("itemId").containsExactly(502L);
         assertThat(updatedByFirst).isEmpty();
         assertThat(deletedByFirst).isEmpty();
+    }
+
+    @Test
+    void itShouldKeepItemChangesAfterLaterOperations() {
+        // given
+        // v1 creates #600 #601, v2 deletes #600 and updates #601, v3 deletes #601
+        Inventory inventory = new Inventory(100000000006L);
+
+        Operation operation1 = insertOperation(inventory, 1);
+        Operation operation2 = insertOperation(inventory, 2);
+        Operation operation3 = insertOperation(inventory, 3);
+
+        InventoryItem inventoryItem600 = insertItemByOperation(inventory, 600L, operation1, Operation.Type.C);
+        InventoryItem inventoryItem601 = insertItemByOperation(inventory, 601L, operation1, Operation.Type.C);
+
+        deleteItem(inventoryItem600, operation2);
+        hideItem(inventoryItem601);
+        InventoryItem inventoryItem601Updated = insertItemByOperation(inventory, 601L, operation2, Operation.Type.U);
+
+        deleteItem(inventoryItem601Updated, operation3);
+
+        InventoryItemChangeFilter filter = InventoryItemChangeFilter.builder().build();
+
+        // when
+        List<InventoryItem> createdByFirst = underTest.findAll(inventory, operation1, ChangeType.create, filter);
+        List<InventoryItem> updatedBySecond = underTest.findAll(inventory, operation2, ChangeType.update, filter);
+        List<InventoryItem> deletedBySecond = underTest.findAll(inventory, operation2, ChangeType.delete, filter);
+        List<InventoryItem> deletedByThird = underTest.findAll(inventory, operation3, ChangeType.delete, filter);
+
+        // then
+        // deleted later - still in the version that created or updated them
+        assertThat(createdByFirst).extracting("itemId").containsExactlyInAnyOrder(600L, 601L);
+        assertThat(updatedBySecond).extracting("itemId").containsExactly(601L);
+        assertThat(deletedBySecond).extracting("itemId").containsExactly(600L);
+        assertThat(deletedByThird).extracting("itemId").containsExactly(601L);
     }
 
     @Test
@@ -1058,6 +1085,24 @@ class InventoryItemRepositoryTest {
         inventoryItem.setOperationType(operationType);
 
         return mongoTemplate.insert(inventoryItem);
+    }
+
+    // as sync on update - old copy hidden
+    private void hideItem(InventoryItem inventoryItem) {
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("_id").is(inventoryItem.getId())),
+                Update.update("_isA", false),
+                InventoryItem.class
+        );
+    }
+
+    // as sync on delete - hidden, marked by the operation
+    private void deleteItem(InventoryItem inventoryItem, Operation operation) {
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("_id").is(inventoryItem.getId())),
+                Update.update("_isA", false).set("_odId", operation.getId()),
+                InventoryItem.class
+        );
     }
 
     private Operation insertOperation(Inventory inventory, int version) {
