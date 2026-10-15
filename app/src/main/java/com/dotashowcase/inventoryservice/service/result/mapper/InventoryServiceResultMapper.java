@@ -26,7 +26,11 @@ public class InventoryServiceResultMapper {
         InventoryWithLatestOperationDTO inventoryDTO = new InventoryWithLatestOperationDTO();
         Long steamId = inventory.getSteamId();
         inventoryDTO.setSteamId(steamId);
-        inventoryDTO.setOperation(this.operationServiceResultMapper.getOperationDTO(operation));
+
+        // no operation yet - inventory is being created
+        if (operation != null) {
+            inventoryDTO.setOperation(this.operationServiceResultMapper.getOperationDTO(operation));
+        }
 
         return inventoryDTO;
     }

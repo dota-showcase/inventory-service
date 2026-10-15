@@ -366,6 +366,24 @@ class OperationRepositoryTest {
     }
 
     @Test
+    void itShouldReadOperationWithoutStoredMetaAsEmpty() {
+        // given
+        // stored by a sync that failed before saving counts
+        Long steamId = 100000000002L;
+        mongoTemplate.getCollection(Operation.class.getAnnotation(Document.class).value())
+                .insertOne(new org.bson.Document("steamId", steamId).append("version", 1).append("type", "C"));
+
+        // when
+        Operation latest = underTest.findLatest(new Inventory(steamId));
+        List<Operation> aggregated = underTest.aggregateLatestByInventories(List.of(steamId));
+
+        // then
+        assertThat(latest.getMeta().getItemCount()).isEqualTo(0);
+        assertThat(latest.getMeta().getNumSlots()).isEqualTo(0);
+        assertThat(aggregated.getFirst().getMeta().getItemCount()).isEqualTo(0);
+    }
+
+    @Test
     void itShouldRemoveAllOperationsByInventory() {
         // given
         Long steamId1 = 100000000000L;

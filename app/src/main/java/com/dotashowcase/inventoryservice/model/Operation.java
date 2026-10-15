@@ -32,8 +32,9 @@ public class Operation {
     @Field
     private Type type = Type.C;
 
+    // empty until sync stores counts - read mid-sync as an empty inventory
     @Field
-    private OperationMeta meta;
+    private OperationMeta meta = new OperationMeta();
 
     @Field
     private Date createdAt = new Date();
