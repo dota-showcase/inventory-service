@@ -13,9 +13,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -91,5 +95,20 @@ class InventoryControllerTest {
                 .andExpect(header().string(RateLimitHandler.HEADER_RETRY_AFTER, "60"));
 
         verify(inventoryService, times(1)).update(steamId);
+    }
+
+    @Test
+    void willHideInternalErrorDetails() throws Exception {
+        // given
+        Long steamId = 76561198000000001L;
+
+        when(inventoryService.get(steamId)).thenThrow(new IllegalStateException("internal detail"));
+
+        // when
+        // then
+        mockMvc.perform(get("/api/v1/inventories/" + steamId))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("Internal server error"))
+                .andExpect(content().string(not(containsString("internal detail"))));
     }
 }

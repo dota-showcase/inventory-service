@@ -9,6 +9,7 @@ import com.dotashowcase.inventoryservice.model.embedded.ItemAttribute;
 import com.dotashowcase.inventoryservice.model.embedded.ItemEquipment;
 import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
+import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.PageMapper;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.AccountInfoDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemAttributeDTO;
@@ -26,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.annotation.Import;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -682,23 +684,38 @@ class InventoryItemSyncTest {
         operation2.setType(Operation.Type.U);
         operation2.setVersion(2);
 
+        // as the repository - modified count, inserted items
+        when(inventoryItemRepository.updateAll(any(), any()))
+                .thenAnswer(invocation -> (long) invocation.<Set<ObjectId>>getArgument(0).size());
+        when(inventoryItemRepository.insertAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
         // when
-        underTest.sync(inventory, operation2, items);
+        OperationCountDTO operationCountDTO = underTest.sync(inventory, operation2, items);
 
         // then
         ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
+        ArgumentCaptor<List<AbstractMap.SimpleImmutableEntry<String, Object>>> updateEntryArgumentCaptor =
+                ArgumentCaptor.forClass((Class) List.class);
         verify(inventoryItemRepository, times(2)).updateAll(
                 updateArgumentCaptor.capture(),
-                ArgumentMatchers.anyList()
+                updateEntryArgumentCaptor.capture()
         );
 
         // hide
         assertThat(updateArgumentCaptor.getAllValues().getFirst().size()).isEqualTo(1);
         assertThat(updateArgumentCaptor.getAllValues().getFirst().iterator().next().compareTo(objectId2)).isEqualTo(0);
+        // deleted by this operation
+        assertThat(updateEntryArgumentCaptor.getAllValues().getFirst()).containsExactlyInAnyOrder(
+                new AbstractMap.SimpleImmutableEntry<>("_isA", false),
+                new AbstractMap.SimpleImmutableEntry<>("_odId", operation2.getId())
+        );
 
         // update
         assertThat(updateArgumentCaptor.getAllValues().get(1).size()).isEqualTo(1);
         assertThat(updateArgumentCaptor.getAllValues().get(1).iterator().next().compareTo(objectId1)).isEqualTo(0);
+        assertThat(updateEntryArgumentCaptor.getAllValues().get(1)).containsExactly(
+                new AbstractMap.SimpleImmutableEntry<>("_isA", false)
+        );
 
         ArgumentCaptor<List<InventoryItem>> insertArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
         verify(inventoryItemRepository).insertAll(insertArgumentCaptor.capture());
@@ -708,9 +725,19 @@ class InventoryItemSyncTest {
         assertThat(insertArgumentCaptor.getValue().getFirst().getItemId()).isEqualTo(itemId1);
         assertThat(insertArgumentCaptor.getValue().getFirst().getCustomName()).isEqualTo("Sample #1 - updated");
         assertThat(insertArgumentCaptor.getValue().getFirst().getIsActive()).isEqualTo(true);
+        assertThat(insertArgumentCaptor.getValue().getFirst().getOperationType()).isEqualTo(Operation.Type.U);
+        assertThat(insertArgumentCaptor.getValue().getFirst().getOperationId()).isEqualTo(operation2.getId());
 
         // create new
         assertThat(insertArgumentCaptor.getValue().get(1).getItemId()).isEqualTo(itemId4);
         assertThat(insertArgumentCaptor.getValue().get(1).getCustomName()).isEqualTo("Sample #4");
+        assertThat(insertArgumentCaptor.getValue().get(1).getOperationType()).isEqualTo(Operation.Type.C);
+        assertThat(insertArgumentCaptor.getValue().get(1).getOperationId()).isEqualTo(operation2.getId());
+
+        // counts - #4 created, #1 updated, #2 deleted, 3 items before
+        assertThat(operationCountDTO.getCreate()).isEqualTo(1);
+        assertThat(operationCountDTO.getUpdate()).isEqualTo(1);
+        assertThat(operationCountDTO.getDelete()).isEqualTo(1);
+        assertThat(operationCountDTO.getInventorySize()).isEqualTo(3);
     }
 }

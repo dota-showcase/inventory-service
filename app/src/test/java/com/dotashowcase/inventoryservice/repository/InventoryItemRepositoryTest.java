@@ -607,6 +607,53 @@ class InventoryItemRepositoryTest {
     }
 
     @Test
+    void itShouldFindItemChangesByType() {
+        // given
+        // as stored by sync - v1 creates #500 #501 #502, v2 updates #501, deletes #502, creates #503
+        Inventory inventory = new Inventory(100000000005L);
+
+        Operation operation1 = insertOperation(inventory, 1);
+        Operation operation2 = insertOperation(inventory, 2);
+
+        insertItemByOperation(inventory, 500L, operation1, Operation.Type.C);
+        InventoryItem inventoryItem501 = insertItemByOperation(inventory, 501L, operation1, Operation.Type.C);
+        InventoryItem inventoryItem502 = insertItemByOperation(inventory, 502L, operation1, Operation.Type.C);
+
+        // update - old copy hidden, new copy by v2
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("_id").is(inventoryItem501.getId())),
+                Update.update("_isA", false),
+                InventoryItem.class
+        );
+        insertItemByOperation(inventory, 501L, operation2, Operation.Type.U);
+
+        // delete - hidden, marked by v2
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("_id").is(inventoryItem502.getId())),
+                Update.update("_isA", false).set("_odId", operation2.getId()),
+                InventoryItem.class
+        );
+
+        insertItemByOperation(inventory, 503L, operation2, Operation.Type.C);
+
+        InventoryItemChangeFilter filter = InventoryItemChangeFilter.builder().build();
+
+        // when
+        List<InventoryItem> created = underTest.findAll(inventory, operation2, ChangeType.create, filter);
+        List<InventoryItem> updated = underTest.findAll(inventory, operation2, ChangeType.update, filter);
+        List<InventoryItem> deleted = underTest.findAll(inventory, operation2, ChangeType.delete, filter);
+        List<InventoryItem> updatedByFirst = underTest.findAll(inventory, operation1, ChangeType.update, filter);
+        List<InventoryItem> deletedByFirst = underTest.findAll(inventory, operation1, ChangeType.delete, filter);
+
+        // then
+        assertThat(created).extracting("itemId").containsExactly(503L);
+        assertThat(updated).extracting("itemId").containsExactly(501L);
+        assertThat(deleted).extracting("itemId").containsExactly(502L);
+        assertThat(updatedByFirst).isEmpty();
+        assertThat(deletedByFirst).isEmpty();
+    }
+
+    @Test
     void itShouldFindPositionedPage() {
         // given
         Long steamId1 = 100000000000L;
@@ -996,6 +1043,29 @@ class InventoryItemRepositoryTest {
         inventoryItem.setInventoryPosition(position);
         inventoryItem.setQuality(quality);
         mongoTemplate.insert(inventoryItem);
+    }
+
+    private InventoryItem insertItemByOperation(
+            Inventory inventory,
+            Long itemId,
+            Operation operation,
+            Operation.Type operationType
+    ) {
+        InventoryItem inventoryItem = new InventoryItem();
+        inventoryItem.setItemId(itemId);
+        inventoryItem.setSteamId(inventory.getSteamId());
+        inventoryItem.setOperationId(operation.getId());
+        inventoryItem.setOperationType(operationType);
+
+        return mongoTemplate.insert(inventoryItem);
+    }
+
+    private Operation insertOperation(Inventory inventory, int version) {
+        Operation operation = new Operation();
+        operation.setSteamId(inventory.getSteamId());
+        operation.setVersion(version);
+
+        return mongoTemplate.insert(operation);
     }
 
     private List<Long> searchItemIdsByPages(Inventory inventory, InventoryItemFilter filter, Sort sort) {
