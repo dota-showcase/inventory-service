@@ -41,7 +41,10 @@ public class OperationRepository implements OperationDAL {
     public List<Operation> aggregateLatestByInventories(List<Long> inventorySteamIds) {
         AggregationOperation match = Aggregation.match(Criteria.where("steamId").in(inventorySteamIds));
 
-        AggregationOperation sort = Aggregation.sort(Sort.by("version").descending());
+        // sort matches index and group key - DISTINCT_SCAN, one index entry per inventory
+        AggregationOperation sort = Aggregation.sort(
+                Sort.by(Sort.Direction.ASC, "steamId").and(Sort.by(Sort.Direction.DESC, "version"))
+        );
 
         AggregationOperation group = Aggregation.group("steamId")
                 .first("$$ROOT")

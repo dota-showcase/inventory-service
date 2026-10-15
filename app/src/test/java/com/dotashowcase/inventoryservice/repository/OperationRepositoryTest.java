@@ -5,6 +5,9 @@ import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -148,6 +151,40 @@ class OperationRepositoryTest {
                 .extracting("version")
                 .contains(steamId1Version3, steamId2Version1)
                 .hasSize(2);
+    }
+
+    @Test
+    void itShouldAggregateLatestOperationsWithoutScanningHistory() {
+        // given
+        IndexOperations indexOps = mongoTemplate.indexOps(Operation.class);
+        new MongoPersistentEntityIndexResolver(mongoTemplate.getConverter().getMappingContext())
+                .resolveIndexFor(Operation.class)
+                .forEach(indexOps::createIndex);
+
+        MongoDatabase db = mongoTemplate.getDb();
+        String collection = Operation.class.getAnnotation(Document.class).value();
+
+        try {
+            // when
+            db.runCommand(new org.bson.Document("profile", 2));
+            underTest.aggregateLatestByInventories(List.of(100000000000L, 100000000001L));
+            db.runCommand(new org.bson.Document("profile", 0));
+
+            org.bson.Document profile = db.getCollection("system.profile")
+                    .find(Filters.and(Filters.eq("ns", db.getName() + "." + collection), Filters.eq("op", "command")))
+                    .sort(Sorts.descending("ts"))
+                    .first();
+
+            // then
+            // one index entry per inventory - not every version
+            assertThat(profile).isNotNull();
+            assertThat(profile.getString("planSummary")).startsWith("DISTINCT_SCAN");
+            assertThat(profile.getInteger("docsExamined")).isEqualTo(2);
+        } finally {
+            db.runCommand(new org.bson.Document("profile", 0));
+            db.getCollection("system.profile").drop();
+            indexOps.dropIndex("operations__steam_id_version");
+        }
     }
 
     @Test
