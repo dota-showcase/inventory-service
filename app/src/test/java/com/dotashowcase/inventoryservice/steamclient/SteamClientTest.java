@@ -199,6 +199,37 @@ class SteamClientTest {
     }
 
     @Test
+    void willThrowWhenInventoryStatusIsMissing() {
+        // given
+        String responseBody = """
+                {
+                    "result": {
+                        "num_backpack_slots": 10120,
+                        "items": []
+                    }
+                }""";
+
+        Long steamId = 100000000000L;
+
+        ResponseEntity<String> stringResponseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        ArgumentMatchers.any(URI.class),
+                        ArgumentMatchers.any(HttpMethod.class),
+                        ArgumentMatchers.any(),
+                        ArgumentMatchers.<Class<String>>any()
+                )
+        )
+                .thenReturn(stringResponseEntity);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.fetchUserInventory(steamId))
+                .isInstanceOf(SteamClientException.class)
+                .hasMessageContaining("no inventory status");
+    }
+
+    @Test
     void willNotExposeApiKeyOnIOError() {
         // given
         String apiKey = "SECRET_KEY";

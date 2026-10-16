@@ -13,7 +13,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -90,9 +89,6 @@ public class InventoryItem {
 
     @Field("attrs")
     private List<ItemAttribute> attributes;
-
-    // fields allowed in bulk updates
-    public static final Set<String> FILLABLE = Set.of("_isA", "_odId", "isTr", "isCr", "qnt");
 
     @Override
     public boolean equals(Object o) {

@@ -79,7 +79,11 @@ public class SteamClient {
             throw new SteamClientException(badResponseBodyException.getMessage());
         }
 
-        int inventoryStatus = userInventoryResponseDTO.getStatus();
+        Integer inventoryStatus = userInventoryResponseDTO.getStatus();
+        if (inventoryStatus == null) {
+            throw new SteamClientException("Steam response has no inventory status");
+        }
+
         if (!inventoryStatusHandler.isOk(inventoryStatus)) {
             throw InventoryStatusException.itemsNotPresent(
                     response.getStatusCode().value(),

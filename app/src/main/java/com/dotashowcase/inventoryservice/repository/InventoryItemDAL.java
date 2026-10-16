@@ -11,7 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import java.util.AbstractMap;
 import java.util.List;
 import java.util.Set;
 
@@ -36,7 +35,11 @@ public interface InventoryItemDAL {
 
     List<InventoryItem> insertAll(List<InventoryItem> inventoryItems);
 
-    long updateAll(Set<ObjectId> ids, List<AbstractMap.SimpleImmutableEntry<String, Object>> updateEntry);
+    // old copies of updated items
+    long deactivate(Set<ObjectId> ids);
+
+    // items gone from steam - hidden, marked by the operation
+    long markDeleted(Set<ObjectId> ids, Operation operation);
 
     long removeAll(Inventory inventory);
 }

@@ -167,23 +167,12 @@ public class InventoryItemServiceImpl implements InventoryItemService {
                 itemIdsToHide.add(inventoryItemsById.get(itemId).getId());
             }
 
-            deleteCount += (int)inventoryItemRepository.updateAll(
-                    itemIdsToHide,
-                    new ArrayList<>(List.of(
-                        new AbstractMap.SimpleImmutableEntry<>("_isA", false),
-                        new AbstractMap.SimpleImmutableEntry<>("_odId", currentOperation.getId()) // deleteOperationId
-                    ))
-            );
+            deleteCount += (int)inventoryItemRepository.markDeleted(itemIdsToHide, currentOperation);
 
 //            operations += inventoryItemRepository.removeAll(inventory, itemIdsToRemove);
         }
 
-        updateCount += (int)inventoryItemRepository.updateAll(
-                itemIdsToUpdate,
-                new ArrayList<>(List.of(
-                    new AbstractMap.SimpleImmutableEntry<>("_isA", false)
-                ))
-        );
+        updateCount += (int)inventoryItemRepository.deactivate(itemIdsToUpdate);
 
         createCount += inventoryItemRepository.insertAll(itemsToCreate).size();
 

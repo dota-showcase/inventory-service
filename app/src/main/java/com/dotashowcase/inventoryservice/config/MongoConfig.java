@@ -10,10 +10,9 @@ import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.convert.DbRefResolver;
-import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 import java.text.MessageFormat;
@@ -68,18 +67,19 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
         return super.mongoDbFactory();
     }
 
-    @Primary
+    @Override
     @Bean
-    public MappingMongoConverter mongoConverter(
-            MongoDatabaseFactory mongoFactory, MongoMappingContext mongoMappingContext
-    ) throws Exception {
-        DbRefResolver dbRefResolver = new DefaultDbRefResolver(mongoFactory);
-        MappingMongoConverter mongoConverter = new MappingMongoConverter(dbRefResolver, mongoMappingContext);
+    public MappingMongoConverter mappingMongoConverter(
+            MongoDatabaseFactory databaseFactory,
+            MongoCustomConversions customConversions,
+            MongoMappingContext mappingContext
+    ) {
+        MappingMongoConverter converter = super.mappingMongoConverter(databaseFactory, customConversions, mappingContext);
 
         // Remove custom "_class" column field from collection
-        mongoConverter.setTypeMapper(new DefaultMongoTypeMapper(null));
+        converter.setTypeMapper(new DefaultMongoTypeMapper(null));
 
-        return mongoConverter;
+        return converter;
     }
 
     @Override

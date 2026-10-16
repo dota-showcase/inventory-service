@@ -251,30 +251,13 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
     }
 
     @Override
-    public long updateAll(Set<ObjectId> ids, List<AbstractMap.SimpleImmutableEntry<String, Object>> updateEntry) {
-        if (ids.isEmpty()) {
-            return 0L;
-        }
+    public long deactivate(Set<ObjectId> ids) {
+        return updateAll(ids, Update.update("_isA", false));
+    }
 
-        Update update = new Update();
-
-        int count = 0;
-        for (AbstractMap.SimpleImmutableEntry<String, Object> entry : updateEntry) {
-            String key = entry.getKey();
-            if (InventoryItem.FILLABLE.contains(key)) {
-                update.set(key, entry.getValue());
-                ++count;
-            }
-        }
-
-        if (count == 0) {
-            return 0L;
-        }
-
-        Criteria criteria = Criteria.where("_id").in(ids);
-        Query query = new Query(criteria);
-
-        return mongoTemplate.updateMulti(query, update, InventoryItem.class).getModifiedCount();
+    @Override
+    public long markDeleted(Set<ObjectId> ids, Operation operation) {
+        return updateAll(ids, Update.update("_isA", false).set("_odId", operation.getId()));
     }
 
     @Override
@@ -285,6 +268,16 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
         defaultCriteria.forEach(query::addCriteria);
 
         return mongoTemplate.remove(query, InventoryItem.class).getDeletedCount();
+    }
+
+    private long updateAll(Set<ObjectId> ids, Update update) {
+        if (ids.isEmpty()) {
+            return 0L;
+        }
+
+        Query query = new Query(Criteria.where("_id").in(ids));
+
+        return mongoTemplate.updateMulti(query, update, InventoryItem.class).getModifiedCount();
     }
 
     // api names -> stored names, e.g. defIndex -> dIdx

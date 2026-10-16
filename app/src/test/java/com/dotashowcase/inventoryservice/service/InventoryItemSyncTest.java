@@ -22,12 +22,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.annotation.Import;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -119,10 +117,8 @@ class InventoryItemSyncTest {
 
         // then
         ArgumentCaptor<Set<ObjectId>> inventoryItemUpdateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
-        verify(inventoryItemRepository, times(1)).updateAll(
-                inventoryItemUpdateArgumentCaptor.capture(),
-                ArgumentMatchers.anyList()
-        );
+        verify(inventoryItemRepository).deactivate(inventoryItemUpdateArgumentCaptor.capture());
+        verify(inventoryItemRepository, never()).markDeleted(any(), any());
 
         assertThat(inventoryItemUpdateArgumentCaptor.getValue().size()).isEqualTo(0);
 
@@ -245,10 +241,8 @@ class InventoryItemSyncTest {
 
         // then
         ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
-        verify(inventoryItemRepository, times(1)).updateAll(
-                updateArgumentCaptor.capture(),
-                ArgumentMatchers.anyList()
-        );
+        verify(inventoryItemRepository).deactivate(updateArgumentCaptor.capture());
+        verify(inventoryItemRepository, never()).markDeleted(any(), any());
         assertThat(updateArgumentCaptor.getValue().size()).isEqualTo(0);
 
         ArgumentCaptor<List<InventoryItem>> insertArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
@@ -345,15 +339,16 @@ class InventoryItemSyncTest {
         underTest.sync(inventory, operation2, items);
 
         // then
-        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
-        verify(inventoryItemRepository, times(2)).updateAll(
-                updateArgumentCaptor.capture(),
-                ArgumentMatchers.anyList()
-        );
+        ArgumentCaptor<Set<ObjectId>> deleteArgumentCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(inventoryItemRepository).markDeleted(deleteArgumentCaptor.capture(), eq(operation2));
 
-        assertThat(updateArgumentCaptor.getAllValues().getFirst().size()).isEqualTo(1);
+        assertThat(deleteArgumentCaptor.getValue().size()).isEqualTo(1);
         // check ids is the same
-        assertThat(updateArgumentCaptor.getAllValues().getFirst().iterator().next().compareTo(objectId2)).isEqualTo(0);
+        assertThat(deleteArgumentCaptor.getValue().iterator().next().compareTo(objectId2)).isEqualTo(0);
+
+        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(inventoryItemRepository).deactivate(updateArgumentCaptor.capture());
+        assertThat(updateArgumentCaptor.getValue()).isEmpty();
 
         ArgumentCaptor<List<InventoryItem>> insertArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
         verify(inventoryItemRepository).insertAll(insertArgumentCaptor.capture());
@@ -484,10 +479,8 @@ class InventoryItemSyncTest {
 
         // then
         ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
-        verify(inventoryItemRepository, times(1)).updateAll(
-                updateArgumentCaptor.capture(),
-                ArgumentMatchers.anyList()
-        );
+        verify(inventoryItemRepository).deactivate(updateArgumentCaptor.capture());
+        verify(inventoryItemRepository, never()).markDeleted(any(), any());
 
         assertThat(updateArgumentCaptor.getValue().size()).isEqualTo(1);
         assertThat(updateArgumentCaptor.getValue().iterator().next().compareTo(objectId2)).isEqualTo(0);
@@ -685,7 +678,9 @@ class InventoryItemSyncTest {
         operation2.setVersion(2);
 
         // as the repository - modified count, inserted items
-        when(inventoryItemRepository.updateAll(any(), any()))
+        when(inventoryItemRepository.markDeleted(any(), any()))
+                .thenAnswer(invocation -> (long) invocation.<Set<ObjectId>>getArgument(0).size());
+        when(inventoryItemRepository.deactivate(any()))
                 .thenAnswer(invocation -> (long) invocation.<Set<ObjectId>>getArgument(0).size());
         when(inventoryItemRepository.insertAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -693,29 +688,17 @@ class InventoryItemSyncTest {
         OperationCountDTO operationCountDTO = underTest.sync(inventory, operation2, items);
 
         // then
-        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
-        ArgumentCaptor<List<AbstractMap.SimpleImmutableEntry<String, Object>>> updateEntryArgumentCaptor =
-                ArgumentCaptor.forClass((Class) List.class);
-        verify(inventoryItemRepository, times(2)).updateAll(
-                updateArgumentCaptor.capture(),
-                updateEntryArgumentCaptor.capture()
-        );
-
-        // hide
-        assertThat(updateArgumentCaptor.getAllValues().getFirst().size()).isEqualTo(1);
-        assertThat(updateArgumentCaptor.getAllValues().getFirst().iterator().next().compareTo(objectId2)).isEqualTo(0);
         // deleted by this operation
-        assertThat(updateEntryArgumentCaptor.getAllValues().getFirst()).containsExactlyInAnyOrder(
-                new AbstractMap.SimpleImmutableEntry<>("_isA", false),
-                new AbstractMap.SimpleImmutableEntry<>("_odId", operation2.getId())
-        );
+        ArgumentCaptor<Set<ObjectId>> deleteArgumentCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(inventoryItemRepository).markDeleted(deleteArgumentCaptor.capture(), eq(operation2));
+        assertThat(deleteArgumentCaptor.getValue().size()).isEqualTo(1);
+        assertThat(deleteArgumentCaptor.getValue().iterator().next().compareTo(objectId2)).isEqualTo(0);
 
         // update
-        assertThat(updateArgumentCaptor.getAllValues().get(1).size()).isEqualTo(1);
-        assertThat(updateArgumentCaptor.getAllValues().get(1).iterator().next().compareTo(objectId1)).isEqualTo(0);
-        assertThat(updateEntryArgumentCaptor.getAllValues().get(1)).containsExactly(
-                new AbstractMap.SimpleImmutableEntry<>("_isA", false)
-        );
+        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(inventoryItemRepository).deactivate(updateArgumentCaptor.capture());
+        assertThat(updateArgumentCaptor.getValue().size()).isEqualTo(1);
+        assertThat(updateArgumentCaptor.getValue().iterator().next().compareTo(objectId1)).isEqualTo(0);
 
         ArgumentCaptor<List<InventoryItem>> insertArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
         verify(inventoryItemRepository).insertAll(insertArgumentCaptor.capture());

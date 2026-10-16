@@ -824,48 +824,56 @@ class InventoryItemRepositoryTest {
     }
 
     @Test
-    void itShouldUpdateAllInventoryItems() {
+    void itShouldDeactivateInventoryItems() {
         // given
-        Long itemId1 = 101L;
-        Long itemId2 = 102L; // exist x2
-        Long itemId3 = 103L; // not exists
+        Inventory inventory = new Inventory(100000000007L);
+        Operation operation = insertOperation(inventory, 1);
 
-        List<InventoryItem> inventoryItems = mongoTemplate.find(
-                Query.query(Criteria.where("itemId").in(List.of(itemId1, itemId2, itemId3))),
-                InventoryItem.class
-        );
-
-        Set<ObjectId> ids = inventoryItems.stream()
-                .map(InventoryItem::getId)
-                .collect(Collectors.toSet());
+        InventoryItem inventoryItem700 = insertItemByOperation(inventory, 700L, operation, Operation.Type.C);
+        InventoryItem inventoryItem701 = insertItemByOperation(inventory, 701L, operation, Operation.Type.C);
 
         // when
-        long updateCount = underTest.updateAll(
-                ids,
-                new ArrayList<>(List.of(
-                        new AbstractMap.SimpleImmutableEntry<>("_isA", false),
-                        new AbstractMap.SimpleImmutableEntry<>("qnt", 2)
-                ))
-        );
-
-        long updateCountNotExistProp = underTest.updateAll(
-                ids,
-                new ArrayList<>(List.of(
-                        new AbstractMap.SimpleImmutableEntry<>("_abc101", false)
-                ))
-        );
-
-        long updateCountNotExistItem = underTest.updateAll(
-                Set.of(new ObjectId("631fb4e3111ee61f2d109b4c")),
-                new ArrayList<>(List.of(
-                        new AbstractMap.SimpleImmutableEntry<>("_isA", false)
-                ))
-        );
+        long deactivateCount = underTest.deactivate(Set.of(inventoryItem700.getId()));
+        long deactivateCountNotExistItem = underTest.deactivate(Set.of(new ObjectId()));
+        long deactivateCountEmpty = underTest.deactivate(Set.of());
 
         // then
-        assertThat(updateCount).isEqualTo(3L);
-        assertThat(updateCountNotExistProp).isEqualTo(0L);
-        assertThat(updateCountNotExistItem).isEqualTo(0L);
+        assertThat(deactivateCount).isEqualTo(1L);
+        assertThat(deactivateCountNotExistItem).isEqualTo(0L);
+        assertThat(deactivateCountEmpty).isEqualTo(0L);
+
+        InventoryItem deactivated = mongoTemplate.findById(inventoryItem700.getId(), InventoryItem.class);
+        assertThat(deactivated.getIsActive()).isFalse();
+        assertThat(deactivated.getDeleteOperationId()).isNull();
+
+        assertThat(mongoTemplate.findById(inventoryItem701.getId(), InventoryItem.class).getIsActive()).isTrue();
+    }
+
+    @Test
+    void itShouldMarkInventoryItemsDeleted() {
+        // given
+        Inventory inventory = new Inventory(100000000007L);
+        Operation operation1 = insertOperation(inventory, 1);
+        Operation operation2 = insertOperation(inventory, 2);
+
+        InventoryItem inventoryItem700 = insertItemByOperation(inventory, 700L, operation1, Operation.Type.C);
+        InventoryItem inventoryItem701 = insertItemByOperation(inventory, 701L, operation1, Operation.Type.C);
+
+        // when
+        long deleteCount = underTest.markDeleted(Set.of(inventoryItem700.getId()), operation2);
+        long deleteCountEmpty = underTest.markDeleted(Set.of(), operation2);
+
+        // then
+        assertThat(deleteCount).isEqualTo(1L);
+        assertThat(deleteCountEmpty).isEqualTo(0L);
+
+        InventoryItem deleted = mongoTemplate.findById(inventoryItem700.getId(), InventoryItem.class);
+        assertThat(deleted.getIsActive()).isFalse();
+        assertThat(deleted.getDeleteOperationId()).isEqualTo(operation2.getId());
+
+        InventoryItem untouched = mongoTemplate.findById(inventoryItem701.getId(), InventoryItem.class);
+        assertThat(untouched.getIsActive()).isTrue();
+        assertThat(untouched.getDeleteOperationId()).isNull();
     }
 
     @Test

@@ -278,4 +278,83 @@ class UserInventoryResponseParserTest {
         assertThat(expected.getItems()).isNull();
     }
 
+    @Test
+    void itShouldParseWhenNestedNodesHaveUnknownFields() {
+        // given
+        // fields steam may add later
+        String responseBody = """
+                {
+                    "result": {
+                        "status": 1,
+                        "items": [
+                            {
+                                "id": 3120140571,
+                                "defindex": 6671,
+                                "equipped": [
+                                    {
+                                        "class": 13,
+                                        "slot": 1,
+                                        "new_field": true
+                                    }
+                                ],
+                                "attributes": [
+                                    {
+                                        "defindex": 8,
+                                        "value": 1,
+                                        "new_field": 1,
+                                        "account_info": {
+                                            "steamid": 76561198000000001,
+                                            "personaname": "name",
+                                            "new_field": "value"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }""";
+
+        // when
+        UserInventoryResponseDTO expected = underTest.run(responseBody);
+
+        // then
+        assertThat(expected.getItems().getFirst().getEquipped().getFirst().getSlot()).isEqualTo(1);
+        assertThat(expected.getItems().getFirst().getAttributes().getFirst().getAccount_info().getPersonaname())
+                .isEqualTo("name");
+    }
+
+    @Test
+    void willThrowWhenItemHasInvalidValue() {
+        // given
+        String responseBody = """
+                {
+                    "result": {
+                        "status": 1,
+                        "items": [
+                            {
+                                "id": 3120140571,
+                                "level": "high"
+                            }
+                        ]
+                    }
+                }""";
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.run(responseBody))
+                .isInstanceOf(BadResponseBodyException.class);
+    }
+
+    @Test
+    void willThrowWhenBodyIsEmpty() {
+        // given
+        // 200 without body
+        String responseBody = null;
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.run(responseBody))
+                .isInstanceOf(BadResponseBodyException.class);
+    }
+
 }

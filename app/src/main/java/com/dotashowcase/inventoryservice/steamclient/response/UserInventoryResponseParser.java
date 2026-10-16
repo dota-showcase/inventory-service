@@ -4,6 +4,7 @@ import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.exception.BadResponseBodyException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
@@ -52,7 +53,9 @@ import java.util.List;
 @NoArgsConstructor
 public class UserInventoryResponseParser {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // steam adds fields - unknown ones are ignored in nested nodes too
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
     private static final String NODE_RESULT = "result";
     private static final String NODE_ITEMS = "items";
@@ -60,6 +63,10 @@ public class UserInventoryResponseParser {
     private static final String NODE_SLOTS = "num_backpack_slots";
 
     public UserInventoryResponseDTO run(String responseBody) throws BadResponseBodyException {
+        if (responseBody == null) {
+            throw BadResponseBodyException.invalidBodyStructure("empty body");
+        }
+
         JsonNode rootNode = null;
         try {
             rootNode = objectMapper.readTree(responseBody);
@@ -95,8 +102,13 @@ public class UserInventoryResponseParser {
         JsonNode itemNode = resultNode.path(NODE_ITEMS);
 
         List <ItemDTO> items = new ArrayList<>();
-        for (JsonNode item : itemNode) {
-            items.add(objectMapper.convertValue(item, ItemDTO.class));
+        try {
+            for (JsonNode item : itemNode) {
+                items.add(objectMapper.convertValue(item, ItemDTO.class));
+            }
+        } catch (IllegalArgumentException e) {
+            // reject whole response - skipped items would be synced as deleted
+            throw BadResponseBodyException.invalidBodyStructure(e.getMessage());
         }
 
         userInventoryResponseDTO.setItems(items);
