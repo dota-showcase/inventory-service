@@ -3,7 +3,7 @@ package com.dotashowcase.inventoryservice.service;
 import com.dotashowcase.inventoryservice.http.filter.InventoryItemChangeFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.Operation;
-import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
+import com.dotashowcase.inventoryservice.repository.InventoryItemDAL;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.mapper.InventoryItemServiceResultMapper;
 import com.dotashowcase.inventoryservice.service.type.ChangeType;
@@ -16,7 +16,7 @@ import java.util.*;
 @Service
 public class InventoryItemChangesServiceImpl implements InventoryItemChangesService {
 
-    private final InventoryItemDALRepository inventoryItemRepository;
+    private final InventoryItemDAL inventoryItemRepository;
 
     private final InventoryItemServiceResultMapper inventoryItemServiceResultMapper;
 
@@ -24,10 +24,10 @@ public class InventoryItemChangesServiceImpl implements InventoryItemChangesServ
 
     @Autowired
     public InventoryItemChangesServiceImpl(
-            InventoryItemDALRepository inventoryItemRepository,
+            InventoryItemDAL inventoryItemRepository,
             OperationService operationService
     ) {
-        Assert.notNull(inventoryItemRepository, "InventoryItemDALRepository must not be null!");
+        Assert.notNull(inventoryItemRepository, "InventoryItemDAL must not be null!");
         this.inventoryItemRepository = inventoryItemRepository;
 
         Assert.notNull(operationService, "OperationService must not be null!");

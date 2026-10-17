@@ -7,7 +7,6 @@ User=ubuntu
 Group=ubuntu
 Type=simple
 
-[Service]
 # App dir - relative paths resolve from it, e.g. logs in storage/logs
 WorkingDirectory=/usr/local/inventory-service/app
 # Path to JAR file built by Gradle

@@ -5,9 +5,9 @@ import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
-import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryUpdateConflictException;
+import com.dotashowcase.inventoryservice.service.exception.OperationNotFoundException;
 import com.dotashowcase.inventoryservice.service.lock.InventorySyncLock;
 import com.dotashowcase.inventoryservice.service.result.dto.*;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
@@ -206,7 +206,7 @@ public class InventoryServiceImpl implements InventoryService {
         Operation prevOperation = operationService.getLatest(inventory);
 
         if (prevOperation == null) {
-            throw new InventoryException("Cannot find Inventory Operation resource");
+            throw new OperationNotFoundException(steamId);
         }
 
         UserInventoryResponseDTO inventoryResponseDTO = steamClient.fetchUserInventory(steamId);
@@ -271,7 +271,7 @@ public class InventoryServiceImpl implements InventoryService {
         Operation operation = operationService.getLatest(inventory);
 
         if (operation == null) {
-            throw new InventoryException("Cannot find Inventory Operation resource");
+            throw new OperationNotFoundException(steamId);
         }
 
         inventory.setLatestOperation(operation);

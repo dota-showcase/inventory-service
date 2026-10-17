@@ -6,8 +6,13 @@ SERVICE_NAME="ds-inventory"
 GRADLE_CMD="./gradlew"
 
 # ===== STEP 1: BUILD THE JAR =====
+# tests are skipped - RUN_TESTS=1 runs them
 echo "🚀 Building application..."
-$GRADLE_CMD build -x test -x javadoc
+if [ "${RUN_TESTS:-0}" = "1" ]; then
+    $GRADLE_CMD build -x javadoc
+else
+    $GRADLE_CMD build -x test -x javadoc
+fi
 
 # ===== STEP 2: RESTART THE SYSTEMD SERVICE =====
 echo "🔄 Restarting service: $SERVICE_NAME"

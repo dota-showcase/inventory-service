@@ -1,9 +1,17 @@
 package com.dotashowcase.inventoryservice.http.controller;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
+import com.dotashowcase.inventoryservice.http.exception.AppExceptionHandler;
 import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
 import com.dotashowcase.inventoryservice.service.InventoryService;
+import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
+import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.times;
@@ -111,5 +120,38 @@ class InventoryControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message").value("Internal server error"))
                 .andExpect(content().string(not(containsString("internal detail"))));
+    }
+
+    @Test
+    void itShouldLogOnlyServerErrorsAsErrors() throws Exception {
+        // given
+        Long notFoundSteamId = 76561198000000002L;
+        Long privateSteamId = 76561198000000003L;
+        Long failingSteamId = 76561198000000004L;
+
+        when(inventoryService.get(notFoundSteamId)).thenThrow(new InventoryNotFoundException());
+        when(inventoryService.update(privateSteamId)).thenThrow(
+                InventoryStatusException.itemsNotPresent(200, 15, "User inventory is private")
+        );
+        when(inventoryService.get(failingSteamId)).thenThrow(new IllegalStateException("internal detail"));
+
+        ListAppender<ILoggingEvent> logEvents = new ListAppender<>();
+        logEvents.start();
+        Logger logger = (Logger) LoggerFactory.getLogger(AppExceptionHandler.class);
+        logger.addAppender(logEvents);
+
+        try {
+            // when
+            mockMvc.perform(get("/api/v1/inventories/" + notFoundSteamId)).andExpect(status().isNotFound());
+            mockMvc.perform(put("/api/v1/inventories/" + privateSteamId)).andExpect(status().isBadRequest());
+            mockMvc.perform(get("/api/v1/inventories/" + failingSteamId)).andExpect(status().isInternalServerError());
+
+            // then
+            assertThat(logEvents.list)
+                    .extracting(ILoggingEvent::getLevel)
+                    .containsExactly(Level.WARN, Level.WARN, Level.ERROR);
+        } finally {
+            logger.detachAppender(logEvents);
+        }
     }
 }

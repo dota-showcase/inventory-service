@@ -17,9 +17,9 @@ Swagger OpenAPI 3 is available by path:
 
 ### Inventory Endpoints
 
-* Show Inventories: `GET /api/v1/inventories`
+* Show Inventories: `GET /api/v1/inventories/`
 * Search Inventories (paginated): `GET /api/v1/inventories/search-page`
-* Create an Inventory (load items from steam): `POST /api/v1/inventories/:steamid`
+* Create an Inventory (load items from steam): `POST /api/v1/inventories/` with body `{"steamId": steamid}`
 * Show an Inventory: `GET /api/v1/inventories/:steamid`
 * Update an Inventory (reload items from steam): `PUT /api/v1/inventories/:steamid`
 * Delete an Inventory: `DELETE /api/v1/inventories/:steamid`
@@ -58,7 +58,7 @@ Swagger OpenAPI 3 is available by path:
     docker-compose up
     ```
 5. To run in production environment - as a systemd service, see `prod-app.service.example`.
-   Build the jar and restart the service:
+   Build the jar (tests are skipped; `RUN_TESTS=1 ./deploy.sh` runs them first) and restart the service:
     ```bash
     cd app && ./deploy.sh
     ```

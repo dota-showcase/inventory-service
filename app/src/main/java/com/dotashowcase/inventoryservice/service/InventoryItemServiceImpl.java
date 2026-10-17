@@ -4,7 +4,7 @@ import com.dotashowcase.inventoryservice.http.filter.InventoryItemFilter;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.InventoryItem;
 import com.dotashowcase.inventoryservice.model.Operation;
-import com.dotashowcase.inventoryservice.repository.InventoryItemDALRepository;
+import com.dotashowcase.inventoryservice.repository.InventoryItemDAL;
 import com.dotashowcase.inventoryservice.service.mapper.InventoryItemMapper;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryItemDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @Service
 public class InventoryItemServiceImpl implements InventoryItemService {
 
-    private final InventoryItemDALRepository inventoryItemRepository;
+    private final InventoryItemDAL inventoryItemRepository;
 
     private final InventoryItemMapper inventoryItemMapper;
 
@@ -56,11 +56,11 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Autowired
     public InventoryItemServiceImpl(
-            InventoryItemDALRepository inventoryItemRepository,
+            InventoryItemDAL inventoryItemRepository,
             SortBuilder sortBuilder,
             PageMapper<InventoryItem, InventoryItemDTO> pageMapper
     ) {
-        Assert.notNull(inventoryItemRepository, "InventoryItemDALRepository must not be null!");
+        Assert.notNull(inventoryItemRepository, "InventoryItemDAL must not be null!");
         this.inventoryItemRepository = inventoryItemRepository;
 
         Assert.notNull(sortBuilder, "SortBuilder must not be null!");

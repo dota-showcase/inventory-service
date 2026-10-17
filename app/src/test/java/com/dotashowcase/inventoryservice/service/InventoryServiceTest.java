@@ -7,9 +7,9 @@ import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
 import com.dotashowcase.inventoryservice.repository.InventoryRepository;
 import com.dotashowcase.inventoryservice.service.exception.InventoryAlreadyExistsException;
-import com.dotashowcase.inventoryservice.service.exception.InventoryException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
 import com.dotashowcase.inventoryservice.service.exception.InventoryUpdateConflictException;
+import com.dotashowcase.inventoryservice.service.exception.OperationNotFoundException;
 import com.dotashowcase.inventoryservice.service.lock.InventorySyncLock;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
@@ -213,6 +213,22 @@ class InventoryServiceTest {
         // then
         assertThatThrownBy(() -> underTest.get(steamId2))
                 .isInstanceOf(InventoryNotFoundException.class);
+    }
+
+    @Test
+    void willThrowWhenGetInventoryWithoutOperation() {
+        // given
+        Long steamId = 100000000000L;
+        Inventory inventory = new Inventory(steamId);
+
+        when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
+        when(operationService.getLatest(inventory)).thenReturn(null);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.get(steamId))
+                .isInstanceOf(OperationNotFoundException.class)
+                .hasMessageContaining("There are not Operations for Inventory");
     }
 
     @Test
@@ -435,8 +451,8 @@ class InventoryServiceTest {
         // when
         // then
         assertThatThrownBy(() -> underTest.update(steamId))
-                .isInstanceOf(InventoryException.class)
-                .hasMessageContaining("Cannot find Inventory Operation resource");
+                .isInstanceOf(OperationNotFoundException.class)
+                .hasMessageContaining("There are not Operations for Inventory");
     }
 
     @Test

@@ -152,7 +152,12 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 steamErrorDetail
         );
 
-        log.error(LOG_MESSAGE_TEMPLATE, steamErrorResponse);
+        // inventory status is on the user side, e.g. private inventory
+        if (ex instanceof InventoryStatusException) {
+            log.warn(LOG_MESSAGE_TEMPLATE, steamErrorResponse);
+        } else {
+            log.error(LOG_MESSAGE_TEMPLATE, steamErrorResponse);
+        }
 
         return new ResponseEntity<>(steamErrorResponse, steamHttpStatus);
     }
@@ -208,7 +213,7 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 
         ErrorResponse errorResponse = getErrorResponse(request.getRequestURI(), status, message);
 
-        log.error(LOG_MESSAGE_TEMPLATE, errorResponse);
+        log.warn(LOG_MESSAGE_TEMPLATE, errorResponse);
 
         return new ResponseEntity<>(errorResponse, status);
     }

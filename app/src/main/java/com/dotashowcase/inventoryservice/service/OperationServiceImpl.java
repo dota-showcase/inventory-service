@@ -4,7 +4,7 @@ import com.dotashowcase.inventoryservice.http.filter.InventoryOperationFilter;
 import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.model.Inventory;
 import com.dotashowcase.inventoryservice.model.embedded.OperationMeta;
-import com.dotashowcase.inventoryservice.repository.OperationRepository;
+import com.dotashowcase.inventoryservice.repository.OperationDAL;
 import com.dotashowcase.inventoryservice.service.exception.OperationNotFoundException;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationCountDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.OperationDTO;
@@ -29,7 +29,7 @@ import java.util.Set;
 @Service
 public class OperationServiceImpl implements OperationService  {
 
-    private final OperationRepository operationRepository;
+    private final OperationDAL operationRepository;
 
     private final SortBuilder sortBuilder;
 
@@ -43,11 +43,11 @@ public class OperationServiceImpl implements OperationService  {
 
     @Autowired
     public OperationServiceImpl(
-            OperationRepository operationRepository,
+            OperationDAL operationRepository,
             SortBuilder sortBuilder,
             PageMapper<Operation, OperationDTO> pageMapper
     ) {
-        Assert.notNull(operationRepository, "OperationRepository must not be null!");
+        Assert.notNull(operationRepository, "OperationDAL must not be null!");
         this.operationRepository = operationRepository;
 
         Assert.notNull(sortBuilder, "SortBuilder must not be null!");
