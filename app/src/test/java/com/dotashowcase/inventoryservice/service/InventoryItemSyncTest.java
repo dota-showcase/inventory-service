@@ -723,4 +723,82 @@ class InventoryItemSyncTest {
         assertThat(operationCountDTO.getDelete()).isEqualTo(1);
         assertThat(operationCountDTO.getInventorySize()).isEqualTo(3);
     }
+
+    @Test
+    void itShouldSkipInventoryItemsWhenOnlyEquipmentOrderDiffers() {
+        // given - item 14892786322 from prod, steam returned the same equips in reverse order
+        Long steamId = 76561198148541358L;
+        Inventory inventory = new Inventory(steamId);
+
+        Long itemId = 14892786322L;
+        InventoryItem inventoryItem = new InventoryItem();
+        inventoryItem.setId(new ObjectId());
+        inventoryItem.setItemId(itemId);
+        inventoryItem.setSteamId(steamId);
+        inventoryItem.setOriginalId(7121637420L);
+        inventoryItem.setDefIndex(5412);
+        inventoryItem.setLevel((byte) 1);
+        inventoryItem.setQuality((byte) 9);
+        inventoryItem.setInventoryToken(136L);
+        inventoryItem.setInventoryPosition(136);
+        inventoryItem.setQuantity(1);
+        inventoryItem.setIsTradable(true);
+        inventoryItem.setIsCraftable(true);
+        inventoryItem.setItemEquipment(List.of(new ItemEquipment(22, 0), new ItemEquipment(22, 8)));
+        inventoryItem.setAttributes(List.of(
+                new ItemAttribute(185, "1441147439", 31633606443008.0, null),
+                new ItemAttribute(212, "1442357039", 34170321502208.0, null),
+                new ItemAttribute(2010, "2", 2.802596928649634e-45, null)
+        ));
+
+        when(inventoryItemRepository.findAll(inventory)).thenReturn(List.of(inventoryItem));
+
+        Operation operation = new Operation();
+        operation.setId(new ObjectId());
+        operation.setSteamId(steamId);
+        operation.setType(Operation.Type.U);
+        operation.setVersion(2);
+
+        ItemDTO item = new ItemDTO();
+        item.setId(itemId);
+        item.setOriginal_id(7121637420L);
+        item.setDefindex(5412);
+        item.setLevel((byte) 1);
+        item.setQuality((byte) 9);
+        item.setInventory(136L);
+        item.setQuantity(1);
+        ItemEquipDTO itemEquip1 = new ItemEquipDTO();
+        itemEquip1.setEquip_class(22);
+        itemEquip1.setSlot(8);
+        ItemEquipDTO itemEquip2 = new ItemEquipDTO();
+        itemEquip2.setEquip_class(22);
+        itemEquip2.setSlot(0);
+        item.setEquipped(List.of(itemEquip1, itemEquip2));
+        ItemAttributeDTO itemAttribute1 = new ItemAttributeDTO();
+        itemAttribute1.setDefindex(185);
+        itemAttribute1.setValue("1441147439");
+        itemAttribute1.setFloat_value(31633606443008.0);
+        ItemAttributeDTO itemAttribute2 = new ItemAttributeDTO();
+        itemAttribute2.setDefindex(212);
+        itemAttribute2.setValue("1442357039");
+        itemAttribute2.setFloat_value(34170321502208.0);
+        ItemAttributeDTO itemAttribute3 = new ItemAttributeDTO();
+        itemAttribute3.setDefindex(2010);
+        itemAttribute3.setValue("2");
+        itemAttribute3.setFloat_value(2.802596928649634e-45);
+        item.setAttributes(List.of(itemAttribute1, itemAttribute2, itemAttribute3));
+
+        // when
+        underTest.sync(inventory, operation, List.of(item));
+
+        // then
+        ArgumentCaptor<Set<ObjectId>> updateArgumentCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(inventoryItemRepository).deactivate(updateArgumentCaptor.capture());
+        verify(inventoryItemRepository, never()).markDeleted(any(), any());
+        assertThat(updateArgumentCaptor.getValue()).isEmpty();
+
+        ArgumentCaptor<List<InventoryItem>> insertArgumentCaptor = ArgumentCaptor.forClass((Class) List.class);
+        verify(inventoryItemRepository).insertAll(insertArgumentCaptor.capture());
+        assertThat(insertArgumentCaptor.getValue()).isEmpty();
+    }
 }

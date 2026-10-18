@@ -11,7 +11,9 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @NoArgsConstructor
@@ -106,13 +108,28 @@ public class InventoryItem {
                 Objects.equals(style, that.style) &&
                 Objects.equals(customName, that.customName) &&
                 Objects.equals(customDesc, that.customDesc) &&
-                Objects.equals(itemEquipment, that.itemEquipment) &&
-                Objects.equals(attributes, that.attributes);
+                Objects.equals(countElements(itemEquipment), countElements(that.itemEquipment)) &&
+                Objects.equals(countElements(attributes), countElements(that.attributes));
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(defIndex, level, quality, inventoryToken, inventoryPosition, quantity,
-                isTradable, isCraftable, style, customName, customDesc, itemEquipment, attributes);
+                isTradable, isCraftable, style, customName, customDesc,
+                countElements(itemEquipment), countElements(attributes));
+    }
+
+    // steam returns list elements in no fixed order - compare them as multisets
+    private static <T> Map<T, Integer> countElements(List<T> elements) {
+        if (elements == null) {
+            return null;
+        }
+
+        Map<T, Integer> counts = new HashMap<>();
+        for (T element : elements) {
+            counts.merge(element, 1, Integer::sum);
+        }
+
+        return counts;
     }
 }
