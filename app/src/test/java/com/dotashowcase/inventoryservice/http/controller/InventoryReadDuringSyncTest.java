@@ -65,12 +65,12 @@ class InventoryReadDuringSyncTest {
         Inventory inventory = inventoryRepository.insert(new Inventory(STEAM_ID));
 
         // version 1 - finished sync
-        Operation operation1 = operationService.create(inventory, null, null);
+        Operation operation1 = operationService.create(inventory, null, Operation.Trigger.manual, null);
         inventoryItemService.create(inventory, operation1, List.of(getItemDTO(1L, 1), getItemDTO(2L, 2)));
         operationService.createAndSaveMeta(operation1, new OperationCountDTO(2, 0, 0, 0), 2, 10120);
 
         // version 2 - sync started, counts not stored yet
-        operationService.create(inventory, Operation.Type.U, operation1);
+        operationService.create(inventory, Operation.Type.U, Operation.Trigger.auto, operation1);
 
         // when
         // then

@@ -66,7 +66,7 @@ class InventorySyncIntegrationTest {
                 .thenReturn(getResponse(getItemDTO(1L, "#1"), getItemDTO(2L, "#2"), getItemDTO(3L, "#3")));
 
         // when
-        inventoryService.create(STEAM_ID);
+        inventoryService.create(STEAM_ID, Operation.Trigger.manual);
 
         // then
         Inventory inventory = inventoryService.findInventory(STEAM_ID);
@@ -90,10 +90,10 @@ class InventorySyncIntegrationTest {
                 .thenReturn(getResponse(getItemDTO(1L, "#1"), getItemDTO(2L, "#2"), getItemDTO(3L, "#3")))
                 .thenReturn(getResponse(getItemDTO(1L, "#1"), getItemDTO(2L, "#2 - renamed"), getItemDTO(4L, "#4")));
 
-        inventoryService.create(STEAM_ID);
+        inventoryService.create(STEAM_ID, Operation.Trigger.manual);
 
         // when
-        inventoryService.update(STEAM_ID);
+        inventoryService.update(STEAM_ID, Operation.Trigger.manual);
 
         // then
         Inventory inventory = inventoryService.findInventory(STEAM_ID);
@@ -123,11 +123,11 @@ class InventorySyncIntegrationTest {
                 .thenReturn(getResponse(getItemDTO(1L, "#1"), getItemDTO(2L, "#2 - renamed"), getItemDTO(4L, "#4")))
                 .thenReturn(getResponse(getItemDTO(1L, "#1 - renamed"), getItemDTO(5L, "#5")));
 
-        inventoryService.create(STEAM_ID);
-        inventoryService.update(STEAM_ID);
+        inventoryService.create(STEAM_ID, Operation.Trigger.manual);
+        inventoryService.update(STEAM_ID, Operation.Trigger.manual);
 
         // when
-        inventoryService.update(STEAM_ID);
+        inventoryService.update(STEAM_ID, Operation.Trigger.manual);
 
         // then
         Inventory inventory = inventoryService.findInventory(STEAM_ID);

@@ -235,12 +235,14 @@ class InventoryServiceTest {
     void itShouldCreateInventory() {
         // given
         Long steamId = 100000000000L;
+        Operation.Trigger trigger = Operation.Trigger.auto;
         Inventory inventory = new Inventory(steamId);
         Inventory savedInventory = new Inventory(steamId);
 
         Operation operation1 = new Operation();
         operation1.setSteamId(steamId);
         operation1.setType(Operation.Type.C);
+        operation1.setTrigger(trigger);
         operation1.setVersion(1);
         operation1.setMeta(new OperationMeta());
 
@@ -272,17 +274,17 @@ class InventoryServiceTest {
         when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(null);
         when(steamClient.fetchUserInventory(steamId)).thenReturn(inventoryResponseDTO);
         when(inventoryRepository.insert(inventory)).thenReturn(savedInventory);
-        when(operationService.create(inventory, null, null)).thenReturn(operation1);
+        when(operationService.create(inventory, null, trigger, null)).thenReturn(operation1);
         when(inventoryItemService.create(savedInventory, operation1, inventoryResponseDTO.getItems()))
                 .thenReturn(List.of(inventoryItem1));
 
         // when
-        underTest.create(steamId);
+        InventoryWithLatestOperationDTO result = underTest.create(steamId, trigger);
 
         // then
         verify(steamClient).fetchUserInventory(steamId);
         verify(inventoryRepository).insert(inventory);
-        verify(operationService).create(savedInventory, null, null);
+        verify(operationService).create(savedInventory, null, trigger, null);
         verify(inventoryItemService).create(savedInventory, operation1, inventoryResponseDTO.getItems());
         verify(operationService).createAndSaveMeta(
                 operation1,
@@ -290,6 +292,8 @@ class InventoryServiceTest {
                 1,
                 1000
                 );
+
+        assertThat(result.getOperation().getTrigger()).isEqualTo(trigger);
 
         // lock released
         assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
@@ -305,7 +309,7 @@ class InventoryServiceTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.create(steamId))
+        assertThatThrownBy(() -> underTest.create(steamId, Operation.Trigger.manual))
                 .isInstanceOf(InventoryAlreadyExistsException.class);
 
         // lock released
@@ -329,7 +333,7 @@ class InventoryServiceTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.create(steamId))
+        assertThatThrownBy(() -> underTest.create(steamId, Operation.Trigger.manual))
                 .isInstanceOf(InventoryAlreadyExistsException.class);
 
         verifyNoInteractions(operationService, inventoryItemService);
@@ -339,6 +343,7 @@ class InventoryServiceTest {
     void itShouldUpdateInventory() {
         // given
         Long steamId = 100000000000L;
+        Operation.Trigger trigger = Operation.Trigger.resync;
         Inventory inventory = new Inventory(steamId);
 
         Operation prevOperation = new Operation();
@@ -350,6 +355,7 @@ class InventoryServiceTest {
         Operation currentOperation = new Operation();
         currentOperation.setSteamId(steamId);
         currentOperation.setType(Operation.Type.U);
+        currentOperation.setTrigger(trigger);
         currentOperation.setVersion(2);
         currentOperation.setMeta(new OperationMeta());
 
@@ -372,16 +378,16 @@ class InventoryServiceTest {
         when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
         when(operationService.getLatest(inventory)).thenReturn(prevOperation);
         when(steamClient.fetchUserInventory(steamId)).thenReturn(inventoryResponseDTO);
-        when(operationService.create(inventory, Operation.Type.U, prevOperation)).thenReturn(currentOperation);
+        when(operationService.create(inventory, Operation.Type.U, trigger, prevOperation)).thenReturn(currentOperation);
         when(inventoryItemService.sync(inventory, currentOperation, inventoryResponseDTO.getItems()))
                 .thenReturn(operationCountDTO);
 
         // when
-        underTest.update(steamId);
+        InventoryWithLatestOperationDTO result = underTest.update(steamId, trigger);
 
         // then
         verify(steamClient).fetchUserInventory(steamId);
-        verify(operationService).create(inventory, Operation.Type.U, prevOperation);
+        verify(operationService).create(inventory, Operation.Type.U, trigger, prevOperation);
         verify(inventoryItemService).sync(inventory, currentOperation, inventoryResponseDTO.getItems());
         verify(operationService).createAndSaveMeta(
                 currentOperation,
@@ -389,6 +395,8 @@ class InventoryServiceTest {
                 1,
                 inventoryResponseDTO.getNumberBackpackSlots()
         );
+
+        assertThat(result.getOperation().getTrigger()).isEqualTo(trigger);
 
         // lock released
         assertThat(inventorySyncLock.tryLock(steamId)).isTrue();
@@ -412,12 +420,12 @@ class InventoryServiceTest {
         when(inventoryRepository.findItemBySteamId(steamId)).thenReturn(inventory);
         when(operationService.getLatest(inventory)).thenReturn(prevOperation);
         when(steamClient.fetchUserInventory(steamId)).thenReturn(inventoryResponseDTO);
-        when(operationService.create(inventory, Operation.Type.U, prevOperation))
+        when(operationService.create(inventory, Operation.Type.U, Operation.Trigger.manual, prevOperation))
                 .thenThrow(new DuplicateKeyException("E11000"));
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.update(steamId))
+        assertThatThrownBy(() -> underTest.update(steamId, Operation.Trigger.manual))
                 .isInstanceOf(InventoryUpdateConflictException.class);
 
         verifyNoInteractions(inventoryItemService);
@@ -432,7 +440,7 @@ class InventoryServiceTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.update(steamId))
+        assertThatThrownBy(() -> underTest.update(steamId, Operation.Trigger.manual))
                 .isInstanceOf(InventoryNotFoundException.class);
 
         // lock released
@@ -450,7 +458,7 @@ class InventoryServiceTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.update(steamId))
+        assertThatThrownBy(() -> underTest.update(steamId, Operation.Trigger.manual))
                 .isInstanceOf(OperationNotFoundException.class)
                 .hasMessageContaining("There are not Operations for Inventory");
     }
@@ -465,7 +473,7 @@ class InventoryServiceTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.create(steamId))
+        assertThatThrownBy(() -> underTest.create(steamId, Operation.Trigger.manual))
                 .isInstanceOf(InventoryAlreadyExistsException.class);
 
         verifyNoInteractions(inventoryRepository, steamClient, operationService, inventoryItemService);
@@ -481,7 +489,7 @@ class InventoryServiceTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.update(steamId))
+        assertThatThrownBy(() -> underTest.update(steamId, Operation.Trigger.manual))
                 .isInstanceOf(InventoryUpdateConflictException.class);
 
         verifyNoInteractions(inventoryRepository, steamClient, operationService, inventoryItemService);
@@ -491,6 +499,7 @@ class InventoryServiceTest {
     void itShouldBlockParallelUpdate() throws Exception {
         // given
         Long steamId = 100000000000L;
+        Operation.Trigger trigger = Operation.Trigger.manual;
         Inventory inventory = new Inventory(steamId);
 
         Operation prevOperation = new Operation();
@@ -519,17 +528,17 @@ class InventoryServiceTest {
 
             return inventoryResponseDTO;
         });
-        when(operationService.create(inventory, Operation.Type.U, prevOperation)).thenReturn(currentOperation);
+        when(operationService.create(inventory, Operation.Type.U, trigger, prevOperation)).thenReturn(currentOperation);
         when(inventoryItemService.sync(inventory, currentOperation, inventoryResponseDTO.getItems()))
                 .thenReturn(new OperationCountDTO());
 
         try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-            Future<InventoryWithLatestOperationDTO> firstUpdate = executor.submit(() -> underTest.update(steamId));
+            Future<InventoryWithLatestOperationDTO> firstUpdate = executor.submit(() -> underTest.update(steamId, trigger));
             assertThat(steamCallStarted.await(5, TimeUnit.SECONDS)).isTrue();
 
             // when
             // then
-            assertThatThrownBy(() -> underTest.update(steamId))
+            assertThatThrownBy(() -> underTest.update(steamId, trigger))
                     .isInstanceOf(InventoryUpdateConflictException.class);
 
             steamCallRelease.countDown();
@@ -546,6 +555,7 @@ class InventoryServiceTest {
     void itShouldBlockUpdateWhileCreateInProgress() throws Exception {
         // given
         Long steamId = 100000000000L;
+        Operation.Trigger trigger = Operation.Trigger.manual;
         Inventory inventory = new Inventory(steamId);
 
         Operation operation = new Operation();
@@ -569,17 +579,17 @@ class InventoryServiceTest {
             return inventoryResponseDTO;
         });
         when(inventoryRepository.insert(inventory)).thenReturn(inventory);
-        when(operationService.create(inventory, null, null)).thenReturn(operation);
+        when(operationService.create(inventory, null, trigger, null)).thenReturn(operation);
         when(inventoryItemService.create(inventory, operation, inventoryResponseDTO.getItems()))
                 .thenReturn(List.of());
 
         try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-            Future<InventoryWithLatestOperationDTO> create = executor.submit(() -> underTest.create(steamId));
+            Future<InventoryWithLatestOperationDTO> create = executor.submit(() -> underTest.create(steamId, trigger));
             assertThat(steamCallStarted.await(5, TimeUnit.SECONDS)).isTrue();
 
             // when
             // then
-            assertThatThrownBy(() -> underTest.update(steamId))
+            assertThatThrownBy(() -> underTest.update(steamId, trigger))
                     .isInstanceOf(InventoryUpdateConflictException.class);
 
             steamCallRelease.countDown();
@@ -667,7 +677,7 @@ class InventoryServiceTest {
 
             // when
             // then
-            assertThatThrownBy(() -> underTest.update(steamId))
+            assertThatThrownBy(() -> underTest.update(steamId, Operation.Trigger.manual))
                     .isInstanceOf(InventoryUpdateConflictException.class);
 
             deleteRelease.countDown();

@@ -26,7 +26,7 @@ public interface OperationService {
 
     Operation getByVersion(Inventory inventory, Integer version);
 
-    Operation create(Inventory inventory, Operation.Type type, Operation prevOperation);
+    Operation create(Inventory inventory, Operation.Type type, Operation.Trigger trigger, Operation prevOperation);
 
     void createAndSaveMeta(Operation operation, OperationCountDTO operations, Integer count, Integer numSlots);
 

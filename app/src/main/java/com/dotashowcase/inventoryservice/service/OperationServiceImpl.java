@@ -114,6 +114,7 @@ public class OperationServiceImpl implements OperationService  {
     public Operation create(
             Inventory inventory,
             Operation.Type type,
+            Operation.Trigger trigger,
             Operation prevOperation
     ) {
         Operation operation = new Operation();
@@ -123,6 +124,8 @@ public class OperationServiceImpl implements OperationService  {
         if (type != null) {
             operation.setType(type);
         }
+
+        operation.setTrigger(trigger);
 
         if (prevOperation != null) {
             operation.setVersion(prevOperation.getVersion() + 1);

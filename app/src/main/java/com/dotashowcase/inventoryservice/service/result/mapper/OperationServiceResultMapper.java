@@ -10,6 +10,7 @@ public class OperationServiceResultMapper {
         OperationDTO operationDTO = new OperationDTO();
         operationDTO.setVersion(operation.getVersion());
         operationDTO.setType(operation.getType());
+        operationDTO.setTrigger(operation.getTrigger());
         operationDTO.setCreatedAt(operation.getCreatedAt());
 
         OperationMeta meta = operation.getMeta();

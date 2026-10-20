@@ -1,6 +1,7 @@
 package com.dotashowcase.inventoryservice.service;
 
 import com.dotashowcase.inventoryservice.model.Inventory;
+import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.pagination.PageResult;
@@ -20,9 +21,9 @@ public interface InventoryService {
 
     InventoryWithLatestOperationDTO get(Long steamId);
 
-    InventoryWithLatestOperationDTO create(Long steamId);
+    InventoryWithLatestOperationDTO create(Long steamId, Operation.Trigger trigger);
 
-    InventoryWithLatestOperationDTO update(Long steamId);
+    InventoryWithLatestOperationDTO update(Long steamId, Operation.Trigger trigger);
 
     void delete(Long steamId);
 }

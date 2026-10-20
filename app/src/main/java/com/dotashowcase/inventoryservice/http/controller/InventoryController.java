@@ -6,6 +6,7 @@ import com.dotashowcase.inventoryservice.http.exception.response.SteamErrorRespo
 import com.dotashowcase.inventoryservice.http.exception.response.ValidationErrorResponse;
 import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
 import com.dotashowcase.inventoryservice.http.request.InventoryCreateRequest;
+import com.dotashowcase.inventoryservice.model.Operation.Trigger;
 import com.dotashowcase.inventoryservice.service.InventoryService;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
@@ -30,6 +31,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @Tag(name = "Inventory", description = "The inventory API")
 @Validated
@@ -136,7 +138,10 @@ public class InventoryController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .headers(responseHeaders)
-                .body(inventoryService.create(inventoryCreateRequest.getSteamId()));
+                .body(inventoryService.create(
+                        inventoryCreateRequest.getSteamId(),
+                        inventoryCreateRequest.getTrigger()
+                ));
     }
 
     @Operation(
@@ -171,12 +176,15 @@ public class InventoryController {
     })
     @PutMapping("inventories/{steamId}")
     @ResponseBody
-    public ResponseEntity<InventoryWithLatestOperationDTO> update(@PathVariable @SteamIdConstraint Long steamId) {
+    public ResponseEntity<InventoryWithLatestOperationDTO> update(
+            @PathVariable @SteamIdConstraint Long steamId,
+            @RequestParam Optional<Trigger> trigger
+    ) {
         HttpHeaders responseHeaders = rateLimitHandler.runUpdate(steamId);
 
         return ResponseEntity.ok()
                 .headers(responseHeaders)
-                .body(inventoryService.update(steamId));
+                .body(inventoryService.update(steamId, trigger.orElse(null)));
     }
 
     @Operation(description = "Delete an inventory")

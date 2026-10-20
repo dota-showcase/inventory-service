@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.http.request;
 
+import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.support.validator.SteamIdConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,4 +13,6 @@ public class InventoryCreateRequest {
 
     @SteamIdConstraint
     private Long steamId;
+
+    private Operation.Trigger trigger;
 }

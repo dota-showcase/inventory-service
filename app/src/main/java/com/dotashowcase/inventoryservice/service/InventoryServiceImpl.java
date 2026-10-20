@@ -139,20 +139,20 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public InventoryWithLatestOperationDTO create(Long steamId) {
+    public InventoryWithLatestOperationDTO create(Long steamId, Operation.Trigger trigger) {
         // block parallel sync of the same inventory
         if (!inventorySyncLock.tryLock(steamId)) {
             throw new InventoryAlreadyExistsException();
         }
 
         try {
-            return doCreate(steamId);
+            return doCreate(steamId, trigger);
         } finally {
             inventorySyncLock.unlock(steamId);
         }
     }
 
-    private InventoryWithLatestOperationDTO doCreate(Long steamId) {
+    private InventoryWithLatestOperationDTO doCreate(Long steamId, Operation.Trigger trigger) {
         Inventory existingInventory = inventoryRepository.findItemBySteamId(steamId);
 
         if (existingInventory != null) {
@@ -172,7 +172,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         // store items
-        Operation operation = operationService.create(savedInventory, null, null);
+        Operation operation = operationService.create(savedInventory, null, trigger, null);
         List<InventoryItem> savedInventoryItems = inventoryItemService.create(
                 savedInventory, operation, responseItems
         );
@@ -188,20 +188,20 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public InventoryWithLatestOperationDTO update(Long steamId) {
+    public InventoryWithLatestOperationDTO update(Long steamId, Operation.Trigger trigger) {
         // block parallel sync of the same inventory
         if (!inventorySyncLock.tryLock(steamId)) {
             throw new InventoryUpdateConflictException();
         }
 
         try {
-            return doUpdate(steamId);
+            return doUpdate(steamId, trigger);
         } finally {
             inventorySyncLock.unlock(steamId);
         }
     }
 
-    private InventoryWithLatestOperationDTO doUpdate(Long steamId) {
+    private InventoryWithLatestOperationDTO doUpdate(Long steamId, Operation.Trigger trigger) {
         Inventory inventory = findInventory(steamId);
         Operation prevOperation = operationService.getLatest(inventory);
 
@@ -215,7 +215,7 @@ public class InventoryServiceImpl implements InventoryService {
         // unique version - fails on concurrent update
         Operation currentOperation;
         try {
-            currentOperation = operationService.create(inventory, Operation.Type.U, prevOperation);
+            currentOperation = operationService.create(inventory, Operation.Type.U, trigger, prevOperation);
         } catch (DuplicateKeyException duplicateKeyException) {
             throw new InventoryUpdateConflictException();
         }

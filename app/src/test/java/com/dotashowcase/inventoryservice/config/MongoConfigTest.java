@@ -1,6 +1,7 @@
 package com.dotashowcase.inventoryservice.config;
 
 import com.dotashowcase.inventoryservice.model.Inventory;
+import com.dotashowcase.inventoryservice.model.Operation;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -43,6 +44,25 @@ class MongoConfigTest {
             assertThat(mongoTemplate.getConverter().getCustomConversions())
                     .isSameAs(context.getBean(MongoCustomConversions.class));
             assertThat(document).doesNotContainKey("_class");
+        });
+    }
+
+    @Test
+    void itShouldStoreOperationTriggerAsCode() {
+        contextRunner.run(context -> {
+            // given
+            MongoTemplate mongoTemplate = context.getBean(MongoTemplate.class);
+            Operation operation = new Operation();
+            operation.setTrigger(Operation.Trigger.manual);
+            Document document = new Document();
+
+            // when
+            mongoTemplate.getConverter().write(operation, document);
+            Operation readOperation = mongoTemplate.getConverter().read(Operation.class, document);
+
+            // then
+            assertThat(document).containsEntry("trg", "M");
+            assertThat(readOperation.getTrigger()).isEqualTo(Operation.Trigger.manual);
         });
     }
 }

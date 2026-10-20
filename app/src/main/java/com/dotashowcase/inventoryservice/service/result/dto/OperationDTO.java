@@ -14,6 +14,8 @@ public class OperationDTO {
 
     private Operation.Type type;
 
+    private Operation.Trigger trigger;
+
     private Date createdAt;
 
     private OperationMetaDTO meta;

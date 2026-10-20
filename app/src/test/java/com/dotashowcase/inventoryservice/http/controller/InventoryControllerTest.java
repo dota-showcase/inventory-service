@@ -7,6 +7,7 @@ import ch.qos.logback.core.read.ListAppender;
 import com.dotashowcase.inventoryservice.config.MongoTestConfig;
 import com.dotashowcase.inventoryservice.http.exception.AppExceptionHandler;
 import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
+import com.dotashowcase.inventoryservice.model.Operation;
 import com.dotashowcase.inventoryservice.service.InventoryService;
 import com.dotashowcase.inventoryservice.service.exception.InventoryNotFoundException;
 import com.dotashowcase.inventoryservice.steamclient.exception.InventoryStatusException;
@@ -24,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -104,7 +106,94 @@ class InventoryControllerTest {
                 .andExpect(header().string(HttpHeaders.RETRY_AFTER, "60"))
                 .andExpect(header().string(RateLimitHandler.HEADER_RETRY_AFTER, "60"));
 
-        verify(inventoryService, times(1)).update(steamId);
+        verify(inventoryService, times(1)).update(steamId, null);
+    }
+
+    @Test
+    void itShouldPassTriggerWhenCreate() throws Exception {
+        // given
+        Long steamId = 76561198000000005L;
+        String requestBody = """
+                {
+                    "steamId": 76561198000000005,
+                    "trigger": "auto"
+                }""";
+
+        // when
+        mockMvc.perform(post("/api/v1/inventories/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isCreated());
+
+        // then
+        verify(inventoryService).create(steamId, Operation.Trigger.auto);
+    }
+
+    @Test
+    void itShouldCreateWithUnknownTriggerWhenNotPassed() throws Exception {
+        // given
+        // client not aware of triggers
+        Long steamId = 76561198000000006L;
+        String requestBody = """
+                {
+                    "steamId": 76561198000000006
+                }""";
+
+        // when
+        mockMvc.perform(post("/api/v1/inventories/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isCreated());
+
+        // then
+        verify(inventoryService).create(steamId, null);
+    }
+
+    @Test
+    void willReturnBadRequestWhenCreateWithUnknownTrigger() throws Exception {
+        // given
+        String requestBody = """
+                {
+                    "steamId": 76561198000000007,
+                    "trigger": "scheduled"
+                }""";
+
+        // when
+        // then
+        mockMvc.perform(post("/api/v1/inventories/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(inventoryService);
+    }
+
+    @Test
+    void itShouldPassTriggerWhenUpdate() throws Exception {
+        // given
+        Long steamId = 76561198000000008L;
+
+        // when
+        mockMvc.perform(put("/api/v1/inventories/" + steamId).param("trigger", "resync"))
+                .andExpect(status().isOk());
+
+        // then
+        verify(inventoryService).update(steamId, Operation.Trigger.resync);
+    }
+
+    @Test
+    void willReturnValidationErrorWhenUpdateWithUnknownTrigger() throws Exception {
+        // given
+        Long steamId = 76561198000000009L;
+
+        // when
+        // then
+        mockMvc.perform(put("/api/v1/inventories/" + steamId).param("trigger", "scheduled"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.message").value(startsWith("trigger: ")));
+
+        verifyNoInteractions(inventoryService);
     }
 
     @Test
@@ -130,7 +219,7 @@ class InventoryControllerTest {
         Long failingSteamId = 76561198000000004L;
 
         when(inventoryService.get(notFoundSteamId)).thenThrow(new InventoryNotFoundException());
-        when(inventoryService.update(privateSteamId)).thenThrow(
+        when(inventoryService.update(privateSteamId, null)).thenThrow(
                 InventoryStatusException.itemsNotPresent(200, 15, "User inventory is private")
         );
         when(inventoryService.get(failingSteamId)).thenThrow(new IllegalStateException("internal detail"));

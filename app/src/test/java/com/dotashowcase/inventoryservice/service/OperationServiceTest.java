@@ -307,7 +307,7 @@ class OperationServiceTest {
         Inventory inventory = new Inventory(steamId);
 
         // when
-        underTest.create(inventory, null, null);
+        underTest.create(inventory, null, null, null);
 
         // then
         ArgumentCaptor<Operation> operationArgumentCaptor = ArgumentCaptor.forClass(Operation.class);
@@ -321,6 +321,9 @@ class OperationServiceTest {
         assertThat(captorOperation).extracting(Operation::getType)
                 .isEqualTo(Operation.Type.C);
 
+        assertThat(captorOperation).extracting(Operation::getTrigger)
+                .isNull();
+
         assertThat(captorOperation).extracting(Operation::getVersion)
                 .isEqualTo(1);
     }
@@ -333,7 +336,7 @@ class OperationServiceTest {
         Operation.Type type = Operation.Type.U;
 
         // when
-        underTest.create(inventory, type, null);
+        underTest.create(inventory, type, null, null);
 
         // then
         ArgumentCaptor<Operation> operationArgumentCaptor = ArgumentCaptor.forClass(Operation.class);
@@ -357,16 +360,18 @@ class OperationServiceTest {
         Long steamId = 100000000000L;
         Inventory inventory = new Inventory(steamId);
         Operation.Type type = Operation.Type.U;
+        Operation.Trigger trigger = Operation.Trigger.resync;
         int version = 2;
 
         Operation prevOperation = new Operation();
         prevOperation.setSteamId(steamId);
         prevOperation.setType(Operation.Type.C);
+        prevOperation.setTrigger(Operation.Trigger.manual);
         prevOperation.setVersion(version);
         prevOperation.setMeta(new OperationMeta());
 
         // when
-        underTest.create(inventory, type, prevOperation);
+        underTest.create(inventory, type, trigger, prevOperation);
 
         // then
         ArgumentCaptor<Operation> operationArgumentCaptor = ArgumentCaptor.forClass(Operation.class);
@@ -379,6 +384,10 @@ class OperationServiceTest {
 
         assertThat(captorOperation).extracting(Operation::getType)
                 .isEqualTo(type);
+
+        // own trigger - not inherited from the previous operation
+        assertThat(captorOperation).extracting(Operation::getTrigger)
+                .isEqualTo(trigger);
 
         assertThat(captorOperation).extracting(Operation::getVersion)
                 .isEqualTo(version + 1);

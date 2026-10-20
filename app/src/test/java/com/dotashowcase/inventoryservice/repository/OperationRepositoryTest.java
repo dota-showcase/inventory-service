@@ -384,6 +384,67 @@ class OperationRepositoryTest {
     }
 
     @Test
+    void itShouldStoreTriggerAsOneLetterCode() {
+        // given
+        Long steamId = 100000000002L;
+
+        Operation operation = new Operation();
+        operation.setSteamId(steamId);
+        operation.setTrigger(Operation.Trigger.resync);
+
+        // when
+        underTest.insertOne(operation);
+
+        // then
+        org.bson.Document stored = mongoTemplate.getCollection(Operation.class.getAnnotation(Document.class).value())
+                .find(Filters.eq("steamId", steamId))
+                .first();
+
+        assertThat(stored).containsEntry("trg", "R").doesNotContainKey("trigger");
+
+        assertThat(underTest.findLatest(new Inventory(steamId)).getTrigger())
+                .isEqualTo(Operation.Trigger.resync);
+        assertThat(underTest.aggregateLatestByInventories(List.of(steamId)).getFirst().getTrigger())
+                .isEqualTo(Operation.Trigger.resync);
+    }
+
+    @Test
+    void itShouldNotStoreUnknownTrigger() {
+        // given
+        Long steamId = 100000000002L;
+
+        Operation operation = new Operation();
+        operation.setSteamId(steamId);
+
+        // when
+        underTest.insertOne(operation);
+
+        // then
+        org.bson.Document stored = mongoTemplate.getCollection(Operation.class.getAnnotation(Document.class).value())
+                .find(Filters.eq("steamId", steamId))
+                .first();
+
+        assertThat(stored).doesNotContainKey("trg");
+    }
+
+    @Test
+    void itShouldReadOperationWithoutStoredTriggerAsUnknown() {
+        // given
+        // stored before triggers were tracked
+        Long steamId = 100000000002L;
+        mongoTemplate.getCollection(Operation.class.getAnnotation(Document.class).value())
+                .insertOne(new org.bson.Document("steamId", steamId).append("version", 1).append("type", "C"));
+
+        // when
+        Operation latest = underTest.findLatest(new Inventory(steamId));
+        List<Operation> aggregated = underTest.aggregateLatestByInventories(List.of(steamId));
+
+        // then
+        assertThat(latest.getTrigger()).isNull();
+        assertThat(aggregated.getFirst().getTrigger()).isNull();
+    }
+
+    @Test
     void itShouldRemoveAllOperationsByInventory() {
         // given
         Long steamId1 = 100000000000L;
