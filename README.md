@@ -21,11 +21,12 @@ Swagger OpenAPI 3 is available by path:
 * Search Inventories (paginated): `GET /api/v1/inventories/search-page`
 * Create an Inventory (load items from steam): `POST /api/v1/inventories/` with body `{"steamId": steamid, "trigger": trigger}`
 * Show an Inventory: `GET /api/v1/inventories/:steamid`
-* Update an Inventory (reload items from steam): `PUT /api/v1/inventories/:steamid?trigger=trigger`
+* Update an Inventory (reload items from steam): `PUT /api/v1/inventories/:steamid` with body `{"trigger": trigger}`
 * Delete an Inventory: `DELETE /api/v1/inventories/:steamid`
 
 `trigger` is optional - what initiated the sync: `auto`, `manual` or `resync`.
 It is stored on the created operation and returned as `trigger` of every operation, `null` when it was not passed.
+The update body is required even without a trigger - send `{}`.
 
 ### Inventory Items Endpoints
 

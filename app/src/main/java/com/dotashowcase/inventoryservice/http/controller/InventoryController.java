@@ -6,7 +6,7 @@ import com.dotashowcase.inventoryservice.http.exception.response.SteamErrorRespo
 import com.dotashowcase.inventoryservice.http.exception.response.ValidationErrorResponse;
 import com.dotashowcase.inventoryservice.http.ratelimiter.RateLimitHandler;
 import com.dotashowcase.inventoryservice.http.request.InventoryCreateRequest;
-import com.dotashowcase.inventoryservice.model.Operation.Trigger;
+import com.dotashowcase.inventoryservice.http.request.InventoryUpdateRequest;
 import com.dotashowcase.inventoryservice.service.InventoryService;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryDTO;
 import com.dotashowcase.inventoryservice.service.result.dto.InventoryWithLatestOperationDTO;
@@ -31,7 +31,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @Tag(name = "Inventory", description = "The inventory API")
 @Validated
@@ -140,7 +139,7 @@ public class InventoryController {
                 .headers(responseHeaders)
                 .body(inventoryService.create(
                         inventoryCreateRequest.getSteamId(),
-                        inventoryCreateRequest.getTrigger()
+                        inventoryCreateRequest.toTrigger()
                 ));
     }
 
@@ -178,13 +177,13 @@ public class InventoryController {
     @ResponseBody
     public ResponseEntity<InventoryWithLatestOperationDTO> update(
             @PathVariable @SteamIdConstraint Long steamId,
-            @RequestParam Optional<Trigger> trigger
+            @RequestBody @Valid InventoryUpdateRequest inventoryUpdateRequest
     ) {
         HttpHeaders responseHeaders = rateLimitHandler.runUpdate(steamId);
 
         return ResponseEntity.ok()
                 .headers(responseHeaders)
-                .body(inventoryService.update(steamId, trigger.orElse(null)));
+                .body(inventoryService.update(steamId, inventoryUpdateRequest.toTrigger()));
     }
 
     @Operation(description = "Delete an inventory")

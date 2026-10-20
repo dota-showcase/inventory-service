@@ -72,7 +72,9 @@ class InventorySyncTriggerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.operation.trigger").value("auto"));
 
-        mockMvc.perform(put("/api/v1/inventories/" + steamId).param("trigger", "resync"))
+        mockMvc.perform(put("/api/v1/inventories/" + steamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"trigger\": \"resync\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.operation.trigger").value("resync"));
 
@@ -100,8 +102,10 @@ class InventorySyncTriggerTest {
 
         when(steamClient.fetchUserInventory(steamId)).thenReturn(getResponse(getItemDTO(1L)));
 
-        // version 2 - client not aware of triggers
-        mockMvc.perform(put("/api/v1/inventories/" + steamId))
+        // version 2 - trigger not passed
+        mockMvc.perform(put("/api/v1/inventories/" + steamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
                 .andExpect(status().isOk());
 
         // when

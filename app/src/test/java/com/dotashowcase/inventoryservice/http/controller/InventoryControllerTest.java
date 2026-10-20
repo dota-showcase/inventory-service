@@ -25,7 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -45,6 +44,8 @@ class InventoryControllerTest {
 
     private static final String STEAM_ID_ERROR =
             "steamId: Steam Id must be a SteamID64 between 76561197960265729 and 76561202255233023";
+
+    private static final String TRIGGER_ERROR = "trigger: Trigger must be one of auto, manual, resync";
 
     @Autowired
     private MockMvc mockMvc;
@@ -96,12 +97,16 @@ class InventoryControllerTest {
         // given
         Long steamId = 76561198000000001L;
 
-        mockMvc.perform(put("/api/v1/inventories/" + steamId))
+        mockMvc.perform(put("/api/v1/inventories/" + steamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
                 .andExpect(status().isOk());
 
         // when
         // then
-        mockMvc.perform(put("/api/v1/inventories/" + steamId))
+        mockMvc.perform(put("/api/v1/inventories/" + steamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().string(HttpHeaders.RETRY_AFTER, "60"))
                 .andExpect(header().string(RateLimitHandler.HEADER_RETRY_AFTER, "60"));
@@ -150,7 +155,7 @@ class InventoryControllerTest {
     }
 
     @Test
-    void willReturnBadRequestWhenCreateWithUnknownTrigger() throws Exception {
+    void willReturnValidationErrorWhenCreateWithUnknownTrigger() throws Exception {
         // given
         String requestBody = """
                 {
@@ -163,7 +168,9 @@ class InventoryControllerTest {
         mockMvc.perform(post("/api/v1/inventories/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.validationErrors[0]").value(TRIGGER_ERROR));
 
         verifyNoInteractions(inventoryService);
     }
@@ -172,9 +179,15 @@ class InventoryControllerTest {
     void itShouldPassTriggerWhenUpdate() throws Exception {
         // given
         Long steamId = 76561198000000008L;
+        String requestBody = """
+                {
+                    "trigger": "resync"
+                }""";
 
         // when
-        mockMvc.perform(put("/api/v1/inventories/" + steamId).param("trigger", "resync"))
+        mockMvc.perform(put("/api/v1/inventories/" + steamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
                 .andExpect(status().isOk());
 
         // then
@@ -182,16 +195,64 @@ class InventoryControllerTest {
     }
 
     @Test
-    void willReturnValidationErrorWhenUpdateWithUnknownTrigger() throws Exception {
+    void itShouldUpdateWithUnknownTriggerWhenNotPassed() throws Exception {
         // given
-        Long steamId = 76561198000000009L;
+        Long emptyBodySteamId = 76561198000000010L;
+        Long nullTriggerSteamId = 76561198000000013L;
+        String nullTriggerBody = """
+                {
+                    "trigger": null
+                }""";
+
+        // when
+        mockMvc.perform(put("/api/v1/inventories/" + emptyBodySteamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/v1/inventories/" + nullTriggerSteamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(nullTriggerBody))
+                .andExpect(status().isOk());
+
+        // then
+        verify(inventoryService).update(emptyBodySteamId, null);
+        verify(inventoryService).update(nullTriggerSteamId, null);
+    }
+
+    @Test
+    void willReturnBadRequestWhenUpdateWithoutBody() throws Exception {
+        // given
+        Long steamId = 76561198000000014L;
 
         // when
         // then
-        mockMvc.perform(put("/api/v1/inventories/" + steamId).param("trigger", "scheduled"))
+        mockMvc.perform(put("/api/v1/inventories/" + steamId))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/v1/inventories/" + steamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("null"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(inventoryService);
+    }
+
+    @Test
+    void willReturnValidationErrorWhenUpdateWithUnknownTrigger() throws Exception {
+        // given
+        Long steamId = 76561198000000009L;
+        String requestBody = """
+                {
+                    "trigger": "scheduled"
+                }""";
+
+        // when
+        // then
+        mockMvc.perform(put("/api/v1/inventories/" + steamId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.status").value(422))
-                .andExpect(jsonPath("$.message").value(startsWith("trigger: ")));
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.validationErrors[0]").value(TRIGGER_ERROR));
 
         verifyNoInteractions(inventoryService);
     }
@@ -232,7 +293,10 @@ class InventoryControllerTest {
         try {
             // when
             mockMvc.perform(get("/api/v1/inventories/" + notFoundSteamId)).andExpect(status().isNotFound());
-            mockMvc.perform(put("/api/v1/inventories/" + privateSteamId)).andExpect(status().isBadRequest());
+            mockMvc.perform(put("/api/v1/inventories/" + privateSteamId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isBadRequest());
             mockMvc.perform(get("/api/v1/inventories/" + failingSteamId)).andExpect(status().isInternalServerError());
 
             // then
