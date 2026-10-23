@@ -5,6 +5,13 @@ import com.dotashowcase.inventoryservice.steamclient.response.exception.BadRespo
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -18,7 +25,7 @@ class UserInventoryResponseParserTest {
     }
 
     @Test
-    void itShouldParseNormalResponse() {
+    void itShouldParseNormalResponse() throws IOException {
         // given
         String responseBody = """
                 {
@@ -107,7 +114,7 @@ class UserInventoryResponseParserTest {
                 }""";
 
         // when
-        UserInventoryResponseDTO expected = underTest.run(responseBody);
+        UserInventoryResponseDTO expected = underTest.run(toStream(responseBody));
 
         // then
         assertThat(expected.hasItems()).isEqualTo(true);
@@ -190,7 +197,7 @@ class UserInventoryResponseParserTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.run(responseBody))
+        assertThatThrownBy(() -> underTest.run(toStream(responseBody)))
                 .isInstanceOf(BadResponseBodyException.class);
     }
 
@@ -207,13 +214,13 @@ class UserInventoryResponseParserTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.run(responseBody))
+        assertThatThrownBy(() -> underTest.run(toStream(responseBody)))
                 .isInstanceOf(BadResponseBodyException.class)
                 .hasMessageContaining(String.format("Body is mission required node - '%s'", "result"));
     }
 
     @Test
-    void itShouldParseWhenNoStatus() {
+    void itShouldParseWhenNoStatus() throws IOException {
         // given
         String responseBody = """
                 {
@@ -224,7 +231,7 @@ class UserInventoryResponseParserTest {
                 }""";
 
         // when
-        UserInventoryResponseDTO expected = underTest.run(responseBody);
+        UserInventoryResponseDTO expected = underTest.run(toStream(responseBody));
 
         // then
         assertThat(expected.hasItems()).isEqualTo(false);
@@ -235,7 +242,7 @@ class UserInventoryResponseParserTest {
     }
 
     @Test
-    void itShouldParseWhenNoSlots() {
+    void itShouldParseWhenNoSlots() throws IOException {
         // given
         String responseBody = """
                 {
@@ -246,7 +253,7 @@ class UserInventoryResponseParserTest {
                 }""";
 
         // when
-        UserInventoryResponseDTO expected = underTest.run(responseBody);
+        UserInventoryResponseDTO expected = underTest.run(toStream(responseBody));
 
         // then
         assertThat(expected.hasItems()).isEqualTo(false);
@@ -257,7 +264,7 @@ class UserInventoryResponseParserTest {
     }
 
     @Test
-    void itShouldParseWhenNoItems() {
+    void itShouldParseWhenNoItems() throws IOException {
         // given
         String responseBody = """
                 {
@@ -268,7 +275,7 @@ class UserInventoryResponseParserTest {
                 }""";
 
         // when
-        UserInventoryResponseDTO expected = underTest.run(responseBody);
+        UserInventoryResponseDTO expected = underTest.run(toStream(responseBody));
 
         // then
         assertThat(expected.hasItems()).isEqualTo(false);
@@ -279,7 +286,7 @@ class UserInventoryResponseParserTest {
     }
 
     @Test
-    void itShouldParseWhenNestedNodesHaveUnknownFields() {
+    void itShouldParseWhenNestedNodesHaveUnknownFields() throws IOException {
         // given
         // fields steam may add later
         String responseBody = """
@@ -315,7 +322,7 @@ class UserInventoryResponseParserTest {
                 }""";
 
         // when
-        UserInventoryResponseDTO expected = underTest.run(responseBody);
+        UserInventoryResponseDTO expected = underTest.run(toStream(responseBody));
 
         // then
         assertThat(expected.getItems().getFirst().getEquipped().getFirst().getSlot()).isEqualTo(1);
@@ -341,7 +348,7 @@ class UserInventoryResponseParserTest {
 
         // when
         // then
-        assertThatThrownBy(() -> underTest.run(responseBody))
+        assertThatThrownBy(() -> underTest.run(toStream(responseBody)))
                 .isInstanceOf(BadResponseBodyException.class);
     }
 
@@ -349,7 +356,7 @@ class UserInventoryResponseParserTest {
     void willThrowWhenBodyIsEmpty() {
         // given
         // 200 without body
-        String responseBody = null;
+        InputStream responseBody = null;
 
         // when
         // then
@@ -357,4 +364,65 @@ class UserInventoryResponseParserTest {
                 .isInstanceOf(BadResponseBodyException.class);
     }
 
+    @Test
+    void willThrowWhenBodyHasNoContent() {
+        // given
+        // 200 with empty body
+        String responseBody = "";
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.run(toStream(responseBody)))
+                .isInstanceOf(BadResponseBodyException.class);
+    }
+
+    @Test
+    void willThrowReadErrorWhenBodyReadFails() {
+        // given
+        InputStream responseBody = failingStream("");
+
+        // when
+        // then
+        // transport error, not a bad body
+        assertThatThrownBy(() -> underTest.run(responseBody))
+                .isInstanceOf(SocketTimeoutException.class);
+    }
+
+    @Test
+    void willThrowReadErrorWhenBodyReadFailsInsideItems() {
+        // given
+        // jackson wraps errors inside lists
+        InputStream responseBody = failingStream("""
+                {
+                    "result": {
+                        "status": 1,
+                        "items": [
+                            {
+                                "id": 3120140571,
+                                "defindex": 6671
+                            },
+                            {
+                                "id": 8178590185,""");
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.run(responseBody))
+                .isInstanceOf(SocketTimeoutException.class);
+    }
+
+    private static InputStream toStream(String responseBody) {
+        return new ByteArrayInputStream(responseBody.getBytes(StandardCharsets.UTF_8));
+    }
+
+    // body prefix, then read timeout
+    private static InputStream failingStream(String bodyPrefix) {
+        InputStream timeout = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                throw new SocketTimeoutException("Read timed out");
+            }
+        };
+
+        return new SequenceInputStream(toStream(bodyPrefix), timeout);
+    }
 }

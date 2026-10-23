@@ -1,18 +1,15 @@
 package com.dotashowcase.inventoryservice.steamclient.response;
 
-import com.dotashowcase.inventoryservice.steamclient.response.dto.ItemDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.dto.UserInventoryResponseDTO;
 import com.dotashowcase.inventoryservice.steamclient.response.exception.BadResponseBodyException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.MissingNode;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  *  "result": {
@@ -58,61 +55,47 @@ public class UserInventoryResponseParser {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
     private static final String NODE_RESULT = "result";
-    private static final String NODE_ITEMS = "items";
-    private static final String NODE_STATUS = "status";
-    private static final String NODE_SLOTS = "num_backpack_slots";
 
-    public UserInventoryResponseDTO run(String responseBody) throws BadResponseBodyException {
+    // bound while streaming - no body string or json tree in memory, big inventories are several MB
+    private record ResponseBody(UserInventoryResponseDTO result) {}
+
+    /**
+     * @throws BadResponseBodyException on invalid json or unexpected structure
+     * @throws IOException on body read errors, e.g. timeout
+     */
+    public UserInventoryResponseDTO run(InputStream responseBody) throws IOException, BadResponseBodyException {
         if (responseBody == null) {
             throw BadResponseBodyException.invalidBodyStructure("empty body");
         }
 
-        JsonNode rootNode = null;
+        ResponseBody body;
         try {
-            rootNode = objectMapper.readTree(responseBody);
+            body = objectMapper.readValue(responseBody, ResponseBody.class);
         } catch (JsonProcessingException e) {
-            throw BadResponseBodyException.invalidBodyStructure(e.getMessage());
-        }
-
-        // parse root node
-        JsonNode resultNode = rootNode.path(NODE_RESULT);
-
-        if (resultNode instanceof MissingNode) {
-            throw BadResponseBodyException.jsonNodeNotFound(NODE_RESULT);
-        }
-
-        UserInventoryResponseDTO userInventoryResponseDTO = new UserInventoryResponseDTO();
-
-        // parse status and stats nodes
-        if (resultNode.has(NODE_STATUS)) {
-            JsonNode statusNode = resultNode.path(NODE_STATUS);
-            userInventoryResponseDTO.setStatus(statusNode.asInt());
-        }
-
-        if (resultNode.has(NODE_SLOTS)) {
-            JsonNode numSlotNode = resultNode.path(NODE_SLOTS);
-            userInventoryResponseDTO.setNumberBackpackSlots(numSlotNode.asInt());
-        }
-
-        // parse items node
-        if (!resultNode.has(NODE_ITEMS)) {
-           return userInventoryResponseDTO;
-        }
-
-        JsonNode itemNode = resultNode.path(NODE_ITEMS);
-
-        List <ItemDTO> items = new ArrayList<>();
-        try {
-            for (JsonNode item : itemNode) {
-                items.add(objectMapper.convertValue(item, ItemDTO.class));
+            IOException readError = findReadError(e);
+            if (readError != null) {
+                throw readError;
             }
-        } catch (IllegalArgumentException e) {
+
             // reject whole response - skipped items would be synced as deleted
             throw BadResponseBodyException.invalidBodyStructure(e.getMessage());
         }
 
-        userInventoryResponseDTO.setItems(items);
+        if (body == null || body.result() == null) {
+            throw BadResponseBodyException.jsonNodeNotFound(NODE_RESULT);
+        }
 
-        return userInventoryResponseDTO;
+        return body.result();
+    }
+
+    // jackson wraps read errors inside lists (items, attributes) - still a transport error, not a bad body
+    private static IOException findReadError(JsonProcessingException e) {
+        for (Throwable cause = e.getCause(); cause != null; cause = cause.getCause()) {
+            if (cause instanceof IOException ioException && !(cause instanceof JsonProcessingException)) {
+                return ioException;
+            }
+        }
+
+        return null;
     }
 }

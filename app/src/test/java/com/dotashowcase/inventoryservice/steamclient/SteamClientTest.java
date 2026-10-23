@@ -14,16 +14,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -87,16 +96,7 @@ class SteamClientTest {
 
         Long steamId = 100000000000L;
 
-        ResponseEntity<String> stringResponseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
-
-        when(restTemplate.exchange(
-                        ArgumentMatchers.any(URI.class),
-                        ArgumentMatchers.any(HttpMethod.class),
-                        ArgumentMatchers.any(),
-                        ArgumentMatchers.<Class<String>>any()
-                )
-        )
-                .thenReturn(stringResponseEntity);
+        givenSteamResponse(responseBody);
 
         // when
         UserInventoryResponseDTO expected = underTest.fetchUserInventory(steamId);
@@ -118,16 +118,7 @@ class SteamClientTest {
 
         Long steamId = 100000000000L;
 
-        ResponseEntity<String> stringResponseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
-
-        when(restTemplate.exchange(
-                        ArgumentMatchers.any(URI.class),
-                        ArgumentMatchers.any(HttpMethod.class),
-                        ArgumentMatchers.any(),
-                        ArgumentMatchers.<Class<String>>any()
-                )
-        )
-                .thenReturn(stringResponseEntity);
+        givenSteamResponse(responseBody);
 
         // when
         // then
@@ -148,16 +139,7 @@ class SteamClientTest {
 
         Long steamId = 100000000000L;
 
-        ResponseEntity<String> stringResponseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
-
-        when(restTemplate.exchange(
-                        ArgumentMatchers.any(URI.class),
-                        ArgumentMatchers.any(HttpMethod.class),
-                        ArgumentMatchers.any(),
-                        ArgumentMatchers.<Class<String>>any()
-                )
-        )
-                .thenReturn(stringResponseEntity);
+        givenSteamResponse(responseBody);
 
         // when
         // then
@@ -180,16 +162,7 @@ class SteamClientTest {
 
         Long steamId = 100000000000L;
 
-        ResponseEntity<String> stringResponseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
-
-        when(restTemplate.exchange(
-                        ArgumentMatchers.any(URI.class),
-                        ArgumentMatchers.any(HttpMethod.class),
-                        ArgumentMatchers.any(),
-                        ArgumentMatchers.<Class<String>>any()
-                )
-        )
-                .thenReturn(stringResponseEntity);
+        givenSteamResponse(responseBody);
 
         // when
         // then
@@ -211,16 +184,7 @@ class SteamClientTest {
 
         Long steamId = 100000000000L;
 
-        ResponseEntity<String> stringResponseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
-
-        when(restTemplate.exchange(
-                        ArgumentMatchers.any(URI.class),
-                        ArgumentMatchers.any(HttpMethod.class),
-                        ArgumentMatchers.any(),
-                        ArgumentMatchers.<Class<String>>any()
-                )
-        )
-                .thenReturn(stringResponseEntity);
+        givenSteamResponse(responseBody);
 
         // when
         // then
@@ -237,11 +201,11 @@ class SteamClientTest {
 
         Long steamId = 100000000000L;
 
-        when(restTemplate.exchange(
+        when(restTemplate.execute(
                         ArgumentMatchers.any(URI.class),
-                        ArgumentMatchers.any(HttpMethod.class),
-                        ArgumentMatchers.any(),
-                        ArgumentMatchers.<Class<String>>any()
+                        ArgumentMatchers.eq(HttpMethod.GET),
+                        ArgumentMatchers.isNull(),
+                        ArgumentMatchers.<ResponseExtractor<Object>>any()
                 )
         )
                 .thenThrow(new ResourceAccessException(
@@ -253,5 +217,84 @@ class SteamClientTest {
         assertThatThrownBy(() -> underTest.fetchUserInventory(steamId))
                 .isInstanceOf(SteamClientException.class)
                 .hasMessageNotContaining(apiKey);
+    }
+
+    @Test
+    void willThrowWhenBodyIsMalformed() {
+        // given
+        String responseBody = """
+                {
+                    "result": {
+                        "status": 1,
+                        "items": [
+                            {
+                                "id": 3120140571,
+                                "level": "high"
+                            }
+                        ]
+                    }
+                }""";
+
+        Long steamId = 100000000000L;
+
+        givenSteamResponse(responseBody);
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.fetchUserInventory(steamId))
+                .isInstanceOf(SteamClientException.class)
+                .hasMessageContaining("Failed to parse a response from steam");
+    }
+
+    @Test
+    void willThrowWhenBodyReadFails() {
+        // given
+        // real RestTemplate - wraps body read errors
+        RestTemplate realRestTemplate = new RestTemplate();
+        MockRestServiceServer steamServer = MockRestServiceServer.bindTo(realRestTemplate).build();
+        SteamClient steamClient = new SteamClient(realRestTemplate, userInventoryResponseParser, inventoryStatusHandler);
+
+        InputStream timeout = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                throw new SocketTimeoutException("Read timed out");
+            }
+        };
+        InputStream responseBody = new SequenceInputStream(
+                new ByteArrayInputStream("""
+                        {
+                            "result": {
+                                "status": 1,
+                                "items": [
+                                    {
+                                        "id": 3120140571,""".getBytes(StandardCharsets.UTF_8)),
+                timeout
+        );
+
+        steamServer.expect(method(HttpMethod.GET))
+                .andRespond(request -> new MockClientHttpResponse(responseBody, HttpStatus.OK));
+
+        Long steamId = 100000000000L;
+
+        // when
+        // then
+        // transport error, not a bad body
+        assertThatThrownBy(() -> steamClient.fetchUserInventory(steamId))
+                .isInstanceOf(SteamClientException.class)
+                .hasMessageContaining("Failed to reach steam api");
+    }
+
+    // runs the client's extractor on the body, as RestTemplate does
+    private void givenSteamResponse(String responseBody) {
+        when(restTemplate.execute(
+                        ArgumentMatchers.any(URI.class),
+                        ArgumentMatchers.eq(HttpMethod.GET),
+                        ArgumentMatchers.isNull(),
+                        ArgumentMatchers.<ResponseExtractor<Object>>any()
+                )
+        )
+                .thenAnswer(invocation -> invocation.<ResponseExtractor<Object>>getArgument(3).extractData(
+                        new MockClientHttpResponse(responseBody.getBytes(StandardCharsets.UTF_8), HttpStatus.OK)
+                ));
     }
 }

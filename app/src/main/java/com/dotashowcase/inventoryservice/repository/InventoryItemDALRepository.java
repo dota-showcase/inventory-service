@@ -31,6 +31,9 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 
     private final MongoTemplate mongoTemplate;
 
+    // MongoTemplate maps a whole insert to documents before sending - batches cap that copy for big inventories
+    static final int INSERT_BATCH_SIZE = 1000;
+
     @Autowired
     public InventoryItemDALRepository(MongoTemplate mongoTemplate) {
         Assert.notNull(mongoTemplate, "MongoTemplate must not be null!");
@@ -247,7 +250,15 @@ public class InventoryItemDALRepository implements InventoryItemDAL {
 
     @Override
     public List<InventoryItem> insertAll(List<InventoryItem> inventoryItems) {
-        return (List<InventoryItem>) mongoTemplate.insertAll(inventoryItems);
+        List<InventoryItem> insertedItems = new ArrayList<>(inventoryItems.size());
+
+        for (int from = 0; from < inventoryItems.size(); from += INSERT_BATCH_SIZE) {
+            int to = Math.min(from + INSERT_BATCH_SIZE, inventoryItems.size());
+
+            insertedItems.addAll(mongoTemplate.insertAll(inventoryItems.subList(from, to)));
+        }
+
+        return insertedItems;
     }
 
     @Override

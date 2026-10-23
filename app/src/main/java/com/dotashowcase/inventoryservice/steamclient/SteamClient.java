@@ -10,12 +10,13 @@ import com.dotashowcase.inventoryservice.steamclient.response.exception.BadRespo
 import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -55,29 +56,25 @@ public class SteamClient {
             throws SteamClientException, BadRequestException, InventoryStatusException {
         final URI uri = this.getInventoryURI(steamId);
 
-        // retrieve data
-        ResponseEntity<String> response;
+        // retrieve and parse data - body is streamed into dto
+        SteamResponse response;
         try {
-            response = restTemplate.exchange(uri, HttpMethod.GET, null, String.class);
+            response = restTemplate.execute(uri, HttpMethod.GET, null, this::extractResponse);
         } catch (RestClientResponseException restClientResponseException) {
             throw BadRequestException.steamApiError(
                     restClientResponseException.getStatusCode().value(),
                     restClientResponseException.getMessage()
             );
         } catch (RestClientException restClientException) {
-            // hide uri with api key
+            // hide uri with api key; body read errors land here too
             throw new SteamClientException(
                     "Failed to reach steam api - " + restClientException.getClass().getSimpleName()
             );
-        }
-
-        // parse response data
-        UserInventoryResponseDTO userInventoryResponseDTO;
-        try {
-            userInventoryResponseDTO = userInventoryResponseParser.run(response.getBody());
         } catch (BadResponseBodyException badResponseBodyException) {
             throw new SteamClientException(badResponseBodyException.getMessage());
         }
+
+        UserInventoryResponseDTO userInventoryResponseDTO = response.body();
 
         Integer inventoryStatus = userInventoryResponseDTO.getStatus();
         if (inventoryStatus == null) {
@@ -86,7 +83,7 @@ public class SteamClient {
 
         if (!inventoryStatusHandler.isOk(inventoryStatus)) {
             throw InventoryStatusException.itemsNotPresent(
-                    response.getStatusCode().value(),
+                    response.statusCode(),
                     inventoryStatus,
                     inventoryStatusHandler.getStatusMessage(inventoryStatus)
             );
@@ -96,7 +93,7 @@ public class SteamClient {
             int noItemsInventoryStatus = inventoryStatusHandler.getNoItemsCode();
 
             throw InventoryStatusException.itemsNotPresent(
-                    response.getStatusCode().value(),
+                    response.statusCode(),
                     noItemsInventoryStatus,
                     inventoryStatusHandler.getStatusMessage(noItemsInventoryStatus)
             );
@@ -104,6 +101,12 @@ public class SteamClient {
 
         return userInventoryResponseDTO;
     }
+
+    private SteamResponse extractResponse(ClientHttpResponse response) throws IOException {
+        return new SteamResponse(response.getStatusCode().value(), userInventoryResponseParser.run(response.getBody()));
+    }
+
+    private record SteamResponse(int statusCode, UserInventoryResponseDTO body) {}
 
     private URI getInventoryURI(Long steamId) {
         URIBuilder builder = new URIBuilder()

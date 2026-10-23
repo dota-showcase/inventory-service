@@ -15,6 +15,7 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -37,6 +38,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @Import(MongoTestConfig.class)
@@ -821,6 +825,49 @@ class InventoryItemRepositoryTest {
                 .extracting("steamId")
                 .contains(steamId1)
                 .hasSize(2);
+    }
+
+    @Test
+    void itShouldInsertAllInventoryItemsInBatches() {
+        // given
+        Inventory inventory = new Inventory(100000000008L);
+        Operation operation = insertOperation(inventory, 1);
+
+        int itemCount = InventoryItemDALRepository.INSERT_BATCH_SIZE * 2 + 500;
+        List<InventoryItem> inventoryItems = new ArrayList<>(itemCount);
+        for (long itemId = 1; itemId <= itemCount; itemId++) {
+            InventoryItem inventoryItem = new InventoryItem();
+            inventoryItem.setItemId(itemId);
+            inventoryItem.setOperationId(operation.getId());
+            inventoryItem.setSteamId(inventory.getSteamId());
+            inventoryItems.add(inventoryItem);
+        }
+
+        MongoTemplate mongoTemplateSpy = spy(mongoTemplate);
+        InventoryItemDALRepository repository = new InventoryItemDALRepository(mongoTemplateSpy);
+
+        // when
+        List<InventoryItem> items = repository.insertAll(inventoryItems);
+
+        // then
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<InventoryItem>> batches = ArgumentCaptor.forClass(Collection.class);
+        verify(mongoTemplateSpy, times(3)).insertAll(batches.capture());
+
+        assertThat(batches.getAllValues())
+                .extracting(Collection::size)
+                .containsExactly(1000, 1000, 500);
+
+        assertThat(items)
+                .hasSize(itemCount)
+                .allMatch(item -> item.getId() != null)
+                .extracting(InventoryItem::getItemId)
+                .isSorted();
+
+        assertThat(mongoTemplate.count(
+                new Query(Criteria.where("steamId").is(inventory.getSteamId())),
+                InventoryItem.class
+        )).isEqualTo(itemCount);
     }
 
     @Test

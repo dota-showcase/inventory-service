@@ -1,5 +1,6 @@
 package com.dotashowcase.inventoryservice.steamclient.response.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -7,7 +8,8 @@ import java.util.List;
 @Data
 public class UserInventoryResponseDTO {
 
-    private Integer numberBackpackSlots;        // num_backpack_slots
+    @JsonProperty("num_backpack_slots")
+    private Integer numberBackpackSlots;
 
     private Integer status;
 
